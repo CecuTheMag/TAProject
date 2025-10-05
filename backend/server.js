@@ -1,0 +1,20 @@
+import express from 'express'
+import cors from 'cors'
+
+const app = express()
+const PORT = 5000
+
+app.use(cors())
+app.use(express.json())
+
+app.get('/', (req, res) => {
+  res.json({ message: 'School Inventory API - Ready to Build!' })
+})
+
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'Backend working!' })
+})
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
