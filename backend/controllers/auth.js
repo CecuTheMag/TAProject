@@ -1,0 +1,81 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import Joi from 'joi';
+import pool from '../database.js';
+
+const registerSchema = Joi.object({
+  username: Joi.string().alphanum().min(3).max(30).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+  role: Joi.string().valid('user', 'admin').default('user')
+});
+
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required()
+});
+
+export const register = async (req, res) => {
+  try {
+    const { error, value } = registerSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const { username, email, password, role } = value;
+    
+    const hashedPassword = await bcrypt.hash(password, 12);
+    
+    const result = await pool.query(
+      'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role',
+      [username, email, hashedPassword, role]
+    );
+
+    const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: result.rows[0],
+      token
+    });
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
+    res.status(500).json({ error: 'Registration failed' });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    const { error, value } = loginSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const { email, password } = value;
+    
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = result.rows[0];
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    
+    res.json({
+      message: 'Login successful',
+      user: { id: user.id, username: user.username, email: user.email, role: user.role },
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+export const logout = (req, res) => {
+  res.json({ message: 'Logout successful' });
+};
