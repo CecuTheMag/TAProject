@@ -6,6 +6,10 @@ import authRoutes from './routes/auth.js';
 import equipmentRoutes from './routes/equipment.js';
 import requestRoutes from './routes/requests.js';
 import reportRoutes from './routes/reports.js';
+import dashboardRoutes from './routes/dashboard.js';
+import alertRoutes from './routes/alerts.js';
+import documentRoutes from './routes/documents.js';
+import alertService from './services/alertService.js';
 
 dotenv.config();
 
@@ -15,6 +19,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static('uploads'));
 
 // Initialize database
 initDB();
@@ -24,6 +29,9 @@ app.use('/auth', authRoutes);
 app.use('/equipment', equipmentRoutes);
 app.use('/request', requestRoutes);
 app.use('/reports', reportRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/alerts', alertRoutes);
+app.use('/documents', documentRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
@@ -57,4 +65,7 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Database: PostgreSQL (${process.env.DB_NAME})`);
   console.log(`JWT Secret configured: ${!!process.env.JWT_SECRET}`);
+  
+  // Start alert service
+  alertService.startScheduledChecks();
 });

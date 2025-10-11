@@ -38,4 +38,29 @@ export const requests = {
   return: (id, data) => api.put(`/request/${id}/return`, data),
 };
 
+export const dashboard = {
+  getStats: () => api.get('/dashboard/stats'),
+  getActivity: () => api.get('/dashboard/activity'),
+  getAlerts: () => api.get('/dashboard/alerts'),
+};
+
+export const alerts = {
+  getLowStock: () => api.get('/alerts/low-stock'),
+  getOverdue: () => api.get('/alerts/overdue'),
+  updateThreshold: (id, threshold) => api.put(`/alerts/threshold/${id}`, { stock_threshold: threshold })
+};
+
+export const documents = {
+  upload: (equipmentId, file) => {
+    const formData = new FormData();
+    formData.append('document', file);
+    return api.post(`/documents/upload/${equipmentId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  getByEquipment: (equipmentId) => api.get(`/documents/equipment/${equipmentId}`),
+  getFile: (filename) => api.get(`/documents/file/${filename}`, { responseType: 'blob' }),
+  delete: (equipmentId, filename) => api.delete(`/documents/${equipmentId}/${filename}`)
+};
+
 export default api;

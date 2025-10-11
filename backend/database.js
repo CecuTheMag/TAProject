@@ -2,6 +2,7 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
 import { createDefaultAdmin } from './utils/createAdmin.js';
+import { createSampleData } from './utils/createSampleData.js';
 
 dotenv.config();
 
@@ -41,8 +42,19 @@ export const initDB = async () => {
         photo VARCHAR(255),
         qr_code VARCHAR(255),
         requires_approval BOOLEAN DEFAULT false,
+        quantity INTEGER DEFAULT 1,
+        stock_threshold INTEGER DEFAULT 2,
+        documents TEXT[],
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+
+    // Add columns if they don't exist
+    await pool.query(`
+      ALTER TABLE equipment 
+      ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1,
+      ADD COLUMN IF NOT EXISTS stock_threshold INTEGER DEFAULT 2,
+      ADD COLUMN IF NOT EXISTS documents TEXT[]
     `);
 
     // requests table
@@ -54,6 +66,7 @@ export const initDB = async () => {
         request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         start_date TIMESTAMP NOT NULL,
         end_date TIMESTAMP NOT NULL,
+        due_date TIMESTAMP,
         status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned')),
         approved_by INTEGER REFERENCES users(id),
         approved_at TIMESTAMP,
@@ -61,6 +74,12 @@ export const initDB = async () => {
         return_condition VARCHAR(20) CHECK (return_condition IN ('excellent', 'good', 'fair', 'poor')),
         notes TEXT
       )
+    `);
+
+    // Add due_date column if it doesn't exist
+    await pool.query(`
+      ALTER TABLE requests 
+      ADD COLUMN IF NOT EXISTS due_date TIMESTAMP
     `);
 
     // condition logs table
@@ -80,6 +99,9 @@ export const initDB = async () => {
     
     // create default admin account
     await createDefaultAdmin();
+    
+    // create sample data
+    await createSampleData();
   } catch (error) {
     console.error('Database initialization error:', error);
   }
