@@ -1,5 +1,5 @@
-const db = require('../database');
-const emailService = require('./emailService');
+import pool from '../database.js';
+import emailService from './emailService.js';
 
 class AlertService {
   async checkOverdueEquipment() {
@@ -15,7 +15,7 @@ class AlertService {
         AND r.returned_at IS NULL
       `;
       
-      const overdueItems = await db.query(overdueQuery);
+      const overdueItems = await pool.query(overdueQuery);
       
       for (const item of overdueItems.rows) {
         await emailService.sendOverdueReminder(
@@ -40,11 +40,11 @@ class AlertService {
         WHERE (e.quantity - (SELECT COUNT(*) FROM requests r WHERE r.equipment_id = e.id AND r.status = 'approved' AND r.returned_at IS NULL)) <= e.stock_threshold
       `;
       
-      const lowStockItems = await db.query(lowStockQuery);
+      const lowStockItems = await pool.query(lowStockQuery);
       
       // Get admin emails
       const adminQuery = 'SELECT email FROM users WHERE role = $1';
-      const admins = await db.query(adminQuery, ['admin']);
+      const admins = await pool.query(adminQuery, ['admin']);
       
       for (const item of lowStockItems.rows) {
         const availableStock = item.quantity - item.checked_out;
@@ -80,4 +80,4 @@ class AlertService {
   }
 }
 
-module.exports = new AlertService();
+export default new AlertService();
