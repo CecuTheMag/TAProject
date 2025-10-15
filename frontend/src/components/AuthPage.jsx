@@ -228,39 +228,16 @@ const AuthPage = () => {
           </div>
 
           {!isLogin && (
-            <div>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                color: '#374151', 
-                fontWeight: '500', 
-                fontSize: '14px'
-              }}>
-                Account Type
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.2s ease',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  backgroundColor: '#ffffff',
-                  color: '#1f2937',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
-                <option value="admin">Administrator</option>
-              </select>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#0369a1'
+            }}>
+              <div style={{ fontWeight: '600', marginBottom: '4px' }}>📚 Student Account</div>
+              <div>You're creating a student account. Teachers and administrators are created by existing admins.</div>
             </div>
           )}
 

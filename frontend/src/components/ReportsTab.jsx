@@ -5,6 +5,14 @@ const ReportsTab = () => {
   const [selectedReport, setSelectedReport] = useState('inventory');
   const [dateRange, setDateRange] = useState('last30days');
   const [generating, setGenerating] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useState(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const reportTypes = [
     {
@@ -85,92 +93,119 @@ const ReportsTab = () => {
     <div>
       {/* Header */}
       <div style={{
-        background: 'white',
-        padding: '32px',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        background: isMobile ? 'white' : 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: isMobile ? 'none' : 'blur(20px)',
+        padding: isMobile ? '20px' : '40px',
+        borderBottom: isMobile ? '1px solid #e2e8f0' : '1px solid rgba(226, 232, 240, 0.5)',
+        boxShadow: isMobile ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : '0 8px 32px rgba(0, 0, 0, 0.08)',
+        margin: isMobile ? '0 12px' : '0',
+        borderRadius: isMobile ? '12px 12px 0 0' : '0'
       }}>
         <h1 style={{
-          fontSize: '32px',
+          fontSize: isMobile ? '24px' : '32px',
           fontWeight: '800',
           color: '#0f172a',
           margin: '0 0 8px 0',
-          fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+          fontFamily: '"SF Pro Display", -apple-system, sans-serif',
+          textAlign: isMobile ? 'center' : 'left'
         }}>
           Reports & Analytics
         </h1>
         <p style={{
           color: '#64748b',
-          fontSize: '16px',
+          fontSize: isMobile ? '14px' : '16px',
           fontWeight: '500',
-          margin: 0
+          margin: 0,
+          textAlign: isMobile ? 'center' : 'left'
         }}>
           Generate comprehensive reports for your inventory system
         </p>
       </div>
 
       {/* Content */}
-      <div style={{ padding: '32px' }}>
+      <div style={{ 
+        padding: isMobile ? '16px 12px' : '40px',
+        overflowX: isMobile ? 'hidden' : 'visible'
+      }}>
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 400px',
-          gap: '32px'
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '24px' : '40px',
+          maxWidth: isMobile ? 'none' : '1400px',
+          margin: isMobile ? '0' : '0 auto'
         }}>
           {/* Report Types */}
-          <div>
+          <div style={{ flex: isMobile ? 'none' : 1 }}>
             <h2 style={{
-              fontSize: '20px',
-              fontWeight: '600',
+              fontSize: isMobile ? '18px' : '24px',
+              fontWeight: isMobile ? '600' : '700',
               color: '#0f172a',
-              margin: '0 0 24px 0'
+              margin: isMobile ? '0 0 16px 0' : '0 0 24px 0',
+              textAlign: isMobile ? 'center' : 'left',
+              fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
               Select Report Type
             </h2>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '16px'
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: isMobile ? '16px' : '20px',
+              width: isMobile ? '100%' : 'auto'
             }}>
               {reportTypes.map((report) => (
                 <div
                   key={report.id}
                   onClick={() => setSelectedReport(report.id)}
                   style={{
-                    background: 'white',
-                    border: selectedReport === report.id ? '2px solid #0f172a' : '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '20px',
+                    background: isMobile ? 'white' : 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: isMobile ? 'none' : 'blur(20px)',
+                    border: selectedReport === report.id 
+                      ? (isMobile ? '2px solid #0f172a' : '2px solid #0f172a') 
+                      : (isMobile ? '1px solid #e2e8f0' : '1px solid rgba(226, 232, 240, 0.3)'),
+                    borderRadius: isMobile ? '12px' : '16px',
+                    padding: isMobile ? '16px' : '24px',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: selectedReport === report.id ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: selectedReport === report.id 
+                      ? (isMobile ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 12px 40px rgba(15, 23, 42, 0.15)') 
+                      : (isMobile ? '0 1px 3px rgba(0, 0, 0, 0.1)' : '0 8px 32px rgba(0, 0, 0, 0.08)'),
+                    width: isMobile ? '100%' : 'auto',
+                    boxSizing: 'border-box',
+                    transform: !isMobile && selectedReport === report.id ? 'translateY(-4px)' : 'translateY(0)'
                   }}
                 >
                   <div style={{
                     display: 'flex',
                     alignItems: 'flex-start',
-                    gap: '16px'
+                    gap: isMobile ? '16px' : '20px'
                   }}>
                     <div style={{
                       color: selectedReport === report.id ? '#0f172a' : '#64748b',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      padding: isMobile ? '0' : '8px',
+                      borderRadius: isMobile ? '0' : '12px',
+                      background: !isMobile && selectedReport === report.id ? 'rgba(15, 23, 42, 0.1)' : 'transparent',
+                      transition: 'all 0.3s ease'
                     }}>
                       {report.icon}
                     </div>
                     <div>
                       <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
+                        fontSize: isMobile ? '15px' : '18px',
+                        fontWeight: isMobile ? '600' : '700',
                         color: '#0f172a',
-                        margin: '0 0 8px 0'
+                        margin: isMobile ? '0 0 6px 0' : '0 0 8px 0',
+                        fontFamily: '"SF Pro Display", -apple-system, sans-serif'
                       }}>
                         {report.title}
                       </h3>
                       <p style={{
                         color: '#64748b',
-                        fontSize: '14px',
+                        fontSize: isMobile ? '13px' : '15px',
                         margin: 0,
-                        lineHeight: '1.5'
+                        lineHeight: isMobile ? '1.4' : '1.5',
+                        fontWeight: isMobile ? 'normal' : '500'
                       }}>
                         {report.description}
                       </p>
@@ -183,18 +218,27 @@ const ReportsTab = () => {
 
           {/* Report Configuration */}
           <div style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            height: 'fit-content'
+            background: isMobile ? 'white' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: isMobile ? 'none' : 'blur(20px)',
+            border: isMobile ? '1px solid #e2e8f0' : '1px solid rgba(226, 232, 240, 0.3)',
+            borderRadius: isMobile ? '12px' : '20px',
+            padding: isMobile ? '20px' : '32px',
+            boxShadow: isMobile ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : '0 12px 40px rgba(0, 0, 0, 0.1)',
+            height: 'fit-content',
+            width: isMobile ? '100%' : '420px',
+            maxWidth: isMobile ? 'calc(100vw - 40px)' : 'none',
+            flexShrink: 0,
+            boxSizing: 'border-box',
+            position: isMobile ? 'static' : 'sticky',
+            top: isMobile ? 'auto' : '40px'
           }}>
             <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
+              fontSize: isMobile ? '16px' : '22px',
+              fontWeight: isMobile ? '600' : '700',
               color: '#0f172a',
-              margin: '0 0 24px 0'
+              margin: isMobile ? '0 0 20px 0' : '0 0 28px 0',
+              textAlign: isMobile ? 'center' : 'left',
+              fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
               Report Configuration
             </h3>
@@ -206,24 +250,31 @@ const ReportsTab = () => {
                 fontSize: '14px',
                 fontWeight: '600',
                 color: '#111827',
-                marginBottom: '12px'
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
-                📅 Date Range Filter
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z"/>
+                </svg>
+                Date Range Filter
               </label>
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '14px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '10px',
-                  fontSize: '14px',
+                  padding: isMobile ? '14px 16px' : '16px 20px',
+                  border: isMobile ? '2px solid #e5e7eb' : '2px solid #e2e8f0',
+                  borderRadius: isMobile ? '10px' : '12px',
+                  fontSize: isMobile ? '14px' : '15px',
                   fontWeight: '500',
                   backgroundColor: 'white',
                   color: '#374151',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.3s ease',
+                  fontFamily: '"SF Pro Text", -apple-system, sans-serif'
                 }}
               >
                 {dateRanges.map((range) => (
@@ -241,9 +292,15 @@ const ReportsTab = () => {
                 border: '1px solid #bae6fd',
                 borderRadius: '6px',
                 fontSize: '12px',
-                color: '#0369a1'
+                color: '#0369a1',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
-                ℹ️ Reports will include data from the selected time period
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
+                </svg>
+                Reports will include data from the selected time period
               </div>
             </div>
 
@@ -265,19 +322,21 @@ const ReportsTab = () => {
                   disabled={generating}
                   style={{
                     width: '100%',
-                    padding: '16px 24px',
+                    padding: isMobile ? '16px 24px' : '18px 28px',
                     backgroundColor: generating ? '#9ca3af' : '#10b981',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '16px',
+                    borderRadius: isMobile ? '12px' : '14px',
+                    fontSize: isMobile ? '16px' : '17px',
                     fontWeight: '600',
                     cursor: generating ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '12px',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                    boxShadow: !generating && !isMobile ? '0 4px 16px rgba(16, 185, 129, 0.3)' : 'none'
                   }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -290,24 +349,26 @@ const ReportsTab = () => {
 
             {/* Report Preview */}
             <div style={{
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '16px'
+              backgroundColor: isMobile ? '#f8fafc' : 'rgba(248, 250, 252, 0.8)',
+              border: isMobile ? '1px solid #e2e8f0' : '1px solid rgba(226, 232, 240, 0.5)',
+              borderRadius: isMobile ? '8px' : '12px',
+              padding: isMobile ? '16px' : '20px'
             }}>
               <h4 style={{
-                fontSize: '14px',
+                fontSize: isMobile ? '14px' : '16px',
                 fontWeight: '600',
                 color: '#374151',
-                margin: '0 0 8px 0'
+                margin: isMobile ? '0 0 8px 0' : '0 0 12px 0',
+                fontFamily: '"SF Pro Text", -apple-system, sans-serif'
               }}>
                 Report Preview
               </h4>
               <p style={{
-                fontSize: '12px',
+                fontSize: isMobile ? '12px' : '14px',
                 color: '#6b7280',
                 margin: 0,
-                lineHeight: '1.4'
+                lineHeight: isMobile ? '1.4' : '1.5',
+                fontWeight: '500'
               }}>
                 {reportTypes.find(r => r.id === selectedReport)?.description}
                 <br />

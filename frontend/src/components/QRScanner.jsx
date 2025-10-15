@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import QrScanner from 'qr-scanner';
 import { equipment } from '../api';
 
@@ -71,27 +72,45 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '32px',
-        width: '90%',
-        maxWidth: '500px',
-        textAlign: 'center'
-      }}>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        style={{
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          borderRadius: '20px',
+          padding: '0',
+          width: '90%',
+          maxWidth: '500px',
+          textAlign: 'center',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          overflow: 'hidden'
+        }}>
         <div style={{
+          background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+          padding: '24px 32px',
+          color: 'white',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -103,16 +122,24 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
           <button
             onClick={onClose}
             style={{
-              background: 'none',
+              background: 'rgba(255, 255, 255, 0.2)',
               border: 'none',
-              fontSize: '24px',
+              borderRadius: '8px',
+              width: '40px',
+              height: '40px',
+              fontSize: '20px',
               cursor: 'pointer',
-              color: '#64748b'
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             ×
           </button>
         </div>
+        
+        <div style={{ padding: '0 32px 32px 32px' }}>
 
         {!scanning ? (
           <div>
@@ -216,8 +243,10 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
             {error}
           </div>
         )}
-      </div>
-    </div>
+        </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   );
 };
 

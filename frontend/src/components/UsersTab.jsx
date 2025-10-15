@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { users } from '../api';
 import { useAuth } from '../AuthContext';
+import ConfirmDialog from './ConfirmDialog';
+import { toast } from './Toast';
+import { useFormValidation, validationRules } from '../hooks/useFormValidation';
 
 const UsersTab = () => {
   const [usersList, setUsersList] = useState([]);
@@ -9,7 +13,16 @@ const UsersTab = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [userActivity, setUserActivity] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
   const { user } = useAuth();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -30,22 +43,31 @@ const UsersTab = () => {
     try {
       await users.updateRole(userId, newRole);
       await fetchUsers();
+      toast.success('User role updated successfully');
     } catch (error) {
       console.error('Failed to update user role:', error);
-      alert('Failed to update user role');
+      toast.error('Failed to update user role');
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    
-    try {
-      await users.delete(userId);
-      await fetchUsers();
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-      alert('Failed to delete user');
-    }
+  const handleDeleteUser = (userId, username) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete User',
+      message: `Are you sure you want to delete ${username}? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await users.delete(userId);
+          await fetchUsers();
+          toast.success('User deleted successfully');
+        } catch (error) {
+          console.error('Failed to delete user:', error);
+          toast.error('Failed to delete user');
+        }
+        setConfirmDialog({ isOpen: false });
+      },
+      onCancel: () => setConfirmDialog({ isOpen: false })
+    });
   };
 
   const handleViewActivity = async (userId) => {
@@ -103,28 +125,34 @@ const UsersTab = () => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
-        padding: '40px',
+        padding: isMobile ? '20px' : '40px',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        margin: isMobile ? '0 12px' : '0',
+        borderRadius: isMobile ? '12px 12px 0 0' : '0'
       }}>
         <div style={{
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: isMobile ? '16px' : '0'
         }}>
           <div>
             <h1 style={{
-              fontSize: '32px',
+              fontSize: isMobile ? '24px' : '32px',
               fontWeight: '800',
               color: '#0f172a',
-              margin: '0 0 8px 0'
+              margin: '0 0 8px 0',
+              textAlign: isMobile ? 'center' : 'left'
             }}>
               User Management
             </h1>
             <p style={{
               color: '#64748b',
-              fontSize: '16px',
-              margin: 0
+              fontSize: isMobile ? '14px' : '16px',
+              margin: 0,
+              textAlign: isMobile ? 'center' : 'left'
             }}>
               Manage user accounts and permissions
             </p>
@@ -148,17 +176,34 @@ const UsersTab = () => {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div style={{ padding: '40px' }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-        }}>
+      {/* Users List */}
+      <div style={{ 
+        padding: isMobile ? '16px 12px' : '40px',
+        margin: '0'
+      }}>
+        {isMobile ? (
+          // Mobile Card Layout
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {usersList.map((userItem) => (
+              <UserCard 
+                key={userItem.id} 
+                userItem={userItem} 
+                currentUser={user}
+                onRoleChange={handleRoleChange}
+                onViewActivity={handleViewActivity}
+                onDeleteUser={handleDeleteUser}
+                getRoleBadgeColor={getRoleBadgeColor}
+              />
+            ))}
+          </div>
+        ) : (
+          // Desktop Table Layout
           <div style={{
-            overflowX: 'auto'
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
           }}>
             <table style={{
               width: '100%',
@@ -253,7 +298,7 @@ const UsersTab = () => {
                         </button>
                         {userItem.id !== user.id && (
                           <button
-                            onClick={() => handleDeleteUser(userItem.id)}
+                            onClick={() => handleDeleteUser(userItem.id, userItem.username)}
                             style={{
                               padding: '8px 12px',
                               backgroundColor: '#ef4444',
@@ -274,7 +319,7 @@ const UsersTab = () => {
               </tbody>
             </table>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Create User Modal */}
@@ -296,121 +341,408 @@ const UsersTab = () => {
           onClose={() => setShowActivityModal(false)}
         />
       )}
+      
+      {/* Confirm Dialog */}
+      <ConfirmDialog {...confirmDialog} />
     </div>
   );
 };
 
+const UserCard = ({ userItem, currentUser, onRoleChange, onViewActivity, onDeleteUser, getRoleBadgeColor }) => {
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      style={{
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        border: '1px solid rgba(226, 232, 240, 0.3)'
+      }}
+    >
+      {/* User Info */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: '700',
+            fontSize: '18px'
+          }}>
+            {userItem.username.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '16px' }}>
+              {userItem.username}
+            </div>
+            <div style={{ fontSize: '14px', color: '#64748b' }}>
+              {userItem.email}
+            </div>
+          </div>
+        </div>
+        
+        {/* Actions Dropdown */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: '1px solid #e2e8f0',
+              background: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '18px',
+              color: '#64748b'
+            }}
+          >
+            ⋮
+          </button>
+          
+          <AnimatePresence>
+            {showDropdown && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: 'absolute',
+                  top: '45px',
+                  right: '0',
+                  background: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+                  border: '1px solid #e2e8f0',
+                  minWidth: '150px',
+                  zIndex: 10,
+                  overflow: 'hidden'
+                }}
+              >
+                <button
+                  onClick={() => {
+                    onViewActivity(userItem.id);
+                    setShowDropdown(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#374151',
+                    borderBottom: '1px solid #f3f4f6'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
+                    <path d="M16,11V3H8V9H2V21H22V11H16M10,5H14V19H10V5M4,11H8V19H4V11M18,13H20V19H18V13Z"/>
+                  </svg>
+                  View Activity
+                </button>
+                {userItem.id !== currentUser.id && (
+                  <button
+                    onClick={() => {
+                      onDeleteUser(userItem.id, userItem.username);
+                      setShowDropdown(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#ef4444'
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
+                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                    </svg>
+                    Delete User
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+      
+      {/* Role Badge */}
+      <div style={{ marginBottom: '16px' }}>
+        <select
+          value={userItem.role}
+          onChange={(e) => onRoleChange(userItem.id, e.target.value)}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '20px',
+            border: 'none',
+            backgroundColor: getRoleBadgeColor(userItem.role),
+            color: 'white',
+            fontWeight: '600',
+            fontSize: '14px',
+            textTransform: 'capitalize',
+            cursor: 'pointer'
+          }}
+        >
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      
+      {/* Stats */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px',
+        marginBottom: '16px'
+      }}>
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '12px',
+          padding: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', color: '#3b82f6' }}>
+            {userItem.total_requests}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Total Requests
+          </div>
+        </div>
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.1)',
+          borderRadius: '12px',
+          padding: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', color: '#f59e0b' }}>
+            {userItem.pending_requests}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Pending
+          </div>
+        </div>
+      </div>
+      
+      {/* Join Date */}
+      <div style={{
+        fontSize: '14px',
+        color: '#64748b',
+        textAlign: 'center',
+        padding: '8px',
+        background: 'rgba(15, 23, 42, 0.05)',
+        borderRadius: '8px'
+      }}>
+        Joined {new Date(userItem.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })}
+      </div>
+    </motion.div>
+  );
+};
+
 const CreateUserModal = ({ onClose, onSuccess }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    role: 'student'
-  });
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  const validation = useFormValidation(
+    { username: '', email: '', password: '', role: 'student' },
+    {
+      username: [validationRules.required, validationRules.minLength(3)],
+      email: [validationRules.required, validationRules.email],
+      password: [validationRules.required, validationRules.password],
+      role: [validationRules.required]
+    }
+  );
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validation.validateAll()) {
+      toast.error('Please fix the errors below');
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      await users.create(formData);
+      await users.create(validation.values);
+      toast.success('User created successfully');
       onSuccess();
     } catch (error) {
       console.error('Failed to create user:', error);
-      alert('Failed to create user');
+      toast.error('Failed to create user');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '32px',
-        width: '400px',
-        maxWidth: '90%'
-      }}>
-        <h2 style={{ margin: '0 0 24px 0' }}>Create New User</h2>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: isMobile ? '20px' : '0'
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          borderRadius: '20px',
+          padding: '0',
+          width: isMobile ? '100%' : '400px',
+          maxWidth: '100%',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          overflow: 'hidden'
+        }}>
+        <div style={{
+          background: 'rgba(248, 250, 252, 0.95)',
+          padding: isMobile ? '20px' : '24px 32px',
+          color: '#0f172a',
+          marginBottom: '24px',
+          borderBottom: '1px solid #e2e8f0'
+        }}>
+          <h2 id="modal-title" style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700' }}>Create New User</h2>
+        </div>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ padding: isMobile ? '0 20px 20px' : '0 32px 32px' }}>
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            <label htmlFor="username" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
               Username
             </label>
             <input
+              id="username"
               type="text"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              required
+              value={validation.values.username}
+              onChange={(e) => validation.handleChange('username', e.target.value)}
+              onBlur={() => validation.handleBlur('username')}
+              aria-invalid={validation.errors.username ? 'true' : 'false'}
+              aria-describedby={validation.errors.username ? 'username-error' : undefined}
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #e2e8f0',
+                border: `1px solid ${validation.errors.username ? '#ef4444' : '#e2e8f0'}`,
                 borderRadius: '8px',
                 boxSizing: 'border-box'
               }}
             />
+            {validation.errors.username && validation.touched.username && (
+              <div id="username-error" role="alert" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+                {validation.errors.username}
+              </div>
+            )}
           </div>
           
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
               Email
             </label>
             <input
+              id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
+              value={validation.values.email}
+              onChange={(e) => validation.handleChange('email', e.target.value)}
+              onBlur={() => validation.handleBlur('email')}
+              aria-invalid={validation.errors.email ? 'true' : 'false'}
+              aria-describedby={validation.errors.email ? 'email-error' : undefined}
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #e2e8f0',
+                border: `1px solid ${validation.errors.email ? '#ef4444' : '#e2e8f0'}`,
                 borderRadius: '8px',
                 boxSizing: 'border-box'
               }}
             />
+            {validation.errors.email && validation.touched.email && (
+              <div id="email-error" role="alert" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+                {validation.errors.email}
+              </div>
+            )}
           </div>
           
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
               Password
             </label>
             <input
               type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
+              value={validation.values.password}
+              onChange={(e) => validation.handleChange('password', e.target.value)}
+              onBlur={() => validation.handleBlur('password')}
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #e2e8f0',
+                border: `1px solid ${validation.errors.password ? '#ef4444' : '#e2e8f0'}`,
                 borderRadius: '8px',
                 boxSizing: 'border-box'
               }}
             />
+            {validation.errors.password && validation.touched.password && (
+              <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+                {validation.errors.password}
+              </div>
+            )}
           </div>
           
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
               Role
             </label>
             <select
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              value={validation.values.role}
+              onChange={(e) => validation.handleChange('role', e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -456,12 +788,21 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
 const UserActivityModal = ({ user, activity, onClose }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return { bg: '#dcfce7', text: '#166534', border: '#bbf7d0' };
@@ -486,21 +827,27 @@ const UserActivityModal = ({ user, activity, onClose }) => {
       zIndex: 1000,
       backdropFilter: 'blur(4px)'
     }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '0',
-        width: '900px',
-        maxWidth: '95%',
-        maxHeight: '85%',
-        overflow: 'hidden',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-      }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '0',
+          width: isMobile ? '100%' : '900px',
+          maxWidth: '100%',
+          maxHeight: isMobile ? '100%' : '85%',
+          overflow: 'hidden',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          margin: isMobile ? '20px' : '0'
+        }}>
         {/* Header */}
         <div style={{
           padding: '24px 32px',
           borderBottom: '1px solid #e5e7eb',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
           color: 'white'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -534,7 +881,7 @@ const UserActivityModal = ({ user, activity, onClose }) => {
         </div>
         
         {/* Content */}
-        <div style={{ padding: '24px 32px', maxHeight: '500px', overflowY: 'auto' }}>
+        <div style={{ padding: isMobile ? '16px 20px' : '24px 32px', maxHeight: isMobile ? '70vh' : '500px', overflowY: 'auto' }}>
           {activity.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <div style={{
@@ -657,7 +1004,7 @@ const UserActivityModal = ({ user, activity, onClose }) => {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

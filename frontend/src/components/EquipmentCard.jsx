@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import DocumentViewer from './DocumentViewer';
 
-const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
+const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
   const [showDocuments, setShowDocuments] = useState(false);
   const getStatusColor = (status) => {
     switch (status) {
@@ -24,26 +25,22 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
   };
 
   return (
-    <div style={{
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '20px',
-      padding: '28px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-      cursor: 'pointer',
-      position: 'relative',
-      overflow: 'hidden'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.12)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0) scale(1)';
-      e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: isMobile ? '16px' : '20px',
+        padding: isMobile ? '20px' : '28px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        cursor: 'pointer',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
       {/* Status Indicator */}
       <div style={{
         position: 'absolute',
@@ -59,10 +56,12 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: '20px'
+        marginBottom: isMobile ? '16px' : '20px',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '12px' : '0'
       }}>
         <h3 style={{
-          fontSize: '20px',
+          fontSize: isMobile ? '18px' : '20px',
           fontWeight: '700',
           color: '#0f172a',
           margin: 0,
@@ -74,19 +73,20 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
         <span style={{
           backgroundColor: getStatusColor(item.status) + '20',
           color: getStatusColor(item.status),
-          padding: '6px 12px',
+          padding: isMobile ? '8px 16px' : '6px 12px',
           borderRadius: '20px',
-          fontSize: '12px',
+          fontSize: isMobile ? '14px' : '12px',
           fontWeight: '600',
           textTransform: 'capitalize',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
+          alignSelf: isMobile ? 'flex-start' : 'auto'
         }}>
           {item.status.replace('_', ' ')}
         </span>
       </div>
 
       {/* Details Grid */}
-      <div style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gap: isMobile ? '12px' : '16px', marginBottom: isMobile ? '20px' : '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ color: '#64748b' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -158,70 +158,90 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
 
       {/* Actions */}
       <div style={{
-        paddingTop: '20px',
+        paddingTop: isMobile ? '16px' : '20px',
         borderTop: '1px solid #f1f5f9',
         display: 'flex',
-        gap: '12px'
+        gap: isMobile ? '8px' : '12px',
+        flexDirection: isMobile ? 'column' : 'row'
       }}>
-        <button
-          onClick={() => onViewDetails(item)}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            fontFamily: '"SF Pro Text", -apple-system, sans-serif'
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'}
-          onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'}
-        >
-          View Details
-        </button>
-        
-        <button
-          onClick={() => setShowDocuments(true)}
-          style={{
-            padding: '12px 16px',
-            backgroundColor: '#6366f1',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'background-color 0.3s ease',
-            fontFamily: '"SF Pro Text", -apple-system, sans-serif'
-          }}
-        >
-          Documents
-        </button>
+        <div style={{
+          display: 'flex',
+          gap: isMobile ? '8px' : '12px',
+          flex: 1
+        }}>
+          <button
+            onClick={() => onViewDetails(item)}
+            style={{
+              flex: 1,
+              padding: isMobile ? '14px 16px' : '12px 16px',
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: isMobile ? '16px' : '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'}
+            onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'}
+          >
+            View Details
+          </button>
+          
+          <button
+            onClick={() => setShowDocuments(true)}
+            style={{
+              padding: isMobile ? '14px 16px' : '12px 16px',
+              backgroundColor: '#6366f1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: isMobile ? '16px' : '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'background-color 0.3s ease',
+              fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+              minWidth: isMobile ? '100px' : 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+            </svg>
+          </button>
+        </div>
         
         {item.status === 'available' && (
           <button
             onClick={() => onRequest(item)}
             style={{
-              flex: 1,
-              padding: '12px 16px',
+              width: '100%',
+              padding: isMobile ? '14px 16px' : '12px 16px',
               backgroundColor: '#10b981',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: isMobile ? '16px' : '14px',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'background-color 0.3s ease',
-              fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+              fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
             onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
             onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
           >
-            Request
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5,17H19V19H5V17M12,5A4,4 0 0,1 16,9C16,10.88 14.88,12.53 13.25,13.31L15,22H9L10.75,13.31C9.13,12.53 8,10.88 8,9A4,4 0 0,1 12,5Z"/>
+            </svg>
+            Request Equipment
           </button>
         )}
       </div>
@@ -230,18 +250,18 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
       {item.qr_code && (
         <div style={{
           position: 'absolute',
-          bottom: '16px',
-          right: '16px',
-          width: '24px',
-          height: '24px',
+          top: isMobile ? '16px' : '16px',
+          left: isMobile ? '16px' : '16px',
+          width: isMobile ? '28px' : '24px',
+          height: isMobile ? '28px' : '24px',
           background: 'rgba(15, 23, 42, 0.1)',
-          borderRadius: '4px',
+          borderRadius: '6px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#64748b'
         }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <svg width={isMobile ? '16' : '12'} height={isMobile ? '16' : '12'} viewBox="0 0 24 24" fill="currentColor">
             <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,7H9V11H5V7M3,5H5V7H3V5M3,13H5V15H3V13M7,5H9V7H7V5M3,19H5V21H3V19M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19M19,19H21V21H19V19M15,5H17V7H15V5M19,5H21V7H19V5M15,7H17V9H15V7M19,7H21V9H19V7M15,13H17V15H15V13M19,13H21V15H19V13M15,15H17V17H15V15M19,15H21V17H19V15M15,17H17V19H15V17M19,17H21V19H19V17Z"/>
           </svg>
         </div>
@@ -253,7 +273,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
           onClose={() => setShowDocuments(false)}
         />
       )}
-    </div>
+    </motion.div>
   );
 };
 

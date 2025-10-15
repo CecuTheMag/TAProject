@@ -1,8 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 
 const Sidebar = ({ activeTab, setActiveTab, user }) => {
   const { logout } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) setIsMenuOpen(false);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -45,6 +58,106 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
     ] : [])
   ];
 
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile Top Navbar */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '70px',
+          background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 20px',
+          zIndex: 1000,
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path d="M2,10H7V9H2M2,12H7V11H2M20,12H22V10H20M20,9H22V7H20M20,15H22V13H20M11,9H13V7H11M11,12H13V10H11M11,15H13V13H11M11,18H13V16H11M14,9H16V7H14M14,12H16V10H14M14,15H16V13H14M14,18H16V16H14M17,9H19V7H17M17,12H19V10H17M17,15H19V13H17M17,18H19V16H17M8,18H10V16H8M8,15H10V13H8M8,12H10V10H8M8,9H10V7H8M5,18H7V16H5M5,15H7V13H5M5,12H7V10H5M5,9H7V7H5M2,18H4V16H2M2,15H4V13H2M20,18H22V16H20Z"/>
+              </svg>
+            </div>
+            <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', margin: 0 }}>SIMS</h1>
+          </div>
+          
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: 'none',
+              borderRadius: '8px',
+              width: '44px',
+              height: '44px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ width: '18px', height: '2px', backgroundColor: 'white', borderRadius: '1px' }}></div>
+              <div style={{ width: '18px', height: '2px', backgroundColor: 'white', borderRadius: '1px' }}></div>
+              <div style={{ width: '18px', height: '2px', backgroundColor: 'white', borderRadius: '1px' }}></div>
+            </div>
+          </button>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.5)',
+                zIndex: 1001
+              }}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'tween', duration: 0.3 }}
+                style={{
+                  width: '320px',
+                  height: '100vh',
+                  background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '8px 0 32px rgba(0, 0, 0, 0.25)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {renderSidebarContent()}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
   return (
     <div style={{
       width: '300px',
@@ -60,16 +173,23 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
       backdropFilter: 'blur(20px)',
       borderRight: '1px solid rgba(255, 255, 255, 0.1)'
     }}>
-      {/* Header */}
-      <div style={{
-        padding: '32px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        background: 'rgba(255, 255, 255, 0.05)',
-        backdropFilter: 'blur(10px)'
-      }}>
+      {renderSidebarContent()}
+    </div>
+  );
+
+  function renderSidebarContent() {
+    return (
+      <>
+        {/* Header */}
+        <div style={{
+          padding: '32px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)'
+        }}>
         <div style={{
           width: '60px',
           height: '60px',
@@ -82,7 +202,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           boxShadow: '0 8px 32px rgba(59, 130, 246, 0.3)'
         }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-            <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+            <path d="M2,10H7V9H2M2,12H7V11H2M20,12H22V10H20M20,9H22V7H20M20,15H22V13H20M11,9H13V7H11M11,12H13V10H11M11,15H13V13H11M11,18H13V16H11M14,9H16V7H14M14,12H16V10H14M14,15H16V13H14M14,18H16V16H14M17,9H19V7H17M17,12H19V10H17M17,15H19V13H17M17,18H19V16H17M8,18H10V16H8M8,15H10V13H8M8,12H10V10H8M8,9H10V7H8M5,18H7V16H5M5,15H7V13H5M5,12H7V10H5M5,9H7V7H5M2,18H4V16H2M2,15H4V13H2M20,18H22V16H20Z"/>
           </svg>
         </div>
         <h1 style={{
@@ -107,15 +227,18 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
         }}>
           Inventory Management
         </p>
-      </div>
+        </div>
 
-      {/* Navigation */}
-      <nav style={{ flex: 1, padding: '32px 0' }}>
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            style={{
+        {/* Navigation */}
+        <nav style={{ flex: 1, padding: '32px 0' }}>
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveTab(item.id);
+                if (isMobile) setIsMenuOpen(false);
+              }}
+              style={{
               width: '100%',
               padding: '18px 32px',
               background: activeTab === item.id 
@@ -135,7 +258,8 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
               justifyContent: 'flex-start',
               borderRadius: activeTab === item.id ? '0 12px 12px 0' : '0',
               marginRight: activeTab === item.id ? '8px' : '0',
-              boxShadow: activeTab === item.id ? '0 4px 12px rgba(59, 130, 246, 0.2)' : 'none'
+              boxShadow: activeTab === item.id ? '0 4px 12px rgba(59, 130, 246, 0.2)' : 'none',
+              outline: 'none'
             }}
             onMouseEnter={(e) => {
               if (activeTab !== item.id) {
@@ -150,21 +274,21 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
                 e.target.style.color = 'rgba(255, 255, 255, 0.7)';
                 e.target.style.transform = 'translateX(0)';
               }
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
 
-      {/* User Info */}
-      <div style={{
-        padding: '24px 32px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(10px)'
-      }}>
+        {/* User Info */}
+        <div style={{
+          padding: '24px 32px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(10px)'
+        }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -227,10 +351,11 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
               <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z"/>
             </svg>
           </button>
+          </div>
         </div>
-      </div>
-    </div>
-  );
+      </>
+    );
+  }
 };
 
 export default Sidebar;

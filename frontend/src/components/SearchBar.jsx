@@ -6,8 +6,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, placeholder = "Search equipment.
   return (
     <div style={{
       position: 'relative',
-      flex: 1,
-      maxWidth: '400px'
+      width: '100%'
     }}>
       <div style={{
         position: 'absolute',
@@ -32,7 +31,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, placeholder = "Search equipment.
         onBlur={() => setIsFocused(false)}
         style={{
           width: '100%',
-          padding: '16px 20px 16px 52px',
+          padding: '12px 16px 12px 44px',
           border: `2px solid ${isFocused ? '#0f172a' : '#e2e8f0'}`,
           borderRadius: '12px',
           fontSize: '16px',

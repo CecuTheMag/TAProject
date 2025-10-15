@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../database.js';
 import { authenticateToken, requireAdmin, requireTeacherOrAdmin } from '../middleware.js';
+import emailService from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -64,6 +65,17 @@ router.put('/threshold/:id', authenticateToken, requireAdmin, async (req, res) =
   } catch (error) {
     console.error('Error updating stock threshold:', error);
     res.status(500).json({ error: 'Failed to update stock threshold' });
+  }
+});
+
+// Test email reminders manually
+router.post('/test-emails', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const count = await emailService.checkAndSendOverdueReminders();
+    res.json({ message: `Sent ${count} reminder emails`, count });
+  } catch (error) {
+    console.error('Error testing emails:', error);
+    res.status(500).json({ error: 'Failed to test emails' });
   }
 });
 

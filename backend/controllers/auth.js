@@ -6,8 +6,7 @@ import pool from '../database.js';
 const registerSchema = Joi.object({
   username: Joi.string().alphanum().min(3).max(30).required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-  role: Joi.string().valid('user', 'admin').default('user')
+  password: Joi.string().min(6).required()
 });
 
 const loginSchema = Joi.object({
@@ -20,7 +19,8 @@ export const register = async (req, res) => {
     const { error, value } = registerSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    const { username, email, password, role } = value;
+    const { username, email, password } = value;
+    const role = 'student'; // Force student role for public registration
     
     const hashedPassword = await bcrypt.hash(password, 12);
     
@@ -32,7 +32,7 @@ export const register = async (req, res) => {
     const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
     
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'Student account created successfully',
       user: result.rows[0],
       token
     });

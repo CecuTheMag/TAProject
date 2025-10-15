@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './AuthContext';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
+import ErrorBoundary from './components/ErrorBoundary';
+import ToastContainer from './components/Toast';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -28,11 +30,14 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+          <ToastContainer />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

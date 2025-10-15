@@ -3,7 +3,7 @@ const FilterChip = ({ label, isActive, onClick, color = '#0f172a' }) => {
     <button
       onClick={onClick}
       style={{
-        padding: '8px 16px',
+        padding: '8px 12px',
         borderRadius: '20px',
         border: `2px solid ${isActive ? color : '#e2e8f0'}`,
         background: isActive ? color : 'rgba(255, 255, 255, 0.9)',
@@ -34,21 +34,23 @@ const FilterChip = ({ label, isActive, onClick, color = '#0f172a' }) => {
   );
 };
 
-const FilterBar = ({ filters, activeFilters, onFilterChange }) => {
+const FilterBar = ({ filters, activeFilters, onFilterChange, isMobile }) => {
   return (
     <div style={{
       display: 'flex',
-      gap: '12px',
-      flexWrap: 'wrap',
-      alignItems: 'center'
+      gap: isMobile ? '8px' : '12px',
+      flexWrap: isMobile ? 'wrap' : 'nowrap',
+      alignItems: 'center',
+      justifyContent: isMobile ? 'center' : 'flex-start'
     }}>
       <span style={{
         color: '#64748b',
         fontSize: '14px',
         fontWeight: '600',
-        fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+        fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+        whiteSpace: 'nowrap'
       }}>
-        Filter:
+        {isMobile ? 'Filters:' : 'Filter:'}
       </span>
       
       {filters.map((filter) => (

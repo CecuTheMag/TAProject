@@ -25,15 +25,27 @@ export const getDashboardStats = async (req, res) => {
           COUNT(CASE WHEN status = 'returned' THEN 1 END) as returned_requests
         FROM requests
       `;
+      
+      const weeklyTrendsQuery = `
+        SELECT 
+          COUNT(CASE WHEN e.created_at >= NOW() - INTERVAL '7 days' THEN 1 END) as new_equipment_week,
+          COUNT(CASE WHEN r.request_date >= NOW() - INTERVAL '7 days' AND r.status = 'approved' THEN 1 END) as new_checkouts_week,
+          COUNT(CASE WHEN r.returned_at >= NOW() - INTERVAL '7 days' THEN 1 END) as returns_week,
+          COUNT(CASE WHEN e.status = 'under_repair' AND e.created_at >= NOW() - INTERVAL '7 days' THEN 1 END) as new_repairs_week
+        FROM equipment e
+        LEFT JOIN requests r ON e.id = r.equipment_id
+      `;
 
-      const [equipmentStats, requestStats] = await Promise.all([
+      const [equipmentStats, requestStats, weeklyTrends] = await Promise.all([
         pool.query(statsQuery),
-        pool.query(requestsQuery)
+        pool.query(requestsQuery),
+        pool.query(weeklyTrendsQuery)
       ]);
 
       stats = {
         equipment: equipmentStats.rows[0],
-        requests: requestStats.rows[0]
+        requests: requestStats.rows[0],
+        weeklyTrends: weeklyTrends.rows[0]
       };
       
       cache.set(cacheKey, stats, 60); // Cache for 1 minute

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
-const StatsCard = ({ title, value, icon, color, trend, delay = 0 }) => {
+const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick }) => {
   const [animatedValue, setAnimatedValue] = useState(0);
 
   useEffect(() => {
@@ -27,37 +28,25 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0 }) => {
   }, [value, delay]);
 
   return (
-    <div style={{
-      background: 'rgba(255, 255, 255, 0.95)',
-      backdropFilter: 'blur(20px)',
-      borderRadius: '20px',
-      padding: '32px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-      cursor: 'pointer',
-      position: 'relative',
-      overflow: 'hidden'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.12)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0) scale(1)';
-      e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
-    }}>
-      {/* Background Pattern */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        width: '100px',
-        height: '100px',
-        background: `linear-gradient(135deg, ${color}20 0%, ${color}10 100%)`,
-        borderRadius: '50%',
-        transform: 'translate(30px, -30px)'
-      }}></div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={onClick ? { y: -8, scale: 1.02 } : {}}
+      whileTap={onClick ? { scale: 0.98 } : {}}
+      transition={{ duration: 0.3, delay: delay / 1000 }}
+      onClick={onClick}
+      style={{
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '20px',
+        padding: '32px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        cursor: onClick ? 'pointer' : 'default',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{
@@ -82,13 +71,22 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0 }) => {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '6px',
+              backgroundColor: trend > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
               color: trend > 0 ? '#10b981' : '#ef4444',
-              fontSize: '14px',
-              fontWeight: '600'
+              fontSize: '12px',
+              fontWeight: '600',
+              padding: '6px 10px',
+              borderRadius: '20px',
+              border: `1px solid ${trend > 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+              boxShadow: `0 2px 8px ${trend > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`
             }}>
-              <span>{trend > 0 ? '↗' : '↘'}</span>
-              <span>{Math.abs(trend)}%</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{
+                transform: trend > 0 ? 'rotate(-45deg)' : 'rotate(45deg)'
+              }}>
+                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+              </svg>
+              <span>{Math.abs(trend)}</span>
             </div>
           )}
         </div>
@@ -107,12 +105,13 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0 }) => {
           color: '#64748b',
           fontSize: '14px',
           fontWeight: '500',
-          fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+          fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+          letterSpacing: '0.025em'
         }}>
           {title}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

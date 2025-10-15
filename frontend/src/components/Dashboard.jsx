@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { equipment, dashboard } from '../api';
 import { useAuth } from '../AuthContext';
+import { toast } from './Toast';
+import Pagination from './Pagination';
 import Sidebar from './Sidebar';
 import StatsCard from './StatsCard';
 import SearchBar from './SearchBar';
@@ -16,6 +19,7 @@ import QRScanner from './QRScanner';
 import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
 import AddEquipmentModal from './AddEquipmentModal';
+import LoadingSpinner from './LoadingSpinner';
 
 const Dashboard = () => {
   const [equipmentList, setEquipmentList] = useState([]);
@@ -30,11 +34,23 @@ const Dashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
   const { user } = useAuth();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setError(null);
         const [equipmentResponse, statsResponse] = await Promise.all([
           equipment.getAll(),
           dashboard.getStats().catch(() => ({ data: null }))
@@ -43,12 +59,15 @@ const Dashboard = () => {
         setDashboardStats(statsResponse.data);
       } catch (error) {
         console.error('Failed to fetch data:', error);
+        setError('Failed to load dashboard data');
+        toast.error('Failed to load dashboard data');
         // Fallback to equipment list only
         try {
           const equipmentResponse = await equipment.getAll();
           setEquipmentList(equipmentResponse.data);
         } catch (equipmentError) {
           console.error('Failed to fetch equipment:', equipmentError);
+          setError('Failed to load equipment data');
         }
       } finally {
         setLoading(false);
@@ -65,16 +84,26 @@ const Dashboard = () => {
     return matchesSearch && matchesFilters;
   });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEquipment = filteredEquipment.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters]);
+
   const stats = dashboardStats ? {
-    total: parseInt(dashboardStats.equipment.total_equipment),
-    available: parseInt(dashboardStats.equipment.available),
-    checkedOut: parseInt(dashboardStats.equipment.checked_out),
-    underRepair: parseInt(dashboardStats.equipment.under_repair)
+    total: parseInt(dashboardStats.equipment.total_equipment) || 0,
+    available: parseInt(dashboardStats.equipment.available) || 0,
+    checkedOut: parseInt(dashboardStats.equipment.checked_out) || 0,
+    underRepair: parseInt(dashboardStats.equipment.under_repair) || 0
   } : {
-    total: 0,
-    available: 0,
-    checkedOut: 0,
-    underRepair: 0
+    total: equipmentList.length,
+    available: equipmentList.filter(item => item.status === 'available').length,
+    checkedOut: equipmentList.filter(item => item.status === 'checked_out').length,
+    underRepair: equipmentList.filter(item => item.status === 'under_repair').length
   };
 
   const filters = [
@@ -116,8 +145,10 @@ const Dashboard = () => {
         ]);
         setEquipmentList(equipmentResponse.data);
         setDashboardStats(statsResponse.data);
+        toast.success('Data refreshed successfully');
       } catch (error) {
         console.error('Failed to refresh data:', error);
+        toast.error('Failed to refresh data');
       }
     };
     fetchData();
@@ -125,35 +156,31 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'column',
-        gap: '24px',
-        fontFamily: '"SF Pro Display", -apple-system, sans-serif'
-      }}>
-        <div style={{
-          width: '64px',
-          height: '64px',
-          border: '6px solid #e2e8f0',
-          borderTop: '6px solid #0f172a',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}></div>
-        <div style={{ textAlign: 'center' }}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+          gap: '24px',
+          fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+        }}
+      >
+        <LoadingSpinner size={64} />
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          style={{ textAlign: 'center' }}
+        >
           <h2 style={{ color: '#0f172a', fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0' }}>Loading SIMS</h2>
           <p style={{ color: '#64748b', fontSize: '16px', fontWeight: '500', margin: 0 }}>Preparing your dashboard...</p>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
@@ -172,8 +199,9 @@ const Dashboard = () => {
       
       <div style={{
         flex: 1,
-        marginLeft: '300px',
-        minHeight: '100vh',
+        marginLeft: isMobile ? '0' : '300px',
+        marginTop: isMobile ? '70px' : '0',
+        minHeight: isMobile ? 'calc(100vh - 70px)' : '100vh',
         background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)'
       }}>
         {activeTab === 'dashboard' ? (
@@ -182,19 +210,23 @@ const Dashboard = () => {
             <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(20px)',
-          padding: '40px',
+          padding: isMobile ? '20px' : '40px',
           borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          margin: isMobile ? '0 12px' : '0',
+          borderRadius: isMobile ? '12px 12px 0 0' : '0'
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '16px' : '0',
             marginBottom: '24px'
           }}>
-            <div>
+            <div style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>
               <h1 style={{
-                fontSize: '32px',
+                fontSize: isMobile ? '28px' : '32px',
                 fontWeight: '800',
                 color: '#0f172a',
                 margin: '0 0 8px 0',
@@ -204,7 +236,7 @@ const Dashboard = () => {
               </h1>
               <p style={{
                 color: '#64748b',
-                fontSize: '16px',
+                fontSize: isMobile ? '16px' : '16px',
                 fontWeight: '500',
                 margin: 0
               }}>
@@ -212,7 +244,14 @@ const Dashboard = () => {
               </p>
             </div>
             
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: isMobile ? '8px' : '12px', 
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: isMobile ? 'center' : 'flex-start'
+            }}>
               <button
                 onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
                 style={{
@@ -221,11 +260,12 @@ const Dashboard = () => {
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '16px' : '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+                  fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                  minWidth: isMobile ? '120px' : 'auto'
                 }}
               >
                 {viewMode === 'grid' ? (
@@ -253,11 +293,12 @@ const Dashboard = () => {
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '16px' : '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'background-color 0.3s ease',
                   fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                  minWidth: isMobile ? '120px' : 'auto',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
@@ -280,11 +321,12 @@ const Dashboard = () => {
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '16px' : '14px',
                     fontWeight: '600',
                     cursor: 'pointer',
                     transition: 'background-color 0.3s ease',
-                    fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+                    fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                    minWidth: isMobile ? '100px' : 'auto'
                   }}
                   onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
@@ -298,8 +340,8 @@ const Dashboard = () => {
           {/* Stats Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '24px'
+            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: isMobile ? '12px' : '24px'
           }}>
             <StatsCard 
               title="Total Equipment" 
@@ -310,8 +352,9 @@ const Dashboard = () => {
                 </svg>
               }
               color="#0f172a" 
-              trend={5}
+              trend={dashboardStats?.weeklyTrends?.new_equipment_week || null}
               delay={0}
+              onClick={() => setActiveFilters([])}
             />
             <StatsCard 
               title="Available" 
@@ -322,8 +365,9 @@ const Dashboard = () => {
                 </svg>
               }
               color="#10b981" 
-              trend={12}
+              trend={dashboardStats?.weeklyTrends?.returns_week || null}
               delay={200}
+              onClick={() => handleFilterChange('available')}
             />
             <StatsCard 
               title="Checked Out" 
@@ -334,8 +378,9 @@ const Dashboard = () => {
                 </svg>
               }
               color="#f59e0b" 
-              trend={-3}
+              trend={dashboardStats?.weeklyTrends?.new_checkouts_week || null}
               delay={400}
+              onClick={() => handleFilterChange('checked_out')}
             />
             <StatsCard 
               title="Under Repair" 
@@ -346,67 +391,76 @@ const Dashboard = () => {
                 </svg>
               }
               color="#ef4444" 
-              trend={-8}
+              trend={dashboardStats?.weeklyTrends?.new_repairs_week ? -dashboardStats.weeklyTrends.new_repairs_week : null}
               delay={600}
+              onClick={() => handleFilterChange('under_repair')}
             />
           </div>
         </div>
 
         {/* Controls */}
         <div style={{
-          padding: '32px 40px',
+          padding: isMobile ? '16px 12px' : '32px 40px',
           background: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)'
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+          margin: isMobile ? '0 12px' : '0'
         }}>
           <div style={{
             display: 'flex',
-            flexDirection: window.innerWidth < 768 ? 'column' : 'row',
-            gap: '24px',
-            alignItems: window.innerWidth < 768 ? 'stretch' : 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '12px' : '24px',
+            alignItems: isMobile ? 'stretch' : 'center',
             justifyContent: 'space-between'
           }}>
             <SearchBar 
               searchTerm={searchTerm} 
               setSearchTerm={setSearchTerm}
-              placeholder="Search equipment by name or type..."
+              placeholder={isMobile ? "Search..." : "Search equipment by name or type..."}
             />
             
             <FilterBar 
               filters={filters}
               activeFilters={activeFilters}
               onFilterChange={handleFilterChange}
+              isMobile={isMobile}
             />
           </div>
         </div>
 
         {/* Content */}
-        <div style={{ padding: '40px' }}>
+        <div style={{ 
+          padding: isMobile ? '16px 12px' : '40px',
+          margin: '0'
+        }}>
           {filteredEquipment.length === 0 ? (
             <div style={{
               textAlign: 'center',
-              padding: '80px 24px',
-              color: '#64748b'
+              padding: isMobile ? '40px 20px' : '80px 24px',
+              color: '#64748b',
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
             }}>
               <div style={{
-                width: '120px',
-                height: '120px',
+                width: isMobile ? '80px' : '120px',
+                height: isMobile ? '80px' : '120px',
                 backgroundColor: '#f1f5f9',
                 borderRadius: '50%',
-                margin: '0 auto 32px',
+                margin: '0 auto 24px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '48px'
+                justifyContent: 'center'
               }}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <svg width={isMobile ? '32' : '48'} height={isMobile ? '32' : '48'} viewBox="0 0 24 24" fill="currentColor">
                   <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
                 </svg>
               </div>
               <h3 style={{ 
-                margin: '0 0 16px 0', 
-                fontSize: '28px', 
+                margin: '0 0 12px 0', 
+                fontSize: isMobile ? '20px' : '28px', 
                 color: '#0f172a', 
                 fontWeight: '700',
                 fontFamily: '"SF Pro Display", -apple-system, sans-serif'
@@ -414,8 +468,8 @@ const Dashboard = () => {
                 No equipment found
               </h3>
               <p style={{ 
-                margin: '0 0 24px 0', 
-                fontSize: '16px',
+                margin: '0 0 20px 0', 
+                fontSize: isMobile ? '14px' : '16px',
                 maxWidth: '400px',
                 marginLeft: 'auto',
                 marginRight: 'auto',
@@ -424,14 +478,17 @@ const Dashboard = () => {
                 Try adjusting your search terms or filters to find what you're looking for.
               </p>
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={() => {
+                  setSearchTerm('');
+                  setActiveFilters([]);
+                }}
                 style={{
-                  padding: '12px 24px',
+                  padding: isMobile ? '10px 20px' : '12px 24px',
                   background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '14px' : '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   fontFamily: '"SF Pro Text", -apple-system, sans-serif'
@@ -441,25 +498,52 @@ const Dashboard = () => {
               </button>
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: viewMode === 'grid' 
-                ? 'repeat(auto-fill, minmax(380px, 1fr))' 
-                : '1fr',
-              gap: '24px'
-            }}>
-              {filteredEquipment.map((item) => (
-                <EquipmentCard
-                  key={item.id}
-                  item={item}
-                  onViewDetails={handleViewDetails}
-                  onRequest={handleRequest}
-                  user={user}
-                />
-              ))}
-            </div>
+            <motion.div
+              layout
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile 
+                  ? '1fr' 
+                  : viewMode === 'grid' 
+                    ? 'repeat(auto-fill, minmax(380px, 1fr))'
+                    : '1fr',
+                gap: isMobile ? '12px' : '24px'
+              }}
+            >
+              <AnimatePresence>
+                {paginatedEquipment.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
+                  >
+                    <EquipmentCard
+                      item={item}
+                      onViewDetails={handleViewDetails}
+                      onRequest={handleRequest}
+                      user={user}
+                      isMobile={isMobile}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
-            </div>
+          
+          {/* Pagination */}
+          {!isMobile && filteredEquipment.length > itemsPerPage && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredEquipment.length}
+            />
+          )}
+        </div>
           </>
         ) : activeTab === 'equipment' ? (
           <EquipmentTab />

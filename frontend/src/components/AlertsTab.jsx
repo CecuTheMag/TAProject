@@ -8,7 +8,15 @@ const AlertsTab = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchAlerts();
@@ -105,26 +113,36 @@ const AlertsTab = () => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
-        padding: '40px',
+        padding: isMobile ? '20px' : '40px',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        margin: isMobile ? '0 12px' : '0',
+        borderRadius: isMobile ? '12px 12px 0 0' : '0'
       }}>
         <div style={{
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: isMobile ? 'center' : 'center',
+          gap: isMobile ? '16px' : '0',
           marginBottom: '24px'
         }}>
           <div>
             <h1 style={{
-              fontSize: '32px',
+              fontSize: isMobile ? '24px' : '32px',
               fontWeight: '800',
               color: '#0f172a',
-              margin: '0 0 8px 0'
+              margin: '0 0 8px 0',
+              textAlign: isMobile ? 'center' : 'left'
             }}>
               System Alerts
             </h1>
-            <p style={{ color: '#64748b', margin: 0 }}>
+            <p style={{ 
+              color: '#64748b', 
+              margin: 0,
+              textAlign: isMobile ? 'center' : 'left',
+              fontSize: isMobile ? '14px' : '16px'
+            }}>
               Monitor equipment status and take action on critical issues
             </p>
           </div>
@@ -158,8 +176,8 @@ const AlertsTab = () => {
         {/* Alert Summary Cards */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '20px'
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px'
         }}>
           <div style={{
             background: 'white',
@@ -242,10 +260,16 @@ const AlertsTab = () => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(20px)',
-        padding: '0 40px',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.5)'
+        padding: isMobile ? '0 12px' : '0 40px',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+        margin: isMobile ? '0 12px' : '0',
+        overflowX: isMobile ? 'auto' : 'visible'
       }}>
-        <div style={{ display: 'flex', gap: '0' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '0',
+          minWidth: isMobile ? 'max-content' : 'auto'
+        }}>
           {[
             { id: 'overview', label: 'Overview', count: totalAlerts },
             { id: 'stock', label: 'Low Stock', count: lowStockItems.length },
@@ -289,7 +313,10 @@ const AlertsTab = () => {
       </div>
 
       {/* Tab Content */}
-      <div style={{ padding: '40px' }}>
+      <div style={{ 
+        padding: isMobile ? '20px' : '40px',
+        margin: isMobile ? '0 12px' : '0'
+      }}>
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gap: '32px' }}>
             {totalAlerts === 0 ? (
@@ -332,6 +359,7 @@ const AlertsTab = () => {
                     onUpdateThreshold={updateThreshold}
                     showMore={lowStockItems.length > 3}
                     onShowMore={() => setActiveTab('stock')}
+                    isMobile={isMobile}
                   />
                 )}
                 {overdueItems.length > 0 && (
@@ -341,6 +369,7 @@ const AlertsTab = () => {
                     type="overdue"
                     showMore={overdueItems.length > 3}
                     onShowMore={() => setActiveTab('overdue')}
+                    isMobile={isMobile}
                   />
                 )}
               </>
@@ -355,6 +384,7 @@ const AlertsTab = () => {
             type="stock"
             onUpdateThreshold={updateThreshold}
             fullView
+            isMobile={isMobile}
           />
         )}
 
@@ -364,6 +394,7 @@ const AlertsTab = () => {
             items={overdueItems}
             type="overdue"
             fullView
+            isMobile={isMobile}
           />
         )}
       </div>
@@ -371,7 +402,7 @@ const AlertsTab = () => {
   );
 };
 
-const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowMore, fullView }) => {
+const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowMore, fullView, isMobile }) => {
   if (items.length === 0) {
     return (
       <div style={{
@@ -443,6 +474,7 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
             item={item}
             type={type}
             onUpdateThreshold={onUpdateThreshold}
+            isMobile={isMobile}
           />
         ))}
       </div>
@@ -450,7 +482,7 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
   );
 };
 
-const AlertCard = ({ item, type, onUpdateThreshold }) => {
+const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [threshold, setThreshold] = useState(item.stock_threshold || 0);
 
@@ -465,11 +497,15 @@ const AlertCard = ({ item, type, onUpdateThreshold }) => {
         background: 'white',
         border: '2px solid #ea580c',
         borderRadius: '12px',
-        padding: '24px',
+        padding: isMobile ? '16px' : '24px',
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? '16px' : '0',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         <div style={{ flex: 1 }}>
           <h4 style={{
@@ -480,14 +516,20 @@ const AlertCard = ({ item, type, onUpdateThreshold }) => {
           }}>
             {item.name}
           </h4>
-          <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6b7280' }}>
+          <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6b7280', flexWrap: 'wrap' }}>
             <span>Available: <strong>{item.available}</strong></span>
             <span>Threshold: <strong>{item.stock_threshold}</strong></span>
-            <span>Type: <strong>{item.type}</strong></span>
+            {!isMobile && <span>Type: <strong>{item.type}</strong></span>}
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px',
+          flexWrap: 'wrap',
+          justifyContent: isMobile ? 'center' : 'flex-start'
+        }}>
           {isEditing ? (
             <>
               <input
