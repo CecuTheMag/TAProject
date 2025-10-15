@@ -43,10 +43,17 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
 
   const handlePreview = async (filename, mimetype) => {
     try {
-      const response = await documents.getFile(filename);
-      const blob = new Blob([response.data], { type: mimetype });
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
+      if (mimetype === 'application/pdf' || mimetype.startsWith('application/vnd.')) {
+        // Use Google Docs viewer for PDFs and Office documents
+        const publicUrl = `${window.location.origin}/uploads/documents/${filename}`;
+        setPreviewUrl(publicUrl);
+      } else {
+        // Use blob URL for images and other files
+        const response = await documents.getFile(filename);
+        const blob = new Blob([response.data], { type: mimetype });
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl(url);
+      }
     } catch (error) {
       console.error('Failed to preview document:', error);
     }
@@ -311,14 +318,25 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
                   ×
                 </button>
               </div>
-              <iframe
-                src={previewUrl}
-                style={{
-                  width: '100%',
-                  height: '600px',
-                  border: 'none'
-                }}
-              />
+              {previewUrl.includes('blob:') ? (
+                <iframe
+                  src={previewUrl}
+                  style={{
+                    width: '100%',
+                    height: '600px',
+                    border: 'none'
+                  }}
+                />
+              ) : (
+                <iframe
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`}
+                  style={{
+                    width: '100%',
+                    height: '600px',
+                    border: 'none'
+                  }}
+                />
+              )}
             </div>
           </div>
         )}

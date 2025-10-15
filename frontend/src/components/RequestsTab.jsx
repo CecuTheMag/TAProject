@@ -12,7 +12,7 @@ const RequestsTab = () => {
     const fetchRequests = async () => {
       try {
         const response = user?.role === 'admin' 
-          ? await requests.getAll()
+          ? await requests.getAllRequests()
           : await requests.getUserRequests();
         setRequestsList(response.data);
       } catch (error) {

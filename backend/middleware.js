@@ -30,3 +30,10 @@ export const requireAdmin = (req, res, next) => {
   }
   next();
 };
+
+export const requireTeacherOrAdmin = (req, res, next) => {
+  if (!['teacher', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Teacher or Admin access required' });
+  }
+  next();
+};

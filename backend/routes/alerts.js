@@ -1,11 +1,11 @@
 import express from 'express';
 import pool from '../database.js';
-import { authenticateToken, requireAdmin } from '../middleware.js';
+import { authenticateToken, requireAdmin, requireTeacherOrAdmin } from '../middleware.js';
 
 const router = express.Router();
 
 // Get low stock alerts
-router.get('/low-stock', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/low-stock', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const query = `
       SELECT e.id, e.name, e.type, e.quantity, e.stock_threshold,
@@ -25,7 +25,7 @@ router.get('/low-stock', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 // Get overdue equipment
-router.get('/overdue', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/overdue', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const query = `
       SELECT r.id, r.due_date, r.start_date, r.end_date,

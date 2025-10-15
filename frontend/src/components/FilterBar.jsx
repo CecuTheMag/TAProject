@@ -6,7 +6,8 @@ const FilterChip = ({ label, isActive, onClick, color = '#0f172a' }) => {
         padding: '8px 16px',
         borderRadius: '20px',
         border: `2px solid ${isActive ? color : '#e2e8f0'}`,
-        background: isActive ? color : 'white',
+        background: isActive ? color : 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(20px)',
         color: isActive ? 'white' : '#64748b',
         fontSize: '14px',
         fontWeight: '600',
@@ -59,27 +60,6 @@ const FilterBar = ({ filters, activeFilters, onFilterChange }) => {
           color={filter.color}
         />
       ))}
-      
-      {activeFilters.length > 0 && (
-        <button
-          onClick={() => onFilterChange('clear')}
-          style={{
-            padding: '8px 12px',
-            background: 'none',
-            border: 'none',
-            color: '#64748b',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-            fontFamily: '"SF Pro Text", -apple-system, sans-serif'
-          }}
-          onMouseEnter={(e) => e.target.style.color = '#0f172a'}
-          onMouseLeave={(e) => e.target.style.color = '#64748b'}
-        >
-          Clear all
-        </button>
-      )}
     </div>
   );
 };

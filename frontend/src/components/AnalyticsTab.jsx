@@ -1,5 +1,26 @@
 import { useState, useEffect } from 'react';
 import { dashboard } from '../api';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const AnalyticsTab = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -221,39 +242,112 @@ const AnalyticsTab = () => {
           </div>
         </div>
 
-        {/* Chart Placeholder */}
+        {/* Charts */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          textAlign: 'center'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '24px'
         }}>
-          <h3 style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: '#0f172a',
-            margin: '0 0 16px 0'
-          }}>
-            Usage Trends
-          </h3>
+          {/* Equipment Status Chart */}
           <div style={{
-            height: '300px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            border: '2px dashed #cbd5e1'
+            background: 'white',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
           }}>
-            <div style={{ textAlign: 'center' }}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="#94a3b8">
-                <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
-              </svg>
-              <p style={{ color: '#64748b', margin: '16px 0 0 0' }}>
-                Chart visualization coming soon
-              </p>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#0f172a',
+              margin: '0 0 16px 0'
+            }}>
+              Equipment Status Distribution
+            </h3>
+            <div style={{ height: '300px', display: 'flex', justifyContent: 'center' }}>
+              <Doughnut
+                data={{
+                  labels: ['Available', 'Checked Out', 'Under Repair', 'Retired'],
+                  datasets: [{
+                    data: [
+                      equipmentStats.available || 0,
+                      equipmentStats.checked_out || 0,
+                      equipmentStats.under_repair || 0,
+                      equipmentStats.retired || 0
+                    ],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6b7280'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                  }]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        padding: 20,
+                        usePointStyle: true
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Request Status Chart */}
+          <div style={{
+            background: 'white',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#0f172a',
+              margin: '0 0 16px 0'
+            }}>
+              Request Status Overview
+            </h3>
+            <div style={{ height: '300px' }}>
+              <Bar
+                data={{
+                  labels: ['Pending', 'Approved', 'Rejected', 'Returned'],
+                  datasets: [{
+                    label: 'Number of Requests',
+                    data: [
+                      requestStats.pending_requests || 0,
+                      requestStats.approved_requests || 0,
+                      requestStats.rejected_requests || 0,
+                      requestStats.returned_requests || 0
+                    ],
+                    backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#6b7280'],
+                    borderRadius: 8,
+                    borderSkipped: false
+                  }]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: false
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        stepSize: 1
+                      }
+                    }
+                  }
+                }}
+              />
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { reports } from '../api';
 
 const ReportsTab = () => {
   const [selectedReport, setSelectedReport] = useState('inventory');
@@ -59,11 +60,25 @@ const ReportsTab = () => {
   const handleGenerateReport = async (format) => {
     setGenerating(true);
     
-    // Simulate report generation
-    setTimeout(() => {
+    try {
+      const response = await reports.export(selectedReport, format);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${selectedReport}_report.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Failed to generate report:', error);
+      alert('Failed to generate report. Please try again.');
+    } finally {
       setGenerating(false);
-      alert(`${format.toUpperCase()} report generated successfully!`);
-    }, 2000);
+    }
   };
 
   return (
@@ -189,22 +204,26 @@ const ReportsTab = () => {
               <label style={{
                 display: 'block',
                 fontSize: '14px',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '8px'
+                fontWeight: '600',
+                color: '#111827',
+                marginBottom: '12px'
               }}>
-                Date Range
+                📅 Date Range Filter
               </label>
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
+                  padding: '14px 16px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '10px',
                   fontSize: '14px',
-                  backgroundColor: 'white'
+                  fontWeight: '500',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {dateRanges.map((range) => (
@@ -213,6 +232,19 @@ const ReportsTab = () => {
                   </option>
                 ))}
               </select>
+              
+              {/* Date Range Info */}
+              <div style={{
+                marginTop: '8px',
+                padding: '8px 12px',
+                backgroundColor: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#0369a1'
+              }}>
+                ℹ️ Reports will include data from the selected time period
+              </div>
             </div>
 
             {/* Export Options */}
@@ -224,56 +256,34 @@ const ReportsTab = () => {
                 color: '#374151',
                 marginBottom: '12px'
               }}>
-                Export Format
+                Export Report
               </label>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <button
-                  onClick={() => handleGenerateReport('pdf')}
-                  disabled={generating}
-                  style={{
-                    padding: '12px 16px',
-                    backgroundColor: generating ? '#9ca3af' : '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: generating ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                  </svg>
-                  {generating ? 'Generating...' : 'Export as PDF'}
-                </button>
-                
-                <button
                   onClick={() => handleGenerateReport('csv')}
                   disabled={generating}
                   style={{
-                    padding: '12px 16px',
+                    width: '100%',
+                    padding: '16px 24px',
                     backgroundColor: generating ? '#9ca3af' : '#10b981',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
+                    borderRadius: '12px',
+                    fontSize: '16px',
                     fontWeight: '600',
                     cursor: generating ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px'
+                    gap: '12px',
+                    transition: 'all 0.3s ease'
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                   </svg>
-                  {generating ? 'Generating...' : 'Export as CSV'}
+                  {generating ? 'Generating Report...' : 'Export as CSV'}
                 </button>
               </div>
             </div>

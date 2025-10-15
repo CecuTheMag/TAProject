@@ -25,23 +25,24 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user }) => {
 
   return (
     <div style={{
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '16px',
-      padding: '24px',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      borderRadius: '20px',
+      padding: '28px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
       cursor: 'pointer',
       position: 'relative',
       overflow: 'hidden'
     }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-4px)';
-      e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+      e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
+      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.12)';
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+      e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.08)';
     }}>
       {/* Status Indicator */}
       <div style={{

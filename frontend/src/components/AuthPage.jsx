@@ -8,7 +8,7 @@ const AuthPage = () => {
     username: '',
     email: '',
     password: '',
-    role: 'user'
+    role: 'student'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -257,7 +257,8 @@ const AuthPage = () => {
                   cursor: 'pointer'
                 }}
               >
-                <option value="user">User</option>
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
                 <option value="admin">Administrator</option>
               </select>
             </div>

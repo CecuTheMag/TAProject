@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import pool from '../database.js';
 
 class EmailService {
   constructor() {
@@ -11,6 +12,50 @@ class EmailService {
         pass: process.env.EMAIL_PASS || 'your-app-password'
       }
     });
+  }
+
+  async checkAndSendOverdueReminders() {
+    try {
+      const overdueQuery = `
+        SELECT r.id, r.due_date, u.email, u.username, e.name as equipment_name
+        FROM requests r
+        JOIN users u ON r.user_id = u.id
+        JOIN equipment e ON r.equipment_id = e.id
+        WHERE r.status = 'approved' 
+        AND r.due_date < NOW()
+        AND (r.reminder_sent IS NULL OR r.reminder_sent < NOW() - INTERVAL '1 day')
+      `;
+      
+      const result = await pool.query(overdueQuery);
+      
+      for (const request of result.rows) {
+        await this.sendOverdueReminder(
+          request.email,
+          request.equipment_name,
+          request.due_date
+        );
+        
+        await pool.query(
+          'UPDATE requests SET reminder_sent = NOW() WHERE id = $1',
+          [request.id]
+        );
+      }
+      
+      console.log(`✅ Sent ${result.rows.length} overdue reminders`);
+      return result.rows.length;
+    } catch (error) {
+      console.error('❌ Error checking overdue reminders:', error);
+      return 0;
+    }
+  }
+
+  async startReminderScheduler() {
+    setInterval(async () => {
+      await this.checkAndSendOverdueReminders();
+    }, 60 * 60 * 1000);
+    
+    await this.checkAndSendOverdueReminders();
+    console.log('📧 Email reminder scheduler started');
   }
 
   async sendOverdueReminder(userEmail, equipmentName, dueDate) {
@@ -71,4 +116,5 @@ class EmailService {
   }
 }
 
-export default new EmailService();
+const emailService = new EmailService();
+export default emailService;

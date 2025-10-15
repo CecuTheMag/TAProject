@@ -40,7 +40,8 @@ const SearchBar = ({ searchTerm, setSearchTerm, placeholder = "Search equipment.
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           outline: 'none',
           boxSizing: 'border-box',
-          backgroundColor: '#ffffff',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(20px)',
           color: '#0f172a',
           boxShadow: isFocused 
             ? '0 0 0 4px rgba(15, 23, 42, 0.1), 0 1px 3px 0 rgba(0, 0, 0, 0.1)' 

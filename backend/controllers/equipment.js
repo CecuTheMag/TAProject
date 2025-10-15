@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import QRCode from 'qrcode';
 import pool from '../database.js';
+import cache from '../utils/cache.js';
 
 const equipmentSchema = Joi.object({
   name: Joi.string().required(),
@@ -80,6 +81,10 @@ export const createEquipment = async (req, res) => {
       [name, type, serial_number, condition, status, location, requires_approval, qrCode]
     );
 
+    // Invalidate related caches
+    cache.delete('dashboard_stats');
+    cache.delete('usage_report');
+    
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') {
@@ -107,6 +112,10 @@ export const updateEquipment = async (req, res) => {
       return res.status(404).json({ error: 'Equipment not found' });
     }
 
+    // Invalidate related caches
+    cache.delete('dashboard_stats');
+    cache.delete('usage_report');
+    
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update equipment' });
@@ -145,6 +154,10 @@ export const deleteEquipment = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
     }
+    
+    // Invalidate related caches
+    cache.delete('dashboard_stats');
+    cache.delete('usage_report');
     
     res.json({ message: 'Equipment deleted successfully' });
   } catch (error) {

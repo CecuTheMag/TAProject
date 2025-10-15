@@ -63,4 +63,21 @@ export const documents = {
   delete: (equipmentId, filename) => api.delete(`/documents/${equipmentId}/${filename}`)
 };
 
+export const users = {
+  getAll: () => api.get('/users'),
+  create: (userData) => api.post('/users', userData),
+  updateRole: (id, role) => api.put(`/users/${id}/role`, { role }),
+  delete: (id) => api.delete(`/users/${id}`),
+  getActivity: (id) => api.get(`/users/${id}/activity`)
+};
+
+export const reports = {
+  getUsage: () => api.get('/reports/usage'),
+  getHistory: (params) => api.get('/reports/history', { params }),
+  export: (type, format = 'csv') => api.get('/reports/export', {
+    params: { type, format },
+    responseType: 'blob'
+  })
+};
+
 export default api;

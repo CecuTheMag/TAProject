@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken, requireAdmin } from '../middleware.js';
+import { authenticateToken, requireAdmin, requireTeacherOrAdmin } from '../middleware.js';
 import {
   createRequest,
   getUserRequests,
@@ -13,9 +13,9 @@ const router = express.Router();
 
 router.post('/', authenticateToken, createRequest);
 router.get('/', authenticateToken, getUserRequests);
-router.get('/manager', authenticateToken, requireAdmin, getAllRequests);
-router.put('/:id/approve', authenticateToken, requireAdmin, approveRequest);
-router.put('/:id/reject', authenticateToken, requireAdmin, rejectRequest);
-router.put('/:id/return', authenticateToken, requireAdmin, returnEquipment);
+router.get('/manager', authenticateToken, requireTeacherOrAdmin, getAllRequests);
+router.put('/:id/approve', authenticateToken, requireTeacherOrAdmin, approveRequest);
+router.put('/:id/reject', authenticateToken, requireTeacherOrAdmin, rejectRequest);
+router.put('/:id/return', authenticateToken, requireTeacherOrAdmin, returnEquipment);
 
 export default router;

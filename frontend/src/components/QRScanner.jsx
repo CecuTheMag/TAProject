@@ -1,0 +1,224 @@
+import { useState, useRef, useEffect } from 'react';
+import QrScanner from 'qr-scanner';
+import { equipment } from '../api';
+
+const QRScanner = ({ onClose, onEquipmentFound }) => {
+  const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState('');
+  const videoRef = useRef(null);
+  const scannerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.destroy();
+      }
+    };
+  }, []);
+
+  const startScanning = async () => {
+    try {
+      setError('');
+      setScanning(true);
+
+      if (scannerRef.current) {
+        scannerRef.current.destroy();
+      }
+
+      scannerRef.current = new QrScanner(
+        videoRef.current,
+        async (result) => {
+          try {
+            // Extract equipment ID from QR code
+            const qrData = result.data;
+            let equipmentId;
+            
+            if (qrData.includes('equipment/')) {
+              equipmentId = qrData.split('equipment/')[1];
+            } else {
+              equipmentId = qrData;
+            }
+
+            // Fetch equipment details
+            const response = await equipment.getById(equipmentId);
+            onEquipmentFound(response.data);
+            stopScanning();
+          } catch (err) {
+            setError('Equipment not found');
+            console.error('QR scan error:', err);
+          }
+        },
+        {
+          returnDetailedScanResult: true,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
+      );
+
+      await scannerRef.current.start();
+    } catch (err) {
+      setError('Camera access denied or not available');
+      setScanning(false);
+      console.error('Scanner start error:', err);
+    }
+  };
+
+  const stopScanning = () => {
+    if (scannerRef.current) {
+      scannerRef.current.stop();
+    }
+    setScanning(false);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        padding: '32px',
+        width: '90%',
+        maxWidth: '500px',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>
+            QR Code Scanner
+          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: '#64748b'
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {!scanning ? (
+          <div>
+            <div style={{
+              width: '200px',
+              height: '200px',
+              border: '2px dashed #cbd5e1',
+              borderRadius: '12px',
+              margin: '0 auto 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f8fafc'
+            }}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="#94a3b8">
+                <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,7H9V11H5V7M3,5H5V7H3V5M3,13H5V15H3V13M7,5H9V7H7V5M3,19H5V21H3V19M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19M19,19H21V21H19V19M15,5H17V7H15V5M19,5H21V7H19V5M15,7H17V9H15V7M19,7H21V9H19V7M15,13H17V15H15V13M19,13H21V15H19V13M15,15H17V17H15V15M19,15H21V17H19V15M15,17H17V19H15V17M19,17H21V19H19V17Z"/>
+              </svg>
+            </div>
+            
+            <p style={{
+              color: '#64748b',
+              marginBottom: '24px',
+              fontSize: '16px'
+            }}>
+              Point your camera at a QR code to scan equipment
+            </p>
+            
+            <button
+              onClick={startScanning}
+              style={{
+                padding: '16px 32px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                margin: '0 auto'
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17,9A1,1 0 0,1 18,10V14A1,1 0 0,1 17,15H16V16A1,1 0 0,1 15,17H9A1,1 0 0,1 8,16V15H7A1,1 0 0,1 6,14V10A1,1 0 0,1 7,9H8V8A1,1 0 0,1 9,7H15A1,1 0 0,1 16,8V9H17M15,15V9H9V15H15Z"/>
+              </svg>
+              Start Camera
+            </button>
+          </div>
+        ) : (
+          <div>
+            <video
+              ref={videoRef}
+              style={{
+                width: '100%',
+                maxWidth: '400px',
+                height: '300px',
+                borderRadius: '12px',
+                backgroundColor: '#000',
+                marginBottom: '24px'
+              }}
+            />
+            
+            <p style={{
+              color: '#64748b',
+              marginBottom: '24px',
+              fontSize: '16px'
+            }}>
+              Position the QR code within the camera view
+            </p>
+            
+            <button
+              onClick={stopScanning}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Stop Scanning
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            color: '#dc2626',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default QRScanner;

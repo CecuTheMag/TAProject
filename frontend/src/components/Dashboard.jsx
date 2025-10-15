@@ -11,6 +11,8 @@ import RequestsTab from './RequestsTab';
 import AnalyticsTab from './AnalyticsTab';
 import ReportsTab from './ReportsTab';
 import AlertsTab from './AlertsTab';
+import UsersTab from './UsersTab';
+import QRScanner from './QRScanner';
 import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
 import AddEquipmentModal from './AddEquipmentModal';
@@ -27,6 +29,7 @@ const Dashboard = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -82,15 +85,11 @@ const Dashboard = () => {
   ];
 
   const handleFilterChange = (filterKey) => {
-    if (filterKey === 'clear') {
-      setActiveFilters([]);
-    } else {
-      setActiveFilters(prev => 
-        prev.includes(filterKey) 
-          ? prev.filter(f => f !== filterKey)
-          : [...prev, filterKey]
-      );
-    }
+    setActiveFilters(prev => 
+      prev.includes(filterKey) 
+        ? prev.filter(f => f !== filterKey)
+        : [...prev, filterKey]
+    );
   };
 
   const handleViewDetails = (item) => {
@@ -173,17 +172,19 @@ const Dashboard = () => {
       
       <div style={{
         flex: 1,
-        marginLeft: '280px',
-        minHeight: '100vh'
+        marginLeft: '300px',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)'
       }}>
         {activeTab === 'dashboard' ? (
           <>
             {/* Header */}
             <div style={{
-          background: 'white',
-          padding: '32px',
-          borderBottom: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          padding: '40px',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
         }}>
           <div style={{
             display: 'flex',
@@ -244,7 +245,33 @@ const Dashboard = () => {
                 )}
               </button>
               
-              {user?.role === 'admin' && (
+              <button 
+                onClick={() => setShowQRScanner(true)}
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.3s ease',
+                  fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,7H9V11H5V7M3,5H5V7H3V5M3,13H5V15H3V13M7,5H9V7H7V5M3,19H5V21H3V19M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19M19,19H21V21H19V19M15,5H17V7H15V5M19,5H21V7H19V5M15,7H17V9H15V7M19,7H21V9H19V7M15,13H17V15H15V13M19,13H21V15H19V13M15,15H17V17H15V15M19,15H21V17H19V15M15,17H17V19H15V17M19,17H21V19H19V17Z"/>
+                </svg>
+                Scan QR
+              </button>
+              
+              {['teacher', 'admin'].includes(user?.role) && (
                 <button 
                   onClick={handleAddEquipment}
                   style={{
@@ -327,9 +354,11 @@ const Dashboard = () => {
 
         {/* Controls */}
         <div style={{
-          padding: '32px',
-          background: 'white',
-          borderBottom: '1px solid #e2e8f0'
+          padding: '32px 40px',
+          background: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)'
         }}>
           <div style={{
             display: 'flex',
@@ -353,7 +382,7 @@ const Dashboard = () => {
         </div>
 
         {/* Content */}
-        <div style={{ padding: '32px' }}>
+        <div style={{ padding: '40px' }}>
           {filteredEquipment.length === 0 ? (
             <div style={{
               textAlign: 'center',
@@ -395,10 +424,7 @@ const Dashboard = () => {
                 Try adjusting your search terms or filters to find what you're looking for.
               </p>
               <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setActiveFilters([]);
-                }}
+                onClick={() => setSearchTerm('')}
                 style={{
                   padding: '12px 24px',
                   background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -411,7 +437,7 @@ const Dashboard = () => {
                   fontFamily: '"SF Pro Text", -apple-system, sans-serif'
                 }}
               >
-                Clear all filters
+                Clear search
               </button>
             </div>
           ) : (
@@ -445,6 +471,8 @@ const Dashboard = () => {
           <ReportsTab />
         ) : activeTab === 'alerts' ? (
           <AlertsTab />
+        ) : activeTab === 'users' ? (
+          <UsersTab />
         ) : null}
         
         {/* Modals */}
@@ -473,6 +501,17 @@ const Dashboard = () => {
           <AddEquipmentModal
             onClose={() => setShowAddModal(false)}
             onSuccess={handleModalSuccess}
+          />
+        )}
+        
+        {showQRScanner && (
+          <QRScanner
+            onClose={() => setShowQRScanner(false)}
+            onEquipmentFound={(equipment) => {
+              setSelectedEquipment(equipment);
+              setShowDetailsModal(true);
+              setShowQRScanner(false);
+            }}
           />
         )}
       </div>
