@@ -18,7 +18,15 @@ const EquipmentTab = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchEquipment = async () => {
@@ -106,20 +114,25 @@ const EquipmentTab = () => {
     <div>
       {/* Header */}
       <div style={{
-        background: 'white',
-        padding: '32px',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        padding: isMobile ? '12px' : '32px',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        margin: '0',
+        borderRadius: '0'
       }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '16px' : '0',
           marginBottom: '24px'
         }}>
-          <div>
+          <div style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>
             <h1 style={{
-              fontSize: '32px',
+              fontSize: isMobile ? '28px' : '32px',
               fontWeight: '800',
               color: '#0f172a',
               margin: '0 0 8px 0',
@@ -129,7 +142,7 @@ const EquipmentTab = () => {
             </h1>
             <p style={{
               color: '#64748b',
-              fontSize: '16px',
+              fontSize: isMobile ? '16px' : '16px',
               fontWeight: '500',
               margin: 0
             }}>
@@ -137,7 +150,14 @@ const EquipmentTab = () => {
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: isMobile ? '8px' : '12px', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            width: isMobile ? '100%' : 'auto',
+            justifyContent: isMobile ? 'center' : 'flex-start'
+          }}>
             <button
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
               style={{
@@ -146,11 +166,12 @@ const EquipmentTab = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: isMobile ? '16px' : '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+                fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                minWidth: isMobile ? '120px' : 'auto'
               }}
             >
               {viewMode === 'grid' ? 'List View' : 'Grid View'}
@@ -165,11 +186,12 @@ const EquipmentTab = () => {
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '16px' : '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'background-color 0.3s ease',
-                  fontFamily: '"SF Pro Text", -apple-system, sans-serif'
+                  fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                  minWidth: isMobile ? '100px' : 'auto'
                 }}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
@@ -183,15 +205,18 @@ const EquipmentTab = () => {
 
       {/* Controls */}
       <div style={{
-        padding: '32px',
-        background: 'white',
-        borderBottom: '1px solid #e2e8f0'
+        padding: isMobile ? '12px' : '32px',
+        background: 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+        margin: '0'
       }}>
         <div style={{
           display: 'flex',
-          flexDirection: window.innerWidth < 768 ? 'column' : 'row',
-          gap: '24px',
-          alignItems: window.innerWidth < 768 ? 'stretch' : 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '12px' : '24px',
+          alignItems: isMobile ? 'stretch' : 'center',
           justifyContent: 'space-between'
         }}>
           <SearchBar 
@@ -204,12 +229,16 @@ const EquipmentTab = () => {
             filters={filters}
             activeFilters={activeFilters}
             onFilterChange={handleFilterChange}
+            isMobile={isMobile}
           />
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: '32px' }}>
+      <div style={{ 
+        padding: isMobile ? '12px' : '32px',
+        margin: '0'
+      }}>
         {filteredEquipment.length === 0 ? (
           <div style={{
             textAlign: 'center',
@@ -234,10 +263,12 @@ const EquipmentTab = () => {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: viewMode === 'grid' 
-              ? 'repeat(auto-fill, minmax(380px, 1fr))' 
-              : '1fr',
-            gap: '24px'
+            gridTemplateColumns: isMobile 
+              ? '1fr' 
+              : viewMode === 'grid' 
+                ? 'repeat(auto-fill, minmax(380px, 1fr))'
+                : '1fr',
+            gap: isMobile ? '12px' : '24px'
           }}>
             {filteredEquipment.map((item) => (
               <EquipmentCard

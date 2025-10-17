@@ -113,11 +113,11 @@ const AlertsTab = () => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
-        padding: isMobile ? '20px' : '40px',
+        padding: isMobile ? '12px' : '40px',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        margin: isMobile ? '0 12px' : '0',
-        borderRadius: isMobile ? '12px 12px 0 0' : '0'
+        margin: '0',
+        borderRadius: '0'
       }}>
         <div style={{
           display: 'flex',
@@ -125,7 +125,10 @@ const AlertsTab = () => {
           justifyContent: 'space-between',
           alignItems: isMobile ? 'center' : 'center',
           gap: isMobile ? '16px' : '0',
-          marginBottom: '24px'
+          marginBottom: '24px',
+          width: '100%',
+          maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+          boxSizing: 'border-box'
         }}>
           <div>
             <h1 style={{
@@ -151,17 +154,19 @@ const AlertsTab = () => {
             onClick={fetchAlerts}
             disabled={refreshing}
             style={{
-              padding: '12px 24px',
+              padding: isMobile ? '10px 20px' : '12px 24px',
               backgroundColor: refreshing ? '#9ca3af' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '12px',
-              fontSize: '14px',
+              fontSize: isMobile ? '12px' : '14px',
               fontWeight: '600',
               cursor: refreshing ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              maxWidth: isMobile ? 'calc(100vw - 24px)' : 'auto',
+              boxSizing: 'border-box'
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{
@@ -177,15 +182,21 @@ const AlertsTab = () => {
         <div style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px'
+          gap: isMobile ? '8px' : '16px',
+          width: '100%',
+          maxWidth: '100%'
         }}>
           <div style={{
             background: 'white',
-            padding: '24px',
+            padding: isMobile ? '12px' : '24px',
             borderRadius: '12px',
             border: `2px solid ${totalAlerts > 0 ? '#dc2626' : '#16a34a'}`,
             textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <div style={{
               fontSize: '32px',
@@ -206,11 +217,15 @@ const AlertsTab = () => {
           
           <div style={{
             background: 'white',
-            padding: '24px',
+            padding: isMobile ? '12px' : '24px',
             borderRadius: '12px',
             border: `2px solid ${criticalAlerts > 0 ? '#dc2626' : '#6b7280'}`,
             textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <div style={{
               fontSize: '32px',
@@ -231,11 +246,15 @@ const AlertsTab = () => {
           
           <div style={{
             background: 'white',
-            padding: '24px',
+            padding: isMobile ? '12px' : '24px',
             borderRadius: '12px',
             border: `2px solid ${lowStockItems.length > 0 ? '#ea580c' : '#6b7280'}`,
             textAlign: 'center',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <div style={{
               fontSize: '32px',
@@ -262,13 +281,17 @@ const AlertsTab = () => {
         backdropFilter: 'blur(20px)',
         padding: isMobile ? '0 12px' : '0 40px',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-        margin: isMobile ? '0 12px' : '0',
+        margin: '0',
         overflowX: isMobile ? 'auto' : 'visible'
       }}>
         <div style={{ 
           display: 'flex', 
           gap: '0',
-          minWidth: isMobile ? 'max-content' : 'auto'
+          minWidth: isMobile ? 'max-content' : 'auto',
+          width: '100%',
+          maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+          boxSizing: 'border-box',
+          justifyContent: isMobile ? 'center' : 'flex-start'
         }}>
           {[
             { id: 'overview', label: 'Overview', count: totalAlerts },
@@ -279,17 +302,18 @@ const AlertsTab = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
-                padding: '16px 24px',
+                padding: isMobile ? '12px 16px' : '16px 24px',
                 background: 'none',
                 border: 'none',
                 borderBottom: activeTab === tab.id ? '3px solid #3b82f6' : '3px solid transparent',
                 color: activeTab === tab.id ? '#3b82f6' : '#64748b',
-                fontSize: '16px',
+                fontSize: isMobile ? '14px' : '16px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                boxSizing: 'border-box'
               }}
             >
               {tab.label}
@@ -314,8 +338,8 @@ const AlertsTab = () => {
 
       {/* Tab Content */}
       <div style={{ 
-        padding: isMobile ? '20px' : '40px',
-        margin: isMobile ? '0 12px' : '0'
+        padding: isMobile ? '12px' : '40px',
+        margin: '0'
       }}>
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gap: '32px' }}>
@@ -323,10 +347,14 @@ const AlertsTab = () => {
               <div style={{
                 background: 'white',
                 borderRadius: '12px',
-                padding: '60px',
+                padding: isMobile ? '40px 20px' : '60px',
                 textAlign: 'center',
                 border: '2px solid #16a34a',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                width: '100%',
+                maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+                minWidth: 0,
+                boxSizing: 'border-box'
               }}>
                 <div style={{
                   width: '80px',
@@ -408,10 +436,14 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
-        borderRadius: '20px',
-        padding: '40px',
+        borderRadius: '12px',
+        padding: isMobile ? '24px' : '40px',
         textAlign: 'center',
-        border: '2px solid #10b981'
+        border: '2px solid #10b981',
+        width: '100%',
+        maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+        minWidth: 0,
+        boxSizing: 'border-box'
       }}>
         <h3 style={{ color: '#065f46', margin: '0 0 8px 0' }}>
           {type === 'stock' ? 'All Equipment Adequately Stocked' : 'No Overdue Equipment'}
@@ -427,9 +459,13 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
     <div style={{
       background: 'rgba(255, 255, 255, 0.95)',
       backdropFilter: 'blur(20px)',
-      borderRadius: '20px',
-      padding: '32px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
+      borderRadius: '12px',
+      padding: isMobile ? '16px' : '32px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+      width: '100%',
+      maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+      minWidth: 0,
+      boxSizing: 'border-box'
     }}>
       <div style={{
         display: 'flex',
@@ -497,7 +533,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
         background: 'white',
         border: '2px solid #ea580c',
         borderRadius: '12px',
-        padding: isMobile ? '16px' : '24px',
+        padding: isMobile ? '12px' : '24px',
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         justifyContent: 'space-between',
@@ -505,6 +541,8 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
         gap: isMobile ? '16px' : '0',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         width: '100%',
+        maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+        minWidth: 0,
         boxSizing: 'border-box'
       }}>
         <div style={{ flex: 1 }}>
@@ -616,8 +654,12 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
       background: 'white',
       border: `2px solid ${isCritical ? '#dc2626' : '#ea580c'}`,
       borderRadius: '12px',
-      padding: '24px',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+      padding: isMobile ? '12px' : '24px',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      width: '100%',
+      maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+      minWidth: 0,
+      boxSizing: 'border-box'
     }}>
       <div style={{
         display: 'flex',

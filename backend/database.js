@@ -45,7 +45,7 @@ export const initDB = async () => {
         status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'checked_out', 'under_repair', 'retired')),
         location VARCHAR(100),
         photo VARCHAR(255),
-        qr_code VARCHAR(255),
+        qr_code TEXT,
         requires_approval BOOLEAN DEFAULT false,
         quantity INTEGER DEFAULT 1,
         stock_threshold INTEGER DEFAULT 2,
@@ -61,6 +61,12 @@ export const initDB = async () => {
       ADD COLUMN IF NOT EXISTS stock_threshold INTEGER DEFAULT 2,
       ADD COLUMN IF NOT EXISTS documents TEXT[]
     `);
+
+    // Update qr_code column to TEXT
+    await pool.query(`
+      ALTER TABLE equipment 
+      ALTER COLUMN qr_code TYPE TEXT
+    `).catch(() => {});
 
     // requests table
     await pool.query(`

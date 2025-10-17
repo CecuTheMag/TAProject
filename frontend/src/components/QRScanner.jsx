@@ -5,6 +5,7 @@ import { equipment } from '../api';
 
 const QRScanner = ({ onClose, onEquipmentFound }) => {
   const [scanning, setScanning] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const videoRef = useRef(null);
   const scannerRef = useRef(null);
@@ -26,26 +27,32 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
         scannerRef.current.destroy();
       }
 
+      // Wait for video element to be ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!videoRef.current) {
+        throw new Error('Video element not found');
+      }
+
+
+
       scannerRef.current = new QrScanner(
         videoRef.current,
         async (result) => {
           try {
-            // Extract equipment ID from QR code
-            const qrData = result.data;
-            let equipmentId;
+            const serialNumber = result.data;
             
-            if (qrData.includes('equipment/')) {
-              equipmentId = qrData.split('equipment/')[1];
-            } else {
-              equipmentId = qrData;
-            }
-
-            // Fetch equipment details
-            const response = await equipment.getById(equipmentId);
-            onEquipmentFound(response.data);
-            stopScanning();
+            // Show success feedback
+            setScanning(false);
+            setSuccess(true);
+            
+            // Close scanner and update search
+            setTimeout(() => {
+              onClose();
+              onEquipmentFound(serialNumber);
+            }, 1000);
           } catch (err) {
-            setError('Equipment not found');
+            setError('Scan failed');
             console.error('QR scan error:', err);
           }
         },
@@ -58,7 +65,17 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
 
       await scannerRef.current.start();
     } catch (err) {
-      setError('Camera access denied or not available');
+      let errorMessage = 'Camera access denied or not available';
+      
+      if (err.message && err.message.includes('https')) {
+        errorMessage = 'Camera requires HTTPS. QR scanning may not work on HTTP in some browsers.';
+      } else if (err.name === 'NotAllowedError') {
+        errorMessage = 'Camera permission denied. Please allow camera access.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      }
+      
+      setError(errorMessage);
       setScanning(false);
       console.error('Scanner start error:', err);
     }
@@ -189,6 +206,26 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
               </svg>
               Start Camera
             </button>
+          </div>
+        ) : success ? (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '100px',
+              height: '100px',
+              backgroundColor: '#10b981',
+              borderRadius: '50%',
+              margin: '0 auto 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="white">
+                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+              </svg>
+            </div>
+            <p style={{ color: '#10b981', fontSize: '18px', fontWeight: '600' }}>
+              QR Code Scanned Successfully!
+            </p>
           </div>
         ) : (
           <div>

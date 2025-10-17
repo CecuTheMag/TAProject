@@ -132,7 +132,8 @@ const ReportsTab = () => {
           flexDirection: isMobile ? 'column' : 'row',
           gap: isMobile ? '24px' : '40px',
           maxWidth: isMobile ? 'none' : '1400px',
-          margin: isMobile ? '0' : '0 auto'
+          margin: isMobile ? '0' : '0 auto',
+          alignItems: isMobile ? 'center' : 'flex-start'
         }}>
           {/* Report Types */}
           <div style={{ flex: isMobile ? 'none' : 1 }}>
@@ -225,12 +226,13 @@ const ReportsTab = () => {
             padding: isMobile ? '20px' : '32px',
             boxShadow: isMobile ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : '0 12px 40px rgba(0, 0, 0, 0.1)',
             height: 'fit-content',
-            width: isMobile ? '100%' : '420px',
-            maxWidth: isMobile ? 'calc(100vw - 40px)' : 'none',
+            width: isMobile ? 'calc(100% - 24px)' : '420px',
+            maxWidth: isMobile ? 'calc(100vw - 48px)' : 'none',
             flexShrink: 0,
             boxSizing: 'border-box',
             position: isMobile ? 'static' : 'sticky',
-            top: isMobile ? 'auto' : '40px'
+            top: isMobile ? 'auto' : '40px',
+            margin: isMobile ? '0 auto' : '0'
           }}>
             <h3 style={{
               fontSize: isMobile ? '16px' : '22px',

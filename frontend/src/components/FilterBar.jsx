@@ -38,20 +38,23 @@ const FilterBar = ({ filters, activeFilters, onFilterChange, isMobile }) => {
   return (
     <div style={{
       display: 'flex',
-      gap: isMobile ? '8px' : '12px',
-      flexWrap: isMobile ? 'wrap' : 'nowrap',
+      gap: isMobile ? '6px' : '12px',
+      flexWrap: 'nowrap',
       alignItems: 'center',
-      justifyContent: isMobile ? 'center' : 'flex-start'
+      justifyContent: isMobile ? 'center' : 'flex-start',
+      overflowX: isMobile ? 'auto' : 'visible'
     }}>
-      <span style={{
-        color: '#64748b',
-        fontSize: '14px',
-        fontWeight: '600',
-        fontFamily: '"SF Pro Text", -apple-system, sans-serif',
-        whiteSpace: 'nowrap'
-      }}>
-        {isMobile ? 'Filters:' : 'Filter:'}
-      </span>
+      {!isMobile && (
+        <span style={{
+          color: '#64748b',
+          fontSize: '14px',
+          fontWeight: '600',
+          fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+          whiteSpace: 'nowrap'
+        }}>
+          Filter:
+        </span>
+      )}
       
       {filters.map((filter) => (
         <FilterChip

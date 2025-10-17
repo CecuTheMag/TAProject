@@ -6,7 +6,15 @@ const RequestsTab = () => {
   const [requestsList, setRequestsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [isMobile, setIsMobile] = useState(false);
   const { user } = useAuth();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -88,20 +96,25 @@ const RequestsTab = () => {
     <div>
       {/* Header */}
       <div style={{
-        background: 'white',
-        padding: '32px',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        padding: isMobile ? '12px' : '32px',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        margin: '0',
+        borderRadius: '0'
       }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '16px' : '0',
           marginBottom: '24px'
         }}>
-          <div>
+          <div style={{ width: isMobile ? '100%' : 'auto', textAlign: isMobile ? 'center' : 'left' }}>
             <h1 style={{
-              fontSize: '32px',
+              fontSize: isMobile ? '28px' : '32px',
               fontWeight: '800',
               color: '#0f172a',
               margin: '0 0 8px 0',
@@ -111,7 +124,7 @@ const RequestsTab = () => {
             </h1>
             <p style={{
               color: '#64748b',
-              fontSize: '16px',
+              fontSize: isMobile ? '16px' : '16px',
               fontWeight: '500',
               margin: 0
             }}>
@@ -122,7 +135,15 @@ const RequestsTab = () => {
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: isMobile ? '6px' : '12px',
+            flexWrap: 'nowrap',
+            alignItems: 'center',
+            justifyContent: isMobile ? 'center' : 'flex-start',
+            overflowX: isMobile ? 'auto' : 'visible',
+            width: isMobile ? '100%' : 'auto'
+          }}>
             {['all', 'pending', 'approved', 'rejected'].map(status => (
               <button
                 key={status}
@@ -147,7 +168,10 @@ const RequestsTab = () => {
       </div>
 
       {/* Content */}
-      <div style={{ padding: '32px' }}>
+      <div style={{ 
+        padding: isMobile ? '12px' : '32px',
+        margin: '0'
+      }}>
         {filteredRequests.length === 0 ? (
           <div style={{
             textAlign: 'center',
@@ -186,6 +210,8 @@ const RequestsTab = () => {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? '12px' : '0',
                   marginBottom: '16px'
                 }}>
                   <div>
@@ -213,7 +239,14 @@ const RequestsTab = () => {
                     </p>
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: isMobile ? '8px' : '12px',
+                    flexWrap: 'wrap',
+                    width: isMobile ? '100%' : 'auto',
+                    justifyContent: isMobile ? 'space-between' : 'flex-start'
+                  }}>
                     <span style={{
                       padding: '4px 12px',
                       backgroundColor: getStatusColor(request.status),
@@ -227,16 +260,20 @@ const RequestsTab = () => {
                     </span>
                     
                     {user?.role === 'admin' && request.status === 'pending' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: isMobile ? '6px' : '8px',
+                        flexWrap: 'wrap'
+                      }}>
                         <button
                           onClick={() => handleApprove(request.id)}
                           style={{
-                            padding: '8px 16px',
+                            padding: isMobile ? '6px 12px' : '8px 16px',
                             backgroundColor: '#10b981',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
-                            fontSize: '12px',
+                            fontSize: isMobile ? '11px' : '12px',
                             fontWeight: '600',
                             cursor: 'pointer'
                           }}
@@ -246,12 +283,12 @@ const RequestsTab = () => {
                         <button
                           onClick={() => handleReject(request.id)}
                           style={{
-                            padding: '8px 16px',
+                            padding: isMobile ? '6px 12px' : '8px 16px',
                             backgroundColor: '#ef4444',
                             color: 'white',
                             border: 'none',
                             borderRadius: '6px',
-                            fontSize: '12px',
+                            fontSize: isMobile ? '11px' : '12px',
                             fontWeight: '600',
                             cursor: 'pointer'
                           }}

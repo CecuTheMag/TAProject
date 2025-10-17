@@ -246,26 +246,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
         )}
       </div>
 
-      {/* QR Code Indicator */}
-      {item.qr_code && (
-        <div style={{
-          position: 'absolute',
-          top: isMobile ? '16px' : '16px',
-          left: isMobile ? '16px' : '16px',
-          width: isMobile ? '28px' : '24px',
-          height: isMobile ? '28px' : '24px',
-          background: 'rgba(15, 23, 42, 0.1)',
-          borderRadius: '6px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#64748b'
-        }}>
-          <svg width={isMobile ? '16' : '12'} height={isMobile ? '16' : '12'} viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,7H9V11H5V7M3,5H5V7H3V5M3,13H5V15H3V13M7,5H9V7H7V5M3,19H5V21H3V19M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19M19,19H21V21H19V19M15,5H17V7H15V5M19,5H21V7H19V5M15,7H17V9H15V7M19,7H21V9H19V7M15,13H17V15H15V13M19,13H21V15H19V13M15,15H17V17H15V15M19,15H21V17H19V15M15,17H17V19H15V17M19,17H21V19H19V17Z"/>
-          </svg>
-        </div>
-      )}
+
       
       {showDocuments && (
         <DocumentViewer

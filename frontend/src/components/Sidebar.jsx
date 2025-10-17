@@ -141,11 +141,14 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
                 transition={{ type: 'tween', duration: 0.3 }}
                 style={{
                   width: '320px',
-                  height: '100vh',
+                  height: 'calc(100vh - 60px)',
+                  maxHeight: '90vh',
                   background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
                   display: 'flex',
                   flexDirection: 'column',
-                  boxShadow: '8px 0 32px rgba(0, 0, 0, 0.25)'
+                  boxShadow: '8px 0 32px rgba(0, 0, 0, 0.25)',
+                  overflowY: 'auto',
+                  margin: '20px 0'
                 }}
                 onClick={(e) => e.stopPropagation()}
               >

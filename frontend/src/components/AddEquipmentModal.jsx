@@ -22,11 +22,15 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
     setError('');
 
     try {
-      await equipment.create(formData);
+      console.log('Sending equipment data:', formData);
+      const response = await equipment.create(formData);
+      console.log('Equipment created:', response.data);
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to add equipment');
+      console.error('Equipment creation error:', err);
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.error || err.message || 'Failed to add equipment');
     } finally {
       setLoading(false);
     }
@@ -290,6 +294,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
               </select>
             </div>
 
+
             <div>
               <label style={{
                 display: 'block',
@@ -367,13 +372,22 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                   cursor: 'pointer'
                 }}
               />
-              <span style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#374151'
-              }}>
-                Requires admin approval for requests
-              </span>
+              <div>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#374151'
+                }}>
+                  Requires admin approval for requests
+                </span>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#64748b',
+                  marginTop: '4px'
+                }}>
+                  When checked, all requests for this equipment must be approved by an admin before being granted
+                </div>
+              </div>
             </label>
           </div>
 

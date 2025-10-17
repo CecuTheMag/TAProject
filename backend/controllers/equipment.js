@@ -2,20 +2,31 @@ import Joi from 'joi';
 import QRCode from 'qrcode';
 import pool from '../database.js';
 import cache from '../utils/cache.js';
+import redisService from '../utils/redis.js';
 
 const equipmentSchema = Joi.object({
   name: Joi.string().required(),
   type: Joi.string().required(),
-  serial_number: Joi.string().optional(),
+  serial_number: Joi.string().optional().allow(''),
   condition: Joi.string().valid('excellent', 'good', 'fair', 'poor').default('good'),
   status: Joi.string().valid('available', 'checked_out', 'under_repair', 'retired').default('available'),
-  location: Joi.string().optional(),
-  requires_approval: Joi.boolean().default(false)
+  location: Joi.string().optional().allow(''),
+  requires_approval: Joi.boolean().default(false),
+  quantity: Joi.number().integer().min(1).default(1),
+  stock_threshold: Joi.number().integer().min(1).default(2)
 });
 
 export const getAllEquipment = async (req, res) => {
   try {
     const { search, type, status, condition } = req.query;
+    const cacheKey = `equipment:${JSON.stringify(req.query)}`;
+    
+    // Try Redis cache first
+    const cached = await redisService.get(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+    
     let query = 'SELECT * FROM equipment WHERE 1=1';
     const params = [];
     let paramCount = 0;
@@ -43,6 +54,10 @@ export const getAllEquipment = async (req, res) => {
 
     query += ' ORDER BY name';
     const result = await pool.query(query, params);
+    
+    // Cache result for 5 minutes
+    await redisService.set(cacheKey, result.rows, 300);
+    
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch equipment' });
@@ -66,31 +81,37 @@ export const getEquipmentById = async (req, res) => {
 
 export const createEquipment = async (req, res) => {
   try {
-    const { error, value } = equipmentSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.details[0].message });
-
-    const { name, type, serial_number, condition, status, location, requires_approval } = value;
+    const {
+      name,
+      type,
+      serial_number = null,
+      condition = 'good',
+      status = 'available',
+      location = null,
+      requires_approval = false,
+      quantity = 1,
+      stock_threshold = 2
+    } = req.body;
     
-    // Generate QR code
-    const qrData = JSON.stringify({ id: Date.now(), name, serial_number });
-    const qrCode = await QRCode.toDataURL(qrData);
+    // Generate QR code with serial number
+    let qrCode = null;
+    try {
+      const qrData = serial_number || `SIMS-${Date.now()}`;
+      qrCode = await QRCode.toDataURL(qrData);
+    } catch (qrError) {
+      console.error('QR generation error:', qrError);
+    }
     
     const result = await pool.query(
-      `INSERT INTO equipment (name, type, serial_number, condition, status, location, requires_approval, qr_code) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [name, type, serial_number, condition, status, location, requires_approval, qrCode]
+      `INSERT INTO equipment (name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, qr_code) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, qrCode]
     );
 
-    // Invalidate related caches
-    cache.delete('dashboard_stats');
-    cache.delete('usage_report');
-    
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    if (error.code === '23505') {
-      return res.status(400).json({ error: 'Serial number already exists' });
-    }
-    res.status(500).json({ error: 'Failed to create equipment' });
+    console.error('Equipment creation error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -100,12 +121,12 @@ export const updateEquipment = async (req, res) => {
     const { error, value } = equipmentSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    const { name, type, serial_number, condition, status, location, requires_approval } = value;
+    const { name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold } = value;
     
     const result = await pool.query(
       `UPDATE equipment SET name = $1, type = $2, serial_number = $3, condition = $4, 
-       status = $5, location = $6, requires_approval = $7 WHERE id = $8 RETURNING *`,
-      [name, type, serial_number, condition, status, location, requires_approval, id]
+       status = $5, location = $6, requires_approval = $7, quantity = $8, stock_threshold = $9 WHERE id = $10 RETURNING *`,
+      [name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, id]
     );
 
     if (result.rows.length === 0) {

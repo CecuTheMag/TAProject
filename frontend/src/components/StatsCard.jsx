@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick }) => {
+const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick, isMobile = false }) => {
   const [animatedValue, setAnimatedValue] = useState(0);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick }) => 
           }}>
             {icon}
           </div>
-          {trend && (
+          {trend && !isMobile && (
             <div style={{
               display: 'flex',
               alignItems: 'center',

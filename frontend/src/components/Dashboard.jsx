@@ -20,6 +20,7 @@ import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
 import AddEquipmentModal from './AddEquipmentModal';
 import LoadingSpinner from './LoadingSpinner';
+import Footer from './Footer';
 
 const Dashboard = () => {
   const [equipmentList, setEquipmentList] = useState([]);
@@ -79,7 +80,8 @@ const Dashboard = () => {
 
   const filteredEquipment = equipmentList.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.type.toLowerCase().includes(searchTerm.toLowerCase());
+                         item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilters = activeFilters.length === 0 || activeFilters.includes(item.status);
     return matchesSearch && matchesFilters;
   });
@@ -210,11 +212,11 @@ const Dashboard = () => {
             <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(20px)',
-          padding: isMobile ? '20px' : '40px',
+          padding: isMobile ? '12px' : '40px',
           borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-          margin: isMobile ? '0 12px' : '0',
-          borderRadius: isMobile ? '12px 12px 0 0' : '0'
+          margin: '0',
+          borderRadius: '0'
         }}>
           <div style={{
             display: 'flex',
@@ -340,8 +342,10 @@ const Dashboard = () => {
           {/* Stats Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: isMobile ? '12px' : '24px'
+            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: isMobile ? '8px' : '24px',
+            width: '100%',
+            maxWidth: '100%'
           }}>
             <StatsCard 
               title="Total Equipment" 
@@ -355,6 +359,7 @@ const Dashboard = () => {
               trend={dashboardStats?.weeklyTrends?.new_equipment_week || null}
               delay={0}
               onClick={() => setActiveFilters([])}
+              isMobile={isMobile}
             />
             <StatsCard 
               title="Available" 
@@ -368,6 +373,7 @@ const Dashboard = () => {
               trend={dashboardStats?.weeklyTrends?.returns_week || null}
               delay={200}
               onClick={() => handleFilterChange('available')}
+              isMobile={isMobile}
             />
             <StatsCard 
               title="Checked Out" 
@@ -381,6 +387,7 @@ const Dashboard = () => {
               trend={dashboardStats?.weeklyTrends?.new_checkouts_week || null}
               delay={400}
               onClick={() => handleFilterChange('checked_out')}
+              isMobile={isMobile}
             />
             <StatsCard 
               title="Under Repair" 
@@ -394,18 +401,19 @@ const Dashboard = () => {
               trend={dashboardStats?.weeklyTrends?.new_repairs_week ? -dashboardStats.weeklyTrends.new_repairs_week : null}
               delay={600}
               onClick={() => handleFilterChange('under_repair')}
+              isMobile={isMobile}
             />
           </div>
         </div>
 
         {/* Controls */}
         <div style={{
-          padding: isMobile ? '16px 12px' : '32px 40px',
+          padding: isMobile ? '12px' : '32px 40px',
           background: 'rgba(255, 255, 255, 0.9)',
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-          margin: isMobile ? '0 12px' : '0'
+          margin: '0'
         }}>
           <div style={{
             display: 'flex',
@@ -431,7 +439,7 @@ const Dashboard = () => {
 
         {/* Content */}
         <div style={{ 
-          padding: isMobile ? '16px 12px' : '40px',
+          padding: isMobile ? '12px' : '40px',
           margin: '0'
         }}>
           {filteredEquipment.length === 0 ? (
@@ -544,19 +552,38 @@ const Dashboard = () => {
             />
           )}
         </div>
+        <Footer isMobile={isMobile} />
           </>
         ) : activeTab === 'equipment' ? (
-          <EquipmentTab />
+          <>
+            <EquipmentTab />
+            <Footer isMobile={isMobile} />
+          </>
         ) : activeTab === 'requests' ? (
-          <RequestsTab />
+          <>
+            <RequestsTab />
+            <Footer isMobile={isMobile} />
+          </>
         ) : activeTab === 'analytics' ? (
-          <AnalyticsTab />
+          <>
+            <AnalyticsTab />
+            <Footer isMobile={isMobile} />
+          </>
         ) : activeTab === 'reports' ? (
-          <ReportsTab />
+          <>
+            <ReportsTab />
+            <Footer isMobile={isMobile} />
+          </>
         ) : activeTab === 'alerts' ? (
-          <AlertsTab />
+          <>
+            <AlertsTab />
+            <Footer isMobile={isMobile} />
+          </>
         ) : activeTab === 'users' ? (
-          <UsersTab />
+          <>
+            <UsersTab />
+            <Footer isMobile={isMobile} />
+          </>
         ) : null}
         
         {/* Modals */}
@@ -591,9 +618,8 @@ const Dashboard = () => {
         {showQRScanner && (
           <QRScanner
             onClose={() => setShowQRScanner(false)}
-            onEquipmentFound={(equipment) => {
-              setSelectedEquipment(equipment);
-              setShowDetailsModal(true);
+            onEquipmentFound={(serialNumber) => {
+              setSearchTerm(serialNumber);
               setShowQRScanner(false);
             }}
           />

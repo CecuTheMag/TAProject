@@ -25,6 +25,14 @@ ChartJS.register(
 const AnalyticsTab = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -68,16 +76,22 @@ const AnalyticsTab = () => {
   const requestStats = analyticsData?.requests || {};
 
   return (
-    <div>
+    <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{
-        background: 'white',
-        padding: '32px',
-        borderBottom: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(20px)',
+        padding: isMobile ? '16px' : '32px',
+        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        margin: '0',
+        borderRadius: '0',
+        textAlign: isMobile ? 'center' : 'left',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         <h1 style={{
-          fontSize: '32px',
+          fontSize: isMobile ? '24px' : '32px',
           fontWeight: '800',
           color: '#0f172a',
           margin: '0 0 8px 0',
@@ -87,7 +101,7 @@ const AnalyticsTab = () => {
         </h1>
         <p style={{
           color: '#64748b',
-          fontSize: '16px',
+          fontSize: isMobile ? '14px' : '16px',
           fontWeight: '500',
           margin: 0
         }}>
@@ -96,20 +110,33 @@ const AnalyticsTab = () => {
       </div>
 
       {/* Content */}
-      <div style={{ padding: '32px' }}>
+      <div style={{ 
+        padding: isMobile ? '12px' : '32px',
+        margin: '0',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '24px',
-          marginBottom: '32px'
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: isMobile ? '8px' : '24px',
+          marginBottom: isMobile ? '16px' : '32px',
+          width: '100%',
+          maxWidth: '100%'
         }}>
           {/* Equipment Overview */}
           <div style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            padding: isMobile ? '12px' : '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -149,11 +176,16 @@ const AnalyticsTab = () => {
 
           {/* Request Statistics */}
           <div style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            padding: isMobile ? '12px' : '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -193,11 +225,16 @@ const AnalyticsTab = () => {
 
           {/* Utilization Rate */}
           <div style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            padding: isMobile ? '12px' : '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -245,16 +282,23 @@ const AnalyticsTab = () => {
         {/* Charts */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-          gap: '24px'
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: isMobile ? '8px' : '24px',
+          width: '100%',
+          maxWidth: '100%'
         }}>
           {/* Equipment Status Chart */}
           <div style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            padding: isMobile ? '12px' : '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -264,7 +308,13 @@ const AnalyticsTab = () => {
             }}>
               Equipment Status Distribution
             </h3>
-            <div style={{ height: '300px', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ 
+              height: isMobile ? '200px' : '300px', 
+              display: 'flex', 
+              justifyContent: 'center',
+              width: '100%',
+              maxWidth: '100%'
+            }}>
               <Doughnut
                 data={{
                   labels: ['Available', 'Checked Out', 'Under Repair', 'Retired'],
@@ -299,11 +349,16 @@ const AnalyticsTab = () => {
 
           {/* Request Status Chart */}
           <div style={{
-            background: 'white',
-            border: '1px solid #e2e8f0',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+            padding: isMobile ? '12px' : '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            width: '100%',
+            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
+            minWidth: 0,
+            boxSizing: 'border-box'
           }}>
             <h3 style={{
               fontSize: '18px',
@@ -313,7 +368,11 @@ const AnalyticsTab = () => {
             }}>
               Request Status Overview
             </h3>
-            <div style={{ height: '300px' }}>
+            <div style={{ 
+              height: isMobile ? '200px' : '300px',
+              width: '100%',
+              maxWidth: '100%'
+            }}>
               <Bar
                 data={{
                   labels: ['Pending', 'Approved', 'Rejected', 'Returned'],
