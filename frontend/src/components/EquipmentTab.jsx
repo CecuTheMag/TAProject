@@ -11,6 +11,7 @@ import AddEquipmentModal from './AddEquipmentModal';
 const EquipmentTab = () => {
   const [equipmentList, setEquipmentList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
@@ -61,11 +62,15 @@ const EquipmentTab = () => {
 
   const fetchEquipment = async () => {
     try {
+      setError(null);
       const response = await equipment.getAll();
       const data = response.data || response || [];
-      setEquipmentList(Array.isArray(data) ? data : []);
+      const equipmentArray = Array.isArray(data) ? data : [];
+      setEquipmentList(equipmentArray);
+      console.log('Equipment loaded:', equipmentArray.length, 'items');
     } catch (error) {
       console.error('Failed to fetch equipment:', error);
+      setError('Failed to load equipment. Please try again.');
       setEquipmentList([]);
     }
   };
@@ -74,12 +79,13 @@ const EquipmentTab = () => {
     fetchEquipment();
   };
 
-  const filteredEquipment = equipmentList.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.type.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredEquipment = Array.isArray(equipmentList) ? equipmentList.filter(item => {
+    if (!item || typeof item !== 'object') return false;
+    const matchesSearch = (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (item.type || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilters = activeFilters.length === 0 || activeFilters.includes(item.status);
     return matchesSearch && matchesFilters;
-  });
+  }) : [];
 
   const filters = [
     { key: 'available', label: 'Available', color: '#10b981' },
