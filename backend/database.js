@@ -29,7 +29,7 @@ export const initDB = async () => {
         username VARCHAR(50) UNIQUE NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'admin')),
+        role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'manager', 'admin')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -78,7 +78,9 @@ export const initDB = async () => {
         start_date TIMESTAMP NOT NULL,
         end_date TIMESTAMP NOT NULL,
         due_date TIMESTAMP,
-        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned')),
+        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned', 'early_returned')),
+        manager_approved_by INTEGER REFERENCES users(id),
+        manager_approved_at TIMESTAMP,
         approved_by INTEGER REFERENCES users(id),
         approved_at TIMESTAMP,
         returned_at TIMESTAMP,
@@ -91,8 +93,23 @@ export const initDB = async () => {
     await pool.query(`
       ALTER TABLE requests 
       ADD COLUMN IF NOT EXISTS due_date TIMESTAMP,
-      ADD COLUMN IF NOT EXISTS reminder_sent TIMESTAMP
+      ADD COLUMN IF NOT EXISTS reminder_sent TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS manager_approved_by INTEGER REFERENCES users(id),
+      ADD COLUMN IF NOT EXISTS manager_approved_at TIMESTAMP
     `);
+
+    // Update status constraint to include early_returned
+    try {
+      await pool.query(`
+        ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_status_check
+      `);
+      await pool.query(`
+        ALTER TABLE requests ADD CONSTRAINT requests_status_check 
+        CHECK (status IN ('pending', 'approved', 'rejected', 'returned', 'early_returned'))
+      `);
+    } catch (constraintError) {
+      console.log('Status constraint update:', constraintError.message);
+    }
 
     // Update role constraint to include new roles
     try {
@@ -107,7 +124,7 @@ export const initDB = async () => {
       // Add the new constraint
       await pool.query(`
         ALTER TABLE users ADD CONSTRAINT users_role_check 
-        CHECK (role IN ('student', 'teacher', 'admin'))
+        CHECK (role IN ('student', 'teacher', 'manager', 'admin'))
       `);
       
       console.log('Role constraint updated successfully');
@@ -128,6 +145,8 @@ export const initDB = async () => {
       )
     `);
 
+
+
     // Create indexes for better performance
     await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_user_id ON requests(user_id)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_equipment_id ON requests(equipment_id)');
@@ -137,6 +156,7 @@ export const initDB = async () => {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_equipment_type ON equipment(type)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
+
     
     console.log('Database tables and indexes initialized successfully');
     

@@ -9,6 +9,7 @@ import StatsCard from './StatsCard';
 import SearchBar from './SearchBar';
 import FilterBar from './FilterBar';
 import EquipmentCard from './EquipmentCard';
+
 import EquipmentTab from './EquipmentTab';
 import RequestsTab from './RequestsTab';
 import AnalyticsTab from './AnalyticsTab';
@@ -39,7 +40,12 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
+  const [individualItem, setIndividualItem] = useState(null);
+  const [showingIndividual, setShowingIndividual] = useState(false);
   const { user } = useAuth();
+
+  // Students only get basic equipment view
+  const hasLimitedAccess = user?.role === 'student';
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -85,6 +91,28 @@ const Dashboard = () => {
     const matchesFilters = activeFilters.length === 0 || activeFilters.includes(item.status);
     return matchesSearch && matchesFilters;
   });
+
+  // Search for individual items when search term changes
+  useEffect(() => {
+    const searchIndividualItem = async () => {
+      if (searchTerm.length > 3) {
+        try {
+          const response = await equipment.searchIndividual(searchTerm);
+          setIndividualItem(response.data);
+          setShowingIndividual(true);
+        } catch (error) {
+          setIndividualItem(null);
+          setShowingIndividual(false);
+        }
+      } else {
+        setIndividualItem(null);
+        setShowingIndividual(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchIndividualItem, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   // Pagination
   const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
@@ -314,7 +342,7 @@ const Dashboard = () => {
                 Scan QR
               </button>
               
-              {['teacher', 'admin'].includes(user?.role) && (
+              {['teacher', 'manager', 'admin'].includes(user?.role) && (
                 <button 
                   onClick={handleAddEquipment}
                   style={{
@@ -442,7 +470,44 @@ const Dashboard = () => {
           padding: isMobile ? '12px' : '40px',
           margin: '0'
         }}>
-          {filteredEquipment.length === 0 ? (
+          {showingIndividual && individualItem ? (
+            <div>
+              <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+                <h3 style={{ color: '#0f172a', fontSize: '20px', fontWeight: '600', margin: '0 0 8px 0' }}>
+                  Individual Item Found
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowingIndividual(false);
+                    setIndividualItem(null);
+                    setSearchTerm('');
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Back to Equipment List
+                </button>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div style={{ maxWidth: '500px', width: '100%' }}>
+                  <EquipmentCard
+                    item={individualItem}
+                    onViewDetails={handleViewDetails}
+                    onRequest={handleRequest}
+                    user={user}
+                    isMobile={isMobile}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : filteredEquipment.length === 0 ? (
             <div style={{
               textAlign: 'center',
               padding: isMobile ? '40px 20px' : '80px 24px',

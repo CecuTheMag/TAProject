@@ -44,7 +44,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange, itemsPerPage, total
       
       <div style={{ display: 'flex', gap: '8px' }}>
         <button
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => {
+            onPageChange(currentPage - 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           disabled={currentPage === 1}
           style={{
             padding: '8px 12px',
@@ -62,7 +65,12 @@ const Pagination = ({ currentPage, totalPages, onPageChange, itemsPerPage, total
         {getVisiblePages().map((page, index) => (
           <button
             key={index}
-            onClick={() => typeof page === 'number' && onPageChange(page)}
+            onClick={() => {
+              if (typeof page === 'number') {
+                onPageChange(page);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
             disabled={page === '...'}
             style={{
               padding: '8px 12px',
@@ -80,7 +88,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange, itemsPerPage, total
         ))}
         
         <button
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => {
+            onPageChange(currentPage + 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           disabled={currentPage === totalPages}
           style={{
             padding: '8px 12px',

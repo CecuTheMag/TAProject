@@ -7,6 +7,7 @@ import EquipmentCard from './EquipmentCard';
 import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
 import AddEquipmentModal from './AddEquipmentModal';
+import EarlyReturnModal from './EarlyReturnModal';
 
 const EquipmentTab = () => {
   const [equipmentList, setEquipmentList] = useState([]);
@@ -19,6 +20,7 @@ const EquipmentTab = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEarlyReturn, setShowEarlyReturn] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAuth();
 
@@ -51,9 +53,21 @@ const EquipmentTab = () => {
     setShowDetailsModal(true);
   };
 
-  const handleRequest = (item) => {
+  const handleRequest = (item, isEarlyReturn = false) => {
     setSelectedEquipment(item);
-    setShowRequestModal(true);
+    if (isEarlyReturn) {
+      setShowEarlyReturn(true);
+    } else {
+      setShowRequestModal(true);
+    }
+  };
+
+  const handleEarlyReturnClose = (success) => {
+    setShowEarlyReturn(false);
+    setSelectedEquipment(null);
+    if (success) {
+      fetchEquipment();
+    }
   };
 
   const handleAddEquipment = () => {
@@ -296,6 +310,7 @@ const EquipmentTab = () => {
                 onViewDetails={handleViewDetails}
                 onRequest={handleRequest}
                 user={user}
+                isMobile={isMobile}
               />
             ))}
           </div>
@@ -327,6 +342,15 @@ const EquipmentTab = () => {
           <AddEquipmentModal
             onClose={() => setShowAddModal(false)}
             onSuccess={handleModalSuccess}
+          />
+        )}
+        
+        {showEarlyReturn && (
+          <EarlyReturnModal
+            isOpen={showEarlyReturn}
+            onClose={handleEarlyReturnClose}
+            equipment={selectedEquipment}
+            requestId={selectedEquipment?.request_id}
           />
         )}
       </div>

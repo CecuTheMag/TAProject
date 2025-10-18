@@ -504,9 +504,9 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
         display: 'grid',
         gap: '16px'
       }}>
-        {items.map((item) => (
+        {items.map((item, index) => (
           <AlertCard
-            key={item.id}
+            key={item.id || item.base_serial || `${type}-${index}`}
             item={item}
             type={type}
             onUpdateThreshold={onUpdateThreshold}
@@ -555,7 +555,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
             {item.name}
           </h4>
           <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6b7280', flexWrap: 'wrap' }}>
-            <span>Available: <strong>{item.available}</strong></span>
+            <span>Available: <strong>{item.available_count || item.available || 0}</strong></span>
             <span>Threshold: <strong>{item.stock_threshold}</strong></span>
             {!isMobile && <span>Type: <strong>{item.type}</strong></span>}
           </div>

@@ -84,6 +84,7 @@ const UsersTab = () => {
   const getRoleBadgeColor = (role) => {
     switch (role) {
       case 'admin': return '#ef4444';
+      case 'manager': return '#8b5cf6';
       case 'teacher': return '#f59e0b';
       case 'student': return '#3b82f6';
       default: return '#6b7280';
@@ -267,6 +268,7 @@ const UsersTab = () => {
                       >
                         <option value="student">Student</option>
                         <option value="teacher">Teacher</option>
+                        <option value="manager">Manager</option>
                         <option value="admin">Admin</option>
                       </select>
                     </td>
@@ -503,6 +505,7 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onViewActivity, onDelet
         >
           <option value="student">Student</option>
           <option value="teacher">Teacher</option>
+          <option value="manager">Manager</option>
           <option value="admin">Admin</option>
         </select>
       </div>
@@ -753,6 +756,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
             >
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
+              <option value="manager">Manager</option>
               <option value="admin">Admin</option>
             </select>
           </div>

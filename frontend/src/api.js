@@ -29,6 +29,9 @@ export const equipment = {
   create: (data) => api.post('/equipment', data),
   update: (id, data) => api.put(`/equipment/${id}`, data),
   delete: (id) => api.delete(`/equipment/${id}`),
+  updateRepair: (data) => api.put('/equipment/repair', data),
+  getGroups: () => api.get('/equipment/groups'),
+  getLowStock: () => api.get('/equipment/low-stock'),
 };
 
 export const requests = {
@@ -38,6 +41,7 @@ export const requests = {
   approve: (id) => api.put(`/request/${id}/approve`),
   reject: (id) => api.put(`/request/${id}/reject`),
   return: (id, data) => api.put(`/request/${id}/return`, data),
+  earlyReturn: (id, data) => api.put(`/request/${id}/early-return`, data),
 };
 
 export const dashboard = {
@@ -47,7 +51,7 @@ export const dashboard = {
 };
 
 export const alerts = {
-  getLowStock: () => api.get('/alerts/low-stock'),
+  getLowStock: () => api.get('/equipment/low-stock'),
   getOverdue: () => api.get('/alerts/overdue'),
   updateThreshold: (id, threshold) => api.put(`/alerts/threshold/${id}`, { stock_threshold: threshold })
 };

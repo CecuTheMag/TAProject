@@ -71,8 +71,10 @@ const ReportsTab = () => {
     try {
       const response = await reports.export(selectedReport, format);
       
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Create download link with proper content type
+      const contentType = format === 'pdf' ? 'application/pdf' : 'text/csv';
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `${selectedReport}_report.${format}`);
@@ -345,6 +347,34 @@ const ReportsTab = () => {
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                   </svg>
                   {generating ? 'Generating Report...' : 'Export as CSV'}
+                </button>
+                
+                <button
+                  onClick={() => handleGenerateReport('pdf')}
+                  disabled={generating}
+                  style={{
+                    width: '100%',
+                    padding: isMobile ? '16px 24px' : '18px 28px',
+                    backgroundColor: generating ? '#9ca3af' : '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: isMobile ? '12px' : '14px',
+                    fontSize: isMobile ? '16px' : '17px',
+                    fontWeight: '600',
+                    cursor: generating ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    transition: 'all 0.3s ease',
+                    fontFamily: '"SF Pro Text", -apple-system, sans-serif',
+                    boxShadow: !generating && !isMobile ? '0 4px 16px rgba(239, 68, 68, 0.3)' : 'none'
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
+                  {generating ? 'Generating Report...' : 'Export as PDF'}
                 </button>
               </div>
             </div>

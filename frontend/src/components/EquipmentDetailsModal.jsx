@@ -1,5 +1,59 @@
+import { useState, useEffect } from 'react';
+import { equipment as equipmentApi } from '../api';
+import { useAuth } from '../AuthContext';
+
 const EquipmentDetailsModal = ({ equipment, onClose }) => {
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [equipmentGroup, setEquipmentGroup] = useState(null);
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (equipment?.serial_number && ['manager', 'admin'].includes(user?.role)) {
+      fetchEquipmentGroup();
+    }
+  }, [equipment?.serial_number, user?.role]);
+  
+  const fetchEquipmentGroup = async () => {
+    try {
+      const response = await equipmentApi.getGroups();
+      const baseSerial = equipment.serial_number.replace(/\d{3}$/, '');
+      const group = response.data.find(g => g.base_serial === baseSerial);
+      setEquipmentGroup(group);
+    } catch (error) {
+      console.error('Failed to fetch equipment group:', error);
+    }
+  };
+  
+  const handleRepairSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      await equipmentApi.updateRepair({ ids: selectedItems });
+      alert(`${selectedItems.length} items put under repair successfully`);
+      onClose();
+    } catch (error) {
+      console.error('Failed to update repair status:', error);
+      alert('Failed to update repair status');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleItemSelection = (itemId) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+  
+  const availableItems = equipmentGroup?.items?.filter(item => item.status === 'available') || [];
+  
   if (!equipment) return null;
+
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -169,14 +223,7 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
                     {new Date(equipment.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                {equipment.quantity && (
-                  <div>
-                    <span style={{ color: '#64748b', fontSize: '14px' }}>Quantity:</span>
-                    <p style={{ color: '#0f172a', fontSize: '16px', fontWeight: '600', margin: '4px 0 0 0' }}>
-                      {equipment.quantity}
-                    </p>
-                  </div>
-                )}
+
                 {equipment.requires_approval && (
                   <div style={{
                     backgroundColor: '#fef3c7',
@@ -197,6 +244,109 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
               </div>
             </div>
           </div>
+
+          {/* Repair Management Section */}
+          {['manager', 'admin'].includes(user?.role) && equipmentGroup && (
+            <div style={{
+              marginTop: '32px',
+              padding: '24px',
+              backgroundColor: '#fef2f2',
+              borderRadius: '12px',
+              border: '1px solid #fecaca'
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#0f172a',
+                margin: '0 0 16px 0',
+                fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}>
+                🔧 Repair Management
+              </h3>
+              
+              <div style={{ marginBottom: '16px' }}>
+                <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 8px 0', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                  Available: {equipmentGroup.available_count} | 
+                  Under Repair: {equipmentGroup.under_repair_count} | 
+                  Checked Out: {equipmentGroup.checked_out_count}
+                </p>
+              </div>
+              
+              <form onSubmit={handleRepairSubmit}>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                    Select Items to Repair
+                  </label>
+                  <div style={{ 
+                    maxHeight: '200px', 
+                    overflowY: 'auto', 
+                    border: '2px solid #e5e7eb', 
+                    borderRadius: '8px', 
+                    padding: '8px' 
+                  }}>
+                    {availableItems.length === 0 ? (
+                      <p style={{ color: '#64748b', fontSize: '14px', margin: '8px', textAlign: 'center', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                        No available items to repair
+                      </p>
+                    ) : (
+                      availableItems.map(item => (
+                        <label key={item.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px',
+                          cursor: 'pointer',
+                          borderRadius: '4px',
+                          backgroundColor: selectedItems.includes(item.id) ? '#f0f9ff' : 'transparent'
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(item.id)}
+                            onChange={() => handleItemSelection(item.id)}
+                            style={{ margin: 0 }}
+                          />
+                          <span style={{ fontSize: '14px', fontWeight: '500', color: '#0f172a', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                            {item.serial_number}
+                          </span>
+                          <span style={{
+                            fontSize: '12px',
+                            padding: '2px 6px',
+                            borderRadius: '12px',
+                            backgroundColor: item.condition === 'excellent' ? '#dcfce7' : 
+                                           item.condition === 'good' ? '#dbeafe' :
+                                           item.condition === 'fair' ? '#fef3c7' : '#fee2e2',
+                            color: item.condition === 'excellent' ? '#166534' : 
+                                   item.condition === 'good' ? '#1e40af' :
+                                   item.condition === 'fair' ? '#92400e' : '#991b1b'
+                          }}>
+                            {item.condition}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={loading || selectedItems.length === 0}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: loading || selectedItems.length === 0 ? '#9ca3af' : '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: loading || selectedItems.length === 0 ? 'not-allowed' : 'pointer',
+                    fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  {loading ? 'Processing...' : `Put ${selectedItems.length} Item(s) Under Repair`}
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* QR Code Section */}
           {equipment.qr_code && (

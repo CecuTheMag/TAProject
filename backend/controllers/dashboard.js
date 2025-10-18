@@ -22,7 +22,9 @@ export const getDashboardStats = async (req, res) => {
           COUNT(*) as total_requests,
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_requests,
           COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_requests,
-          COUNT(CASE WHEN status = 'returned' THEN 1 END) as returned_requests
+          COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_requests,
+          COUNT(CASE WHEN status = 'returned' THEN 1 END) as returned_requests,
+          COUNT(CASE WHEN status = 'early_returned' THEN 1 END) as early_returned_requests
         FROM requests
       `;
       

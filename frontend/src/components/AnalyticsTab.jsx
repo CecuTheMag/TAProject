@@ -26,6 +26,7 @@ const AnalyticsTab = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showModal, setShowModal] = useState(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -172,6 +173,25 @@ const AnalyticsTab = () => {
                 </span>
               </div>
             </div>
+            {isMobile && (
+              <button
+                onClick={() => setShowModal('equipment')}
+                style={{
+                  marginTop: '12px',
+                  padding: '8px 16px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  outline: 'none'
+                }}
+              >
+                View Details
+              </button>
+            )}
           </div>
 
           {/* Request Statistics */}
@@ -220,7 +240,38 @@ const AnalyticsTab = () => {
                   {requestStats.rejected_requests || 0}
                 </span>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Returned:</span>
+                <span style={{ fontWeight: '600', color: '#6b7280' }}>
+                  {requestStats.returned_requests || 0}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Early Returns:</span>
+                <span style={{ fontWeight: '600', color: '#3b82f6' }}>
+                  {requestStats.early_returned_requests || 0}
+                </span>
+              </div>
             </div>
+            {isMobile && (
+              <button
+                onClick={() => setShowModal('requests')}
+                style={{
+                  marginTop: '12px',
+                  padding: '8px 16px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  outline: 'none'
+                }}
+              >
+                View Details
+              </button>
+            )}
           </div>
 
           {/* Utilization Rate */}
@@ -375,16 +426,17 @@ const AnalyticsTab = () => {
             }}>
               <Bar
                 data={{
-                  labels: ['Pending', 'Approved', 'Rejected', 'Returned'],
+                  labels: ['Pending', 'Approved', 'Rejected', 'Returned', 'Early Returns'],
                   datasets: [{
                     label: 'Number of Requests',
                     data: [
                       requestStats.pending_requests || 0,
                       requestStats.approved_requests || 0,
                       requestStats.rejected_requests || 0,
-                      requestStats.returned_requests || 0
+                      requestStats.returned_requests || 0,
+                      requestStats.early_returned_requests || 0
                     ],
-                    backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#6b7280'],
+                    backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#6b7280', '#3b82f6'],
                     borderRadius: 8,
                     borderSkipped: false
                   }]
@@ -410,6 +462,105 @@ const AnalyticsTab = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Modal */}
+        {showModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#0f172a' }}>
+                  {showModal === 'equipment' && 'Equipment Overview'}
+                  {showModal === 'requests' && 'Request Statistics'}
+                </h3>
+                <button
+                  onClick={() => setShowModal(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    padding: '4px',
+                    outline: 'none'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              
+              {showModal === 'equipment' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Total Equipment:</span>
+                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '18px' }}>{equipmentStats.total_equipment || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Available:</span>
+                    <span style={{ fontWeight: '700', color: '#10b981', fontSize: '18px' }}>{equipmentStats.available || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fffbeb', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Checked Out:</span>
+                    <span style={{ fontWeight: '700', color: '#f59e0b', fontSize: '18px' }}>{equipmentStats.checked_out || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Under Repair:</span>
+                    <span style={{ fontWeight: '700', color: '#ef4444', fontSize: '18px' }}>{equipmentStats.under_repair || 0}</span>
+                  </div>
+                </div>
+              )}
+              
+              {showModal === 'requests' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Total Requests:</span>
+                    <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '18px' }}>{requestStats.total_requests || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fffbeb', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Pending:</span>
+                    <span style={{ fontWeight: '700', color: '#f59e0b', fontSize: '18px' }}>{requestStats.pending_requests || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Approved:</span>
+                    <span style={{ fontWeight: '700', color: '#10b981', fontSize: '18px' }}>{requestStats.approved_requests || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Rejected:</span>
+                    <span style={{ fontWeight: '700', color: '#ef4444', fontSize: '18px' }}>{requestStats.rejected_requests || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Returned:</span>
+                    <span style={{ fontWeight: '700', color: '#6b7280', fontSize: '18px' }}>{requestStats.returned_requests || 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>Early Returns:</span>
+                    <span style={{ fontWeight: '700', color: '#3b82f6', fontSize: '18px' }}>{requestStats.early_returned_requests || 0}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

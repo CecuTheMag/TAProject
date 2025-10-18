@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import puppeteer from 'puppeteer';
 import pool from '../database.js';
 import cache from '../utils/cache.js';
 
@@ -206,12 +207,16 @@ export const exportReport = async (req, res) => {
         headers.map(h => {
           let value = row[h.id];
           if (value === null || value === undefined) value = '';
-          if (value instanceof Date) value = value.toISOString().split('T')[0];
+          if (value instanceof Date) {
+            value = new Date(value).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            });
+          }
           value = String(value);
-          // Escape quotes and wrap in quotes if contains comma
-          return value.includes(',') || value.includes('"') 
-            ? `"${value.replace(/"/g, '""')}"` 
-            : value;
+          // Always wrap in quotes to prevent formatting issues
+          return `"${value.replace(/"/g, '""')}"`;
         }).join(',')
       );
       const csvContent = [csvHeaders, ...csvRows].join('\n');
@@ -219,6 +224,82 @@ export const exportReport = async (req, res) => {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(csvContent);
+    } else if (format === 'pdf') {
+      // Generate PDF content
+      const reportTitle = type.charAt(0).toUpperCase() + type.slice(1) + ' Report';
+      const currentDate = new Date().toLocaleDateString();
+      
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${reportTitle}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .header h1 { color: #0f172a; margin-bottom: 5px; }
+            .header p { color: #64748b; margin: 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+            th { background-color: #f8fafc; font-weight: 600; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            .footer { margin-top: 30px; text-align: center; color: #64748b; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>SIMS - ${reportTitle}</h1>
+            <p>Generated on ${currentDate}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                ${headers.map(h => `<th>${h.title}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(row => `
+                <tr>
+                  ${headers.map(h => {
+                    let value = row[h.id];
+                    if (value === null || value === undefined) value = '';
+                    if (value instanceof Date) {
+                      value = new Date(value).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      });
+                    }
+                    return `<td>${String(value).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="footer">
+            <p>School Inventory Management System - Total Records: ${data.length}</p>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      const browser = await puppeteer.launch({ 
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ 
+        format: 'A4', 
+        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+        printBackground: true
+      });
+      await browser.close();
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.csv', '.pdf')}"`);
+      res.send(pdfBuffer);
     } else {
       // Return JSON for other formats
       res.json({ data, headers, filename });

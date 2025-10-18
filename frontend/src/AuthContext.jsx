@@ -41,8 +41,9 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     isAdmin: user?.role === 'admin',
+    isManager: user?.role === 'manager',
     isTeacher: user?.role === 'teacher',
-    canManage: ['teacher', 'admin'].includes(user?.role),
+    canManage: ['teacher', 'manager', 'admin'].includes(user?.role),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

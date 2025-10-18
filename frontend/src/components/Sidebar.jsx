@@ -16,47 +16,95 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-      </svg>
-    )},
-    { id: 'equipment', label: 'Equipment', icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
-      </svg>
-    )},
-    { id: 'requests', label: 'Requests', icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-      </svg>
-    )},
-    ...(['teacher', 'admin'].includes(user?.role) ? [
-      { id: 'analytics', label: 'Analytics', icon: (
+  const getMenuItems = () => {
+    const baseItems = [
+      { id: 'dashboard', label: 'Dashboard', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
         </svg>
       )},
-      { id: 'reports', label: 'Reports', icon: (
+      { id: 'equipment', label: 'Equipment', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6,2A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6M6,4H13V9H18V20H6V4M8,12V14H16V12H8M8,16V18H13V16H8Z"/>
+          <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
         </svg>
       )},
-      { id: 'alerts', label: 'Alerts', icon: (
+      { id: 'requests', label: 'Requests', icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M10,21H14A2,2 0 0,1 12,23A2,2 0 0,1 10,21M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M17,11A5,5 0 0,0 12,6A5,5 0 0,0 7,11V18H17V11Z"/>
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
         </svg>
-      )},
-      ...(user?.role === 'admin' ? [{
-        id: 'users', label: 'Users', icon: (
+      )}
+    ];
+
+    // Students get basic tabs
+    if (user?.role === 'student') {
+      return baseItems;
+    }
+
+    // Teachers get analytics
+    if (user?.role === 'teacher') {
+      return [
+        ...baseItems,
+        { id: 'analytics', label: 'Analytics', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+          </svg>
+        )}
+      ];
+    }
+
+    // Managers get everything except users
+    if (user?.role === 'manager') {
+      return [
+        ...baseItems,
+        { id: 'analytics', label: 'Analytics', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+          </svg>
+        )},
+        { id: 'reports', label: 'Reports', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6,2A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6M6,4H13V9H18V20H6V4M8,12V14H16V12H8M8,16V18H13V16H8Z"/>
+          </svg>
+        )},
+        { id: 'alerts', label: 'Alerts', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10,21H14A2,2 0 0,1 12,23A2,2 0 0,1 10,21M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M17,11A5,5 0 0,0 12,6A5,5 0 0,0 7,11V18H17V11Z"/>
+          </svg>
+        )}
+      ];
+    }
+
+    // Admins get everything
+    if (user?.role === 'admin') {
+      return [
+        ...baseItems,
+        { id: 'analytics', label: 'Analytics', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+          </svg>
+        )},
+        { id: 'reports', label: 'Reports', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6,2A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6M6,4H13V9H18V20H6V4M8,12V14H16V12H8M8,16V18H13V16H8Z"/>
+          </svg>
+        )},
+        { id: 'alerts', label: 'Alerts', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10,21H14A2,2 0 0,1 12,23A2,2 0 0,1 10,21M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M17,11A5,5 0 0,0 12,6A5,5 0 0,0 7,11V18H17V11Z"/>
+          </svg>
+        )},
+        { id: 'users', label: 'Users', icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01 1l-2.54 3.45c-.28.38-.28.89 0 1.27L14.31 16H16v6h4zm-12.5 0v-6.5H9L7.1 9.4c-.19-.6-.73-1-1.35-1H4.5C3.67 8.4 3 9.07 3 9.9v.6c0 .83.67 1.5 1.5 1.5H6v10h1.5zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5z"/>
           </svg>
-        )
-      }] : [])
-    ] : [])
-  ];
+        )}
+      ];
+    }
+
+    return [];
+  };
+
+  const menuItems = getMenuItems();
 
   if (isMobile) {
     return (

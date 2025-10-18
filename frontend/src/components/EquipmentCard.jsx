@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DocumentViewer from './DocumentViewer';
 
-const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
+const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, isMobile }) => {
+  const getDisplayStatus = (item) => {
+    return item.status;
+  };
   const [showDocuments, setShowDocuments] = useState(false);
   const getStatusColor = (status) => {
     switch (status) {
@@ -48,7 +51,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
         right: 0,
         width: '4px',
         height: '100%',
-        background: getStatusColor(item.status)
+        background: getStatusColor(getDisplayStatus(item))
       }}></div>
 
       {/* Header */}
@@ -70,19 +73,21 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
         }}>
           {item.name}
         </h3>
-        <span style={{
-          backgroundColor: getStatusColor(item.status) + '20',
-          color: getStatusColor(item.status),
-          padding: isMobile ? '8px 16px' : '6px 12px',
-          borderRadius: '20px',
-          fontSize: isMobile ? '14px' : '12px',
-          fontWeight: '600',
-          textTransform: 'capitalize',
-          whiteSpace: 'nowrap',
-          alignSelf: isMobile ? 'flex-start' : 'auto'
-        }}>
-          {item.status.replace('_', ' ')}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: isMobile ? 'flex-start' : 'flex-end' }}>
+          <span style={{
+            backgroundColor: getStatusColor(getDisplayStatus(item)) + '20',
+            color: getStatusColor(getDisplayStatus(item)),
+            padding: isMobile ? '8px 16px' : '6px 12px',
+            borderRadius: '20px',
+            fontSize: isMobile ? '14px' : '12px',
+            fontWeight: '600',
+            textTransform: 'capitalize',
+            whiteSpace: 'nowrap'
+          }}>
+            {getDisplayStatus(item).replace('_', ' ')}
+          </span>
+
+        </div>
       </div>
 
       {/* Details Grid */}
@@ -154,6 +159,8 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
             </div>
           </div>
         )}
+
+
       </div>
 
       {/* Actions */}
@@ -215,7 +222,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
           </button>
         </div>
         
-        {item.status === 'available' && (
+        {getDisplayStatus(item) === 'available' && (
           <button
             onClick={() => onRequest(item)}
             style={{
@@ -244,6 +251,8 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, user, isMobile }) => {
             Request Equipment
           </button>
         )}
+        
+
       </div>
 
 

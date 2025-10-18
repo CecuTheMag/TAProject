@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { requests } from '../api';
 import { useAuth } from '../AuthContext';
+import EarlyReturnModal from './EarlyReturnModal';
 
 const RequestsTab = () => {
   const [requestsList, setRequestsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
+  const [showEarlyReturn, setShowEarlyReturn] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -65,7 +68,32 @@ const RequestsTab = () => {
       case 'pending': return '#f59e0b';
       case 'approved': return '#10b981';
       case 'rejected': return '#ef4444';
+      case 'returned': return '#6b7280';
+      case 'early_returned': return '#3b82f6';
       default: return '#6b7280';
+    }
+  };
+
+  const handleEarlyReturn = (request) => {
+    setSelectedRequest(request);
+    setShowEarlyReturn(true);
+  };
+
+  const handleEarlyReturnClose = (success) => {
+    setShowEarlyReturn(false);
+    setSelectedRequest(null);
+    if (success) {
+      const fetchRequests = async () => {
+        try {
+          const response = user?.role === 'admin' 
+            ? await requests.getAllRequests()
+            : await requests.getUserRequests();
+          setRequestsList(response.data);
+        } catch (error) {
+          console.error('Failed to fetch requests:', error);
+        }
+      };
+      fetchRequests();
     }
   };
 
@@ -144,7 +172,7 @@ const RequestsTab = () => {
             overflowX: isMobile ? 'auto' : 'visible',
             width: isMobile ? '100%' : 'auto'
           }}>
-            {['all', 'pending', 'approved', 'rejected'].map(status => (
+            {['all', 'pending', 'approved', 'rejected', 'returned', 'early_returned'].map(status => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
@@ -160,7 +188,7 @@ const RequestsTab = () => {
                   textTransform: 'capitalize'
                 }}
               >
-                {status}
+                {status === 'early_returned' ? 'Early Returned' : status}
               </button>
             ))}
           </div>
@@ -228,15 +256,29 @@ const RequestsTab = () => {
                       fontSize: '14px',
                       margin: '0 0 8px 0'
                     }}>
-                      Requested by: {request.user_name}
+                      Requested by: {request.username || request.user_name || 'Unknown User'}
                     </p>
                     <p style={{
                       color: '#64748b',
                       fontSize: '14px',
-                      margin: 0
+                      margin: '0 0 8px 0'
                     }}>
-                      {new Date(request.created_at).toLocaleDateString()}
+                      {request.start_date && request.end_date ? (
+                        `${new Date(request.start_date).toLocaleDateString()} - ${new Date(request.end_date).toLocaleDateString()}`
+                      ) : (
+                        new Date(request.request_date || request.created_at).toLocaleDateString()
+                      )}
                     </p>
+                    {request.due_date && request.status === 'approved' && (
+                      <p style={{
+                        color: '#d97706',
+                        fontSize: '14px',
+                        margin: 0,
+                        fontWeight: '600'
+                      }}>
+                        Due: {new Date(request.due_date).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                   
                   <div style={{ 
@@ -256,7 +298,7 @@ const RequestsTab = () => {
                       fontWeight: '600',
                       textTransform: 'capitalize'
                     }}>
-                      {request.status}
+                      {request.status === 'early_returned' ? 'Early Returned' : request.status.replace('_', ' ')}
                     </span>
                     
                     {user?.role === 'admin' && request.status === 'pending' && (
@@ -297,6 +339,24 @@ const RequestsTab = () => {
                         </button>
                       </div>
                     )}
+                    
+                    {request.status === 'approved' && request.user_id === user?.id && (
+                      <button
+                        onClick={() => handleEarlyReturn(request)}
+                        style={{
+                          padding: isMobile ? '6px 12px' : '8px 16px',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: isMobile ? '11px' : '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Return Early
+                      </button>
+                    )}
                   </div>
                 </div>
                 
@@ -322,6 +382,13 @@ const RequestsTab = () => {
           </div>
         )}
       </div>
+      
+      <EarlyReturnModal
+        isOpen={showEarlyReturn}
+        onClose={handleEarlyReturnClose}
+        equipment={selectedRequest ? { name: selectedRequest.equipment_name } : null}
+        requestId={selectedRequest?.id}
+      />
     </div>
   );
 };
