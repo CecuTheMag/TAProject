@@ -37,7 +37,7 @@ app.use(apiLimiter);
 
 // Initialize database and Redis
 initDB();
-redisService.connect();
+redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
 // Routes with rate limiting
 app.use('/auth', authLimiter, authRoutes);

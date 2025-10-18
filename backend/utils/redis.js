@@ -4,27 +4,37 @@ class RedisService {
   constructor() {
     this.client = null;
     this.isConnected = false;
+    this.errorLogged = false;
   }
 
   async connect() {
     try {
       this.client = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379'
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        socket: {
+          connectTimeout: 5000,
+          lazyConnect: true
+        }
       });
 
       this.client.on('error', (err) => {
-        console.error('Redis Client Error:', err);
+        if (!this.errorLogged) {
+          console.log('⚠️  Redis unavailable - running without cache');
+          this.errorLogged = true;
+        }
         this.isConnected = false;
       });
 
       this.client.on('connect', () => {
         console.log('✅ Redis connected');
         this.isConnected = true;
+        this.errorLogged = false;
       });
 
       await this.client.connect();
     } catch (error) {
-      console.error('❌ Redis connection failed:', error);
+      console.log('⚠️  Redis unavailable - running without cache');
+      this.isConnected = false;
     }
   }
 

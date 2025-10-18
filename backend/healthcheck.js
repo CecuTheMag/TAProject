@@ -1,13 +1,14 @@
 import http from 'http';
 
 const options = {
-  host: 'localhost',
-  port: process.env.PORT || 5000,
+  hostname: 'localhost',
+  port: 5000,
   path: '/health',
-  timeout: 2000
+  method: 'GET',
+  timeout: 5000
 };
 
-const request = http.request(options, (res) => {
+const req = http.request(options, (res) => {
   if (res.statusCode === 200) {
     process.exit(0);
   } else {
@@ -15,8 +16,13 @@ const request = http.request(options, (res) => {
   }
 });
 
-request.on('error', () => {
+req.on('error', () => {
   process.exit(1);
 });
 
-request.end();
+req.on('timeout', () => {
+  req.destroy();
+  process.exit(1);
+});
+
+req.end();
