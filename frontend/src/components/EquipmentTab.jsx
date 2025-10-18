@@ -32,9 +32,11 @@ const EquipmentTab = () => {
     const fetchEquipment = async () => {
       try {
         const response = await equipment.getAll();
-        setEquipmentList(response.data);
+        const data = response.data || response || [];
+        setEquipmentList(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Failed to fetch equipment:', error);
+        setEquipmentList([]);
       } finally {
         setLoading(false);
       }
@@ -55,6 +57,17 @@ const EquipmentTab = () => {
 
   const handleAddEquipment = () => {
     setShowAddModal(true);
+  };
+
+  const fetchEquipment = async () => {
+    try {
+      const response = await equipment.getAll();
+      const data = response.data || response || [];
+      setEquipmentList(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch equipment:', error);
+      setEquipmentList([]);
+    }
   };
 
   const handleModalSuccess = () => {

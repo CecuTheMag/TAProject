@@ -41,7 +41,7 @@ export const createSampleData = async () => {
       
       await pool.query(
         'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4)',
-        ['testuser', 'test@school.edu', hashedPassword, 'user']
+        ['testuser', 'test@school.edu', hashedPassword, 'student']
       );
 
       console.log('✅ Sample user created: test@school.edu / password123');
