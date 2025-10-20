@@ -243,7 +243,7 @@ const AnalyticsTab = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#64748b' }}>Returned:</span>
                 <span style={{ fontWeight: '600', color: '#6b7280' }}>
-                  {requestStats.returned_requests || 0}
+                  {requestStats.total_returned_requests || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -433,7 +433,7 @@ const AnalyticsTab = () => {
                       requestStats.pending_requests || 0,
                       requestStats.approved_requests || 0,
                       requestStats.rejected_requests || 0,
-                      requestStats.returned_requests || 0,
+                      requestStats.total_returned_requests || 0,
                       requestStats.early_returned_requests || 0
                     ],
                     backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#6b7280', '#3b82f6'],
@@ -550,7 +550,7 @@ const AnalyticsTab = () => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '8px' }}>
                     <span style={{ color: '#64748b', fontWeight: '500' }}>Returned:</span>
-                    <span style={{ fontWeight: '700', color: '#6b7280', fontSize: '18px' }}>{requestStats.returned_requests || 0}</span>
+                    <span style={{ fontWeight: '700', color: '#6b7280', fontSize: '18px' }}>{requestStats.total_returned_requests || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
                     <span style={{ color: '#64748b', fontWeight: '500' }}>Early Returns:</span>
