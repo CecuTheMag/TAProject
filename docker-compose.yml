@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_primary_data:/var/lib/postgresql/data
     ports:
-      - "0.0.0.0:5432:5432"
+      - "0.0.0.0:5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d SIMS"]
       interval: 10s
@@ -131,7 +131,7 @@ services:
     build: ./frontend
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://localhost/api
+      - VITE_API_URL=https://localhost/api
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
       interval: 30s
@@ -144,8 +144,10 @@ services:
     image: nginx:alpine
     ports:
       - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
     depends_on:
       backend-1:
         condition: service_healthy
