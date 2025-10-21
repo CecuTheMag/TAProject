@@ -103,9 +103,13 @@ const AlertsTab = () => {
   }
 
   const totalAlerts = lowStockItems.length + overdueItems.length;
-  const criticalAlerts = overdueItems.filter(item => 
-    Math.ceil((new Date() - new Date(item.due_date)) / (1000 * 60 * 60 * 24)) > 7
-  ).length;
+  const criticalAlerts = overdueItems.filter(item => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(item.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24)) > 7;
+  }).length;
 
   return (
     <div>
@@ -523,8 +527,14 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
   const [threshold, setThreshold] = useState(item.stock_threshold || 0);
 
   const handleThresholdUpdate = () => {
-    onUpdateThreshold(item.id, threshold);
-    setIsEditing(false);
+    // Use base_serial for group updates
+    const baseSerial = item.base_serial;
+    if (baseSerial) {
+      onUpdateThreshold(baseSerial, threshold);
+      setIsEditing(false);
+    } else {
+      console.error('No base serial found for threshold update');
+    }
   };
 
   if (type === 'stock') {
@@ -646,7 +656,11 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
     );
   }
 
-  const daysOverdue = Math.ceil((new Date() - new Date(item.due_date)) / (1000 * 60 * 60 * 24));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(item.due_date);
+  dueDate.setHours(0, 0, 0, 0);
+  const daysOverdue = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
   const isCritical = daysOverdue > 7;
 
   return (

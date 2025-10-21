@@ -30,8 +30,11 @@ export const equipment = {
   update: (id, data) => api.put(`/equipment/${id}`, data),
   delete: (id) => api.delete(`/equipment/${id}`),
   updateRepair: (data) => api.put('/equipment/repair', data),
+  completeRepair: (data) => api.put('/equipment/repair-complete', data),
+  retireFleet: (data) => api.put('/equipment/retire-fleet', data),
   getGroups: () => api.get('/equipment/groups'),
   getLowStock: () => api.get('/equipment/low-stock'),
+  searchIndividual: (serial) => api.get(`/equipment/search/${encodeURIComponent(serial)}`),
 };
 
 export const requests = {
@@ -53,7 +56,7 @@ export const dashboard = {
 export const alerts = {
   getLowStock: () => api.get('/equipment/low-stock'),
   getOverdue: () => api.get('/alerts/overdue'),
-  updateThreshold: (id, threshold) => api.put(`/alerts/threshold/${id}`, { stock_threshold: threshold })
+  updateThreshold: (baseSerial, threshold) => api.put(`/alerts/threshold/${encodeURIComponent(baseSerial)}`, { stock_threshold: threshold })
 };
 
 export const documents = {

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { equipment as equipmentApi } from '../api';
 import { useAuth } from '../AuthContext';
+import RepairManagement from './RepairManagement';
 
 const EquipmentDetailsModal = ({ equipment, onClose }) => {
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [equipmentGroup, setEquipmentGroup] = useState(null);
   const { user } = useAuth();
   
@@ -25,31 +24,7 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
     }
   };
   
-  const handleRepairSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      await equipmentApi.updateRepair({ ids: selectedItems });
-      alert(`${selectedItems.length} items put under repair successfully`);
-      onClose();
-    } catch (error) {
-      console.error('Failed to update repair status:', error);
-      alert('Failed to update repair status');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleItemSelection = (itemId) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
-  
-  const availableItems = equipmentGroup?.items?.filter(item => item.status === 'available') || [];
+
   
   if (!equipment) return null;
 
@@ -246,105 +221,42 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
           </div>
 
           {/* Repair Management Section */}
-          {['manager', 'admin'].includes(user?.role) && equipmentGroup && (
+          {['manager', 'admin'].includes(user?.role) && equipmentGroup && equipment.status !== 'retired' && (
+            <RepairManagement 
+              equipmentGroup={equipmentGroup}
+              onRepairComplete={() => {
+                fetchEquipmentGroup();
+                // Force refresh parent dashboard
+                window.location.reload();
+              }}
+            />
+          )}
+
+          {/* Retired Item Notice */}
+          {equipment.status === 'retired' && (
             <div style={{
               marginTop: '32px',
               padding: '24px',
-              backgroundColor: '#fef2f2',
+              backgroundColor: '#f3f4f6',
               borderRadius: '12px',
-              border: '1px solid #fecaca'
+              border: '1px solid #d1d5db',
+              textAlign: 'center'
             }}>
               <h3 style={{
                 fontSize: '18px',
                 fontWeight: '600',
-                color: '#0f172a',
-                margin: '0 0 16px 0',
-                fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                color: '#6b7280',
+                margin: '0 0 8px 0'
               }}>
-                🔧 Repair Management
+                ✖ Retired Equipment
               </h3>
-              
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 8px 0', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                  Available: {equipmentGroup.available_count} | 
-                  Under Repair: {equipmentGroup.under_repair_count} | 
-                  Checked Out: {equipmentGroup.checked_out_count}
-                </p>
-              </div>
-              
-              <form onSubmit={handleRepairSubmit}>
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                    Select Items to Repair
-                  </label>
-                  <div style={{ 
-                    maxHeight: '200px', 
-                    overflowY: 'auto', 
-                    border: '2px solid #e5e7eb', 
-                    borderRadius: '8px', 
-                    padding: '8px' 
-                  }}>
-                    {availableItems.length === 0 ? (
-                      <p style={{ color: '#64748b', fontSize: '14px', margin: '8px', textAlign: 'center', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                        No available items to repair
-                      </p>
-                    ) : (
-                      availableItems.map(item => (
-                        <label key={item.id} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '8px',
-                          cursor: 'pointer',
-                          borderRadius: '4px',
-                          backgroundColor: selectedItems.includes(item.id) ? '#f0f9ff' : 'transparent'
-                        }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedItems.includes(item.id)}
-                            onChange={() => handleItemSelection(item.id)}
-                            style={{ margin: 0 }}
-                          />
-                          <span style={{ fontSize: '14px', fontWeight: '500', color: '#0f172a', fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                            {item.serial_number}
-                          </span>
-                          <span style={{
-                            fontSize: '12px',
-                            padding: '2px 6px',
-                            borderRadius: '12px',
-                            backgroundColor: item.condition === 'excellent' ? '#dcfce7' : 
-                                           item.condition === 'good' ? '#dbeafe' :
-                                           item.condition === 'fair' ? '#fef3c7' : '#fee2e2',
-                            color: item.condition === 'excellent' ? '#166534' : 
-                                   item.condition === 'good' ? '#1e40af' :
-                                   item.condition === 'fair' ? '#92400e' : '#991b1b'
-                          }}>
-                            {item.condition}
-                          </span>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={loading || selectedItems.length === 0}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: loading || selectedItems.length === 0 ? '#9ca3af' : '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: loading || selectedItems.length === 0 ? 'not-allowed' : 'pointer',
-                    fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                  }}
-                >
-                  {loading ? 'Processing...' : `Put ${selectedItems.length} Item(s) Under Repair`}
-                </button>
-              </form>
+              <p style={{
+                color: '#6b7280',
+                fontSize: '14px',
+                margin: 0
+              }}>
+                This equipment has been retired from active service and is no longer available for use.
+              </p>
             </div>
           )}
 
@@ -366,18 +278,29 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
                 QR Code
               </h3>
               <div style={{
-                width: '150px',
-                height: '150px',
-                backgroundColor: 'white',
-                border: '2px dashed #cbd5e1',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto',
-                borderRadius: '8px'
+                margin: '0 auto'
               }}>
-                <span style={{ color: '#64748b', fontSize: '14px' }}>QR Code Preview</span>
+                <img 
+                  src={equipment.qr_code} 
+                  alt={`QR Code for ${equipment.serial_number}`}
+                  style={{
+                    width: '150px',
+                    height: '150px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                />
               </div>
+              <p style={{
+                color: '#64748b',
+                fontSize: '12px',
+                margin: '8px 0 0 0'
+              }}>
+                Serial: {equipment.serial_number}
+              </p>
             </div>
           )}
         </div>

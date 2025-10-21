@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import pool from '../database.js';
+import emailService from '../services/emailService.js';
 
 const requestSchema = Joi.object({
   equipment_id: Joi.number().integer().required(),
@@ -134,6 +135,22 @@ export const approveRequest = async (req, res) => {
 
     // Update equipment status to checked_out
     await pool.query('UPDATE equipment SET status = $1 WHERE id = $2', ['checked_out', result.rows[0].equipment_id]);
+
+    // Get user email and equipment name for notification
+    const notificationData = await pool.query(
+      `SELECT u.email, e.name as equipment_name, u2.username as approver_name
+       FROM requests r
+       JOIN users u ON r.user_id = u.id
+       JOIN equipment e ON r.equipment_id = e.id
+       JOIN users u2 ON r.approved_by = u2.id
+       WHERE r.id = $1`,
+      [id]
+    );
+
+    if (notificationData.rows.length > 0) {
+      const { email, equipment_name, approver_name } = notificationData.rows[0];
+      await emailService.sendRequestApprovalNotification(email, equipment_name, approver_name);
+    }
 
     res.json(result.rows[0]);
   } catch (error) {

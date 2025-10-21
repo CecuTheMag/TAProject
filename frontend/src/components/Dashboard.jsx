@@ -175,10 +175,8 @@ const Dashboard = () => {
         ]);
         setEquipmentList(equipmentResponse.data);
         setDashboardStats(statsResponse.data);
-        toast.success('Data refreshed successfully');
       } catch (error) {
         console.error('Failed to refresh data:', error);
-        toast.error('Failed to refresh data');
       }
     };
     fetchData();
@@ -384,7 +382,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#0f172a" 
-              trend={dashboardStats?.weeklyTrends?.new_equipment_week || null}
+              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.new_equipment_day - dashboardStats.dailyTrends.prev_equipment_day) : null}
               delay={0}
               onClick={() => setActiveFilters([])}
               isMobile={isMobile}
@@ -398,7 +396,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#10b981" 
-              trend={dashboardStats?.weeklyTrends?.returns_week || null}
+              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.returns_day - dashboardStats.dailyTrends.prev_returns_day) : null}
               delay={200}
               onClick={() => handleFilterChange('available')}
               isMobile={isMobile}
@@ -412,7 +410,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#f59e0b" 
-              trend={dashboardStats?.weeklyTrends?.new_checkouts_week || null}
+              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.new_checkouts_day - dashboardStats.dailyTrends.prev_checkouts_day) : null}
               delay={400}
               onClick={() => handleFilterChange('checked_out')}
               isMobile={isMobile}
@@ -426,7 +424,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#ef4444" 
-              trend={dashboardStats?.weeklyTrends?.new_repairs_week ? -dashboardStats.weeklyTrends.new_repairs_week : null}
+              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.new_repairs_day - dashboardStats.dailyTrends.prev_repairs_day) : null}
               delay={600}
               onClick={() => handleFilterChange('under_repair')}
               isMobile={isMobile}

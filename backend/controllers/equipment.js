@@ -200,17 +200,81 @@ export const updateRepairStatus = async (req, res) => {
     const { ids } = req.body;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ error: 'Invalid equipment selection' });
+      return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
     const result = await pool.query(
       'UPDATE equipment SET status = $1 WHERE id = ANY($2) AND status = $3 RETURNING *',
       ['under_repair', ids, 'available']
     );
-
+    
+    cache.delete('dashboard_stats');
+    await redisService.flushAll();
+    
     res.json({ message: `${result.rows.length} items put under repair`, updated_items: result.rows.length });
   } catch (error) {
+    console.error('Repair status update error:', error);
     res.status(500).json({ error: 'Failed to update repair status' });
+  }
+};
+
+export const completeRepair = async (req, res) => {
+  try {
+    const { ids, condition } = req.body;
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
+    }
+    
+    if (!condition || !['excellent', 'good', 'fair', 'poor'].includes(condition)) {
+      return res.status(400).json({ error: 'Valid condition required' });
+    }
+
+    const result = await pool.query(
+      'UPDATE equipment SET status = $1, condition = $2 WHERE id = ANY($3) AND status = $4 RETURNING *',
+      ['available', condition, ids, 'under_repair']
+    );
+    
+    cache.delete('dashboard_stats');
+    await redisService.flushAll();
+    
+    res.json({ message: `${result.rows.length} items completed repair`, updated_items: result.rows.length });
+  } catch (error) {
+    console.error('Complete repair error:', error);
+    res.status(500).json({ error: 'Failed to complete repair' });
+  }
+};
+
+export const retireFleet = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    
+    console.log('Retiring fleet items:', ids);
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
+    }
+
+    const result = await pool.query(
+      'UPDATE equipment SET status = $1 WHERE id = ANY($2::int[]) RETURNING *',
+      ['retired', ids]
+    );
+    
+    console.log(`Retired ${result.rows.length} items`);
+    
+    // Clear all caches
+    cache.delete('dashboard_stats');
+    cache.delete('usage_report');
+    try {
+      await redisService.flushAll();
+    } catch (error) {
+      console.log('Redis cache clear failed:', error.message);
+    }
+    
+    res.json({ message: `${result.rows.length} items retired from fleet`, updated_items: result.rows.length });
+  } catch (error) {
+    console.error('Retire fleet error:', error);
+    res.status(500).json({ error: 'Failed to retire fleet' });
   }
 };
 

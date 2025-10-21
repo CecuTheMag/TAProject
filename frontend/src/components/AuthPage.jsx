@@ -22,7 +22,7 @@ const AuthPage = () => {
     try {
       const response = isLogin 
         ? await auth.login({ email: formData.email, password: formData.password })
-        : await auth.register(formData);
+        : await auth.register({ username: formData.username, email: formData.email, password: formData.password });
       
       login(response.data.user, response.data.token);
     } catch (err) {

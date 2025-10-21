@@ -8,7 +8,7 @@ class EmailService {
       port: 587,
       secure: false,
       auth: {
-        user: process.env.EMAIL_USER || 'sims@tech.academy',
+        user: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
         pass: process.env.EMAIL_PASS || 'your-app-password'
       }
     });
@@ -60,7 +60,7 @@ class EmailService {
 
   async sendOverdueReminder(userEmail, equipmentName, dueDate) {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'sims@tech.academy',
+      from: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
       to: userEmail,
       subject: `Equipment Return Reminder - ${equipmentName}`,
       html: `
@@ -86,9 +86,37 @@ class EmailService {
     }
   }
 
+  async sendRequestApprovalNotification(userEmail, equipmentName, approvedBy) {
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
+      to: userEmail,
+      subject: `Request Approved - ${equipmentName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #10b981;">Request Approved</h2>
+          <p>Dear User,</p>
+          <p>Your equipment request has been approved!</p>
+          <div style="background: #d1fae5; padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <strong>Equipment:</strong> ${equipmentName}<br>
+            <strong>Approved by:</strong> ${approvedBy}
+          </div>
+          <p>You can now collect your equipment. Please return it by the due date.</p>
+          <p>Thank you,<br>SIMS Team</p>
+        </div>
+      `
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Approval notification sent to ${userEmail}`);
+    } catch (error) {
+      console.error('Failed to send approval email:', error);
+    }
+  }
+
   async sendLowStockAlert(adminEmail, equipmentName, currentStock, threshold) {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'sims@tech.academy',
+      from: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
       to: adminEmail,
       subject: `Low Stock Alert - ${equipmentName}`,
       html: `

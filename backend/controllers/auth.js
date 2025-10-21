@@ -16,8 +16,12 @@ const loginSchema = Joi.object({
 
 export const register = async (req, res) => {
   try {
+    console.log('Registration request body:', req.body);
     const { error, value } = registerSchema.validate(req.body);
-    if (error) return res.status(400).json({ error: error.details[0].message });
+    if (error) {
+      console.log('Validation error:', error.details[0].message);
+      return res.status(400).json({ error: error.details[0].message });
+    }
 
     const { username, email, password } = value;
     const role = 'student'; // Force student role for public registration

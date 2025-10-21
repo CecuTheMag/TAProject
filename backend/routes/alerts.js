@@ -9,12 +9,27 @@ const router = express.Router();
 router.get('/low-stock', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const query = `
-      SELECT e.id, e.name, e.type, e.quantity, e.stock_threshold,
-             (SELECT COUNT(*) FROM requests r WHERE r.equipment_id = e.id AND r.status = 'approved' AND r.returned_at IS NULL) as checked_out,
-             (e.quantity - (SELECT COUNT(*) FROM requests r WHERE r.equipment_id = e.id AND r.status = 'approved' AND r.returned_at IS NULL)) as available
-      FROM equipment e
-      WHERE (e.quantity - (SELECT COUNT(*) FROM requests r WHERE r.equipment_id = e.id AND r.status = 'approved' AND r.returned_at IS NULL)) <= e.stock_threshold
-      ORDER BY available ASC
+      WITH groups AS (
+        SELECT
+          CASE
+            WHEN RIGHT(serial_number, 3) ~ '^[0-9]{3}$'
+              THEN LEFT(serial_number, GREATEST(LENGTH(serial_number) - 3, 0))
+            ELSE serial_number
+          END AS base_serial,
+          name,
+          type,
+          COUNT(CASE WHEN status != 'retired' THEN 1 END) AS total_count,
+          COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count,
+          COALESCE(MIN(stock_threshold), 2) AS stock_threshold,
+          MIN(id) as id
+        FROM equipment
+        WHERE serial_number IS NOT NULL
+        GROUP BY base_serial, name, type
+        HAVING COUNT(CASE WHEN status != 'retired' THEN 1 END) > 0
+      )
+      SELECT * FROM groups
+      WHERE available_count <= stock_threshold
+      ORDER BY available_count
     `;
     
     const result = await pool.query(query);
@@ -49,19 +64,34 @@ router.get('/overdue', authenticateToken, requireTeacherOrAdmin, async (req, res
 });
 
 // Update equipment stock threshold
-router.put('/threshold/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.put('/threshold/:base_serial', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { id } = req.params;
+    const { base_serial } = req.params;
     const { stock_threshold } = req.body;
     
-    const query = 'UPDATE equipment SET stock_threshold = $1 WHERE id = $2 RETURNING *';
-    const result = await pool.query(query, [stock_threshold, id]);
+    console.log('Updating threshold for base_serial:', base_serial, 'to:', stock_threshold);
+    
+    // Update all equipment items with the same base serial
+    const query = `
+      UPDATE equipment 
+      SET stock_threshold = $1 
+      WHERE (
+        CASE
+          WHEN RIGHT(serial_number, 3) ~ '^[0-9]{3}$'
+            THEN LEFT(serial_number, GREATEST(LENGTH(serial_number) - 3, 0))
+          ELSE serial_number
+        END
+      ) = $2
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [stock_threshold, base_serial]);
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Equipment not found' });
+      return res.status(404).json({ error: 'Equipment group not found' });
     }
     
-    res.json(result.rows[0]);
+    res.json({ message: `Updated ${result.rows.length} items`, updated_count: result.rows.length });
   } catch (error) {
     console.error('Error updating stock threshold:', error);
     res.status(500).json({ error: 'Failed to update stock threshold' });

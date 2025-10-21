@@ -11,7 +11,7 @@ class AlertService {
         JOIN users u ON r.user_id = u.id
         JOIN equipment e ON r.equipment_id = e.id
         WHERE r.status = 'approved' 
-        AND r.due_date < NOW()
+        AND DATE(r.due_date) < CURRENT_DATE
         AND r.returned_at IS NULL
       `;
       

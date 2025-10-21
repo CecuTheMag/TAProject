@@ -81,11 +81,15 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick, isMob
               border: `1px solid ${trend > 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
               boxShadow: `0 2px 8px ${trend > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}`
             }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{
-                transform: trend > 0 ? 'rotate(-45deg)' : 'rotate(45deg)'
-              }}>
-                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
-              </svg>
+              {trend > 0 ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7,14L12,9L17,14H7Z"/>
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7,10L12,15L17,10H7Z"/>
+                </svg>
+              )}
               <span>{Math.abs(trend)}</span>
             </div>
           )}

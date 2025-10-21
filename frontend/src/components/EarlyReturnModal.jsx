@@ -5,6 +5,7 @@ const EarlyReturnModal = ({ isOpen, onClose, equipment, requestId }) => {
   const [condition, setCondition] = useState('good');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [inspected, setInspected] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,6 +105,31 @@ const EarlyReturnModal = ({ isOpen, onClose, equipment, requestId }) => {
             </select>
           </div>
 
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              cursor: 'pointer',
+              fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}>
+              <input
+                type="checkbox"
+                checked={inspected}
+                onChange={(e) => setInspected(e.target.checked)}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  cursor: 'pointer'
+                }}
+              />
+              Equipment has been inspected
+            </label>
+          </div>
+
           <div style={{ marginBottom: '24px' }}>
             <label style={{
               display: 'block',
@@ -159,16 +185,16 @@ const EarlyReturnModal = ({ isOpen, onClose, equipment, requestId }) => {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !inspected}
               style={{
                 padding: '12px 24px',
-                backgroundColor: loading ? '#9ca3af' : '#3b82f6',
+                backgroundColor: loading || !inspected ? '#9ca3af' : '#3b82f6',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: loading || !inspected ? 'not-allowed' : 'pointer',
                 fontFamily: '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 outline: 'none'
               }}
