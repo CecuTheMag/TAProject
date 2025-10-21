@@ -68,11 +68,13 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
       let errorMessage = 'Camera access denied or not available';
       
       if (err.message && err.message.includes('https')) {
-        errorMessage = 'Camera requires HTTPS. QR scanning may not work on HTTP in some browsers.';
+        errorMessage = 'The camera stream is only accessible if the page is transferred via https.';
       } else if (err.name === 'NotAllowedError') {
-        errorMessage = 'Camera permission denied. Please allow camera access.';
+        errorMessage = 'Camera permission denied. Please allow camera access and reload the page.';
       } else if (err.name === 'NotFoundError') {
-        errorMessage = 'No camera found on this device.';
+        errorMessage = 'Camera not found. Please ensure you have a camera connected.';
+      } else if (err.message && err.message.includes('secure')) {
+        errorMessage = 'Camera access requires HTTPS. Please access the site via https://localhost or https://your-ip-address';
       }
       
       setError(errorMessage);
