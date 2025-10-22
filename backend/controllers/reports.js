@@ -287,28 +287,34 @@ export const exportReport = async (req, res) => {
         </html>
       `;
       
-      const browser = await puppeteer.launch({ 
-        headless: 'new',
-        args: [
-          '--no-sandbox', 
-          '--disable-setuid-sandbox', 
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--font-render-hinting=none'
-        ]
-      });
-      const page = await browser.newPage();
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      await page.emulateMediaType('print');
-      const pdfBuffer = await page.pdf({ 
-        format: 'A4', 
-        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
-        printBackground: true,
-        preferCSSPageSize: true,
-        displayHeaderFooter: false
-      });
-      await browser.close();
+      let browser;
+      try {
+        browser = await puppeteer.launch({ 
+          headless: 'new',
+          args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox', 
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-web-security',
+            '--font-render-hinting=none',
+            '--disable-extensions',
+            '--disable-plugins'
+          ]
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.emulateMediaType('print');
+        const pdfBuffer = await page.pdf({ 
+          format: 'A4', 
+          margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+          printBackground: true,
+          preferCSSPageSize: true,
+          displayHeaderFooter: false,
+          timeout: 30000
+        });
+        await browser.close();
+        browser = null;
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.csv', '.pdf')}"`);
@@ -319,6 +325,13 @@ export const exportReport = async (req, res) => {
     }
   } catch (error) {
     console.error('Export error:', error);
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error('Browser close error:', closeError);
+      }
+    }
     res.status(500).json({ error: 'Failed to export report', details: error.message });
   }
 };
