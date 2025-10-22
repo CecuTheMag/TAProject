@@ -315,23 +315,26 @@ export const exportReport = async (req, res) => {
         });
         await browser.close();
         browser = null;
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.csv', '.pdf')}"`);
-      res.send(pdfBuffer);
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.csv', '.pdf')}"`);
+        res.send(pdfBuffer);
+      } catch (pdfError) {
+        if (browser) {
+          try {
+            await browser.close();
+          } catch (closeError) {
+            console.error('Browser close error:', closeError);
+          }
+        }
+        throw pdfError;
+      }
     } else {
       // Return JSON for other formats
       res.json({ data, headers, filename });
     }
   } catch (error) {
     console.error('Export error:', error);
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        console.error('Browser close error:', closeError);
-      }
-    }
     res.status(500).json({ error: 'Failed to export report', details: error.message });
   }
 };
