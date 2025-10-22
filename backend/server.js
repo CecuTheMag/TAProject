@@ -17,6 +17,7 @@ import documentRoutes from './routes/documents.js';
 import userRoutes from './routes/users.js';
 import alertService from './services/alertService.js';
 import emailService from './services/emailService.js';
+import { updateMissingQRCodes } from './utils/updateQRCodes.js';
 
 dotenv.config();
 
@@ -105,6 +106,11 @@ app.listen(PORT, '0.0.0.0', () => {
 // Start services
 alertService.startScheduledChecks();
 emailService.startReminderScheduler();
+
+// Update missing QR codes on startup
+setTimeout(() => {
+  updateMissingQRCodes();
+}, 5000); // Wait 5 seconds after startup
 
 console.log(`Database: PostgreSQL (${process.env.DB_NAME})`);
 console.log(`JWT Secret configured: ${!!process.env.JWT_SECRET}`);

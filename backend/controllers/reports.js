@@ -289,15 +289,24 @@ export const exportReport = async (req, res) => {
       
       const browser = await puppeteer.launch({ 
         headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox', 
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--font-render-hinting=none'
+        ]
       });
       const page = await browser.newPage();
-      await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      await page.emulateMediaType('print');
       const pdfBuffer = await page.pdf({ 
         format: 'A4', 
         margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
         printBackground: true,
-        preferCSSPageSize: true
+        preferCSSPageSize: true,
+        displayHeaderFooter: false
       });
       await browser.close();
       

@@ -126,7 +126,7 @@ const RequestsTab = () => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
-        padding: isMobile ? '12px' : '32px',
+        padding: isMobile ? '12px' : '40px',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
         margin: '0',
@@ -165,11 +165,10 @@ const RequestsTab = () => {
           
           <div style={{ 
             display: 'flex', 
-            gap: isMobile ? '6px' : '12px',
-            flexWrap: 'nowrap',
+            gap: isMobile ? '4px' : '12px',
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
             alignItems: 'center',
             justifyContent: isMobile ? 'center' : 'flex-start',
-            overflowX: isMobile ? 'auto' : 'visible',
             width: isMobile ? '100%' : 'auto'
           }}>
             {['all', 'pending', 'approved', 'rejected', 'returned', 'early_returned'].map(status => (
@@ -177,15 +176,17 @@ const RequestsTab = () => {
                 key={status}
                 onClick={() => setFilter(status)}
                 style={{
-                  padding: '8px 16px',
+                  padding: isMobile ? '6px 10px' : '8px 16px',
                   background: filter === status ? '#0f172a' : 'transparent',
                   color: filter === status ? 'white' : '#64748b',
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '12px' : '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
-                  textTransform: 'capitalize'
+                  textTransform: 'capitalize',
+                  whiteSpace: 'nowrap',
+                  minWidth: 'fit-content'
                 }}
               >
                 {status === 'early_returned' ? 'Early Returned' : status}
@@ -197,7 +198,7 @@ const RequestsTab = () => {
 
       {/* Content */}
       <div style={{ 
-        padding: isMobile ? '12px' : '32px',
+        padding: isMobile ? '12px' : '40px',
         margin: '0'
       }}>
         {filteredRequests.length === 0 ? (
