@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import puppeteer from 'puppeteer';
+import PDFDocument from 'pdfkit';
 import pool from '../database.js';
 import cache from '../utils/cache.js';
 
@@ -215,7 +215,6 @@ export const exportReport = async (req, res) => {
             });
           }
           value = String(value);
-          // Always wrap in quotes to prevent formatting issues
           return `"${value.replace(/"/g, '""')}"`;
         }).join(',')
       );
@@ -225,112 +224,56 @@ export const exportReport = async (req, res) => {
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(csvContent);
     } else if (format === 'pdf') {
-      // Generate PDF content
+      // Generate PDF
+      const doc = new PDFDocument({ margin: 50 });
       const reportTitle = type.charAt(0).toUpperCase() + type.slice(1) + ' Report';
-      const currentDate = new Date().toLocaleDateString();
       
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${reportTitle}</title>
-          <style>
-            * { box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; line-height: 1.4; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .header h1 { color: #0f172a; margin-bottom: 5px; font-size: 24px; }
-            .header p { color: #64748b; margin: 0; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-            th, td { border: 1px solid #e2e8f0; padding: 6px; text-align: left; word-wrap: break-word; }
-            th { background-color: #f8fafc; font-weight: 600; }
-            tr:nth-child(even) { background-color: #f8fafc; }
-            .footer { margin-top: 30px; text-align: center; color: #64748b; font-size: 10px; }
-            @page { margin: 15mm; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>SIMS - ${reportTitle}</h1>
-            <p>Generated on ${currentDate}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                ${headers.map(h => `<th>${h.title}</th>`).join('')}
-              </tr>
-            </thead>
-            <tbody>
-              ${data.map(row => `
-                <tr>
-                  ${headers.map(h => {
-                    let value = row[h.id];
-                    if (value === null || value === undefined) value = '';
-                    if (value instanceof Date) {
-                      value = new Date(value).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                      });
-                    }
-                    const cellValue = String(value).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;');
-                    return `<td style="max-width: 150px; overflow: hidden;">${cellValue}</td>`;
-                  }).join('')}
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <div class="footer">
-            <p>School Inventory Management System - Total Records: ${data.length}</p>
-          </div>
-        </body>
-        </html>
-      `;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.csv', '.pdf')}"`);
       
-      let browser;
-      try {
-        browser = await puppeteer.launch({ 
-          headless: 'new',
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
-          args: [
-            '--no-sandbox', 
-            '--disable-setuid-sandbox', 
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-web-security',
-            '--font-render-hinting=none',
-            '--disable-extensions',
-            '--disable-plugins'
-          ]
-        });
-        const page = await browser.newPage();
-        await page.setContent(htmlContent, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.emulateMediaType('print');
-        const pdfBuffer = await page.pdf({ 
-          format: 'A4', 
-          margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
-          printBackground: true,
-          preferCSSPageSize: true,
-          displayHeaderFooter: false,
-          timeout: 30000
-        });
-        await browser.close();
-        
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename.replace('.csv', '.pdf')}"`);
-        res.send(pdfBuffer);
-      } catch (pdfError) {
-        if (browser) {
-          try {
-            await browser.close();
-          } catch (closeError) {
-            console.error('Browser close error:', closeError);
-          }
+      doc.pipe(res);
+      
+      // Title
+      doc.fontSize(16).text(`SIMS - ${reportTitle}`, { align: 'center' });
+      doc.fontSize(10).text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' });
+      doc.moveDown(2);
+      
+      // Table headers
+      let y = doc.y;
+      const colWidth = 60;
+      headers.forEach((header, i) => {
+        doc.fontSize(8).text(header.title, 50 + (i * colWidth), y, { width: colWidth - 5 });
+      });
+      
+      y += 20;
+      doc.moveTo(50, y).lineTo(50 + (headers.length * colWidth), y).stroke();
+      y += 5;
+      
+      // Table rows
+      data.forEach(row => {
+        if (y > 700) {
+          doc.addPage();
+          y = 50;
         }
-        throw pdfError;
-      }
+        
+        headers.forEach((header, i) => {
+          let value = row[header.id];
+          if (value === null || value === undefined) value = '';
+          if (value instanceof Date) {
+            value = new Date(value).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            });
+          }
+          value = String(value).substring(0, 15); // Truncate long values
+          doc.fontSize(7).text(value, 50 + (i * colWidth), y, { width: colWidth - 5 });
+        });
+        y += 15;
+      });
+      
+      doc.end();
     } else {
-      // Return JSON for other formats
       res.json({ data, headers, filename });
     }
   } catch (error) {
