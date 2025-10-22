@@ -7,7 +7,7 @@ COPY package*.json ./
 
 # Install dependencies, wget for healthcheck, and chromium for puppeteer
 RUN apk add --no-cache wget chromium
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Set Puppeteer to use installed Chromium
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
