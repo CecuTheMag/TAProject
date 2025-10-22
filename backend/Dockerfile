@@ -5,9 +5,12 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies and wget for healthcheck
-RUN apk add --no-cache wget
+# Install dependencies, wget for healthcheck, and chromium for puppeteer
+RUN apk add --no-cache wget chromium
 RUN npm ci --only=production
+
+# Set Puppeteer to use installed Chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Copy source code
 COPY . .
