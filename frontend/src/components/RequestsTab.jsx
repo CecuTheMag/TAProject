@@ -349,7 +349,7 @@ const RequestsTab = () => {
                       </div>
                     )}
                     
-                    {request.status === 'approved' && request.user_id === user?.id && (
+                    {user?.role === 'admin' && request.status === 'approved' && (
                       <button
                         onClick={() => handleEarlyReturn(request)}
                         style={{

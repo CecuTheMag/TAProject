@@ -468,7 +468,9 @@ const Dashboard = () => {
           padding: isMobile ? '12px' : '40px',
           margin: '0',
           maxWidth: '100%',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           {showingIndividual && individualItem ? (
             <div>
