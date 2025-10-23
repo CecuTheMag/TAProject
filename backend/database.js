@@ -1,36 +1,51 @@
+// SIMS Database Configuration and Initialization
+// Handles PostgreSQL connection, table creation, and sample data setup
+
 import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
 import { createDefaultAdmin } from './utils/createAdmin.js';
 import { createSampleData } from './utils/createSampleData.js';
 
+// Load environment variables
 dotenv.config();
 
+/**
+ * PostgreSQL Connection Pool Configuration
+ * Optimized for high-performance concurrent connections
+ */
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  // Connection pool optimization
-  max: 20, // Maximum number of clients
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return error after 2 seconds if connection could not be established
-  maxUses: 7500, // Close connection after 7500 uses
+  host: process.env.DB_HOST,           // Database server hostname
+  port: process.env.DB_PORT,           // Database server port (default: 5432)
+  user: process.env.DB_USER,           // Database username
+  password: process.env.DB_PASSWORD,   // Database password
+  database: process.env.DB_NAME,       // Database name
+  
+  // Connection pool optimization for enterprise scaling
+  max: 20,                    // Maximum number of concurrent connections
+  idleTimeoutMillis: 30000,   // Close idle connections after 30 seconds
+  connectionTimeoutMillis: 2000, // Timeout for new connections (2 seconds)
+  maxUses: 7500,              // Close and recreate connection after 7500 uses
 });
 
-// database initialization
+/**
+ * Database Initialization Function
+ * Creates all required tables, indexes, and constraints
+ * Sets up sample data and default admin account
+ */
 export const initDB = async () => {
   try {
-    // users table
+    // ===== USERS TABLE =====
+    // Stores user accounts with role-based access control
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role VARCHAR(20) DEFAULT 'student' CHECK (role IN ('student', 'teacher', 'manager', 'admin')),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY,                    -- Auto-incrementing user ID
+        username VARCHAR(50) UNIQUE NOT NULL,     -- Unique username for login
+        email VARCHAR(100) UNIQUE NOT NULL,       -- Unique email address
+        password VARCHAR(255) NOT NULL,           -- Hashed password (bcrypt)
+        role VARCHAR(20) DEFAULT 'student'        -- User role for permissions
+          CHECK (role IN ('student', 'teacher', 'manager', 'admin')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Account creation date
       )
     `);
 

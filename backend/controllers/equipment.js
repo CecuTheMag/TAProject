@@ -1,9 +1,11 @@
+// Equipment Controller - Handles CRUD operations for inventory items
 import Joi from 'joi';
 import QRCode from 'qrcode';
 import pool from '../database.js';
 import cache from '../utils/cache.js';
 import redisService from '../utils/redis.js';
 
+// Validation schema for equipment data
 const equipmentSchema = Joi.object({
   name: Joi.string().required(),
   type: Joi.string().required(),
@@ -16,12 +18,13 @@ const equipmentSchema = Joi.object({
   stock_threshold: Joi.number().integer().min(1).default(2)
 });
 
+// Get all equipment with optional filtering and caching
 export const getAllEquipment = async (req, res) => {
   try {
     const { search, type, status, condition } = req.query;
     const cacheKey = `equipment:${JSON.stringify(req.query)}`;
     
-    // Try Redis cache first
+    // Check Redis cache first for performance
     const cached = await redisService.get(cacheKey);
     if (cached) {
       return res.json(cached);
@@ -79,6 +82,7 @@ export const getEquipmentById = async (req, res) => {
   }
 };
 
+// Create new equipment items (supports bulk creation with quantity)
 export const createEquipment = async (req, res) => {
   try {
     const {
@@ -89,7 +93,7 @@ export const createEquipment = async (req, res) => {
       status = 'available',
       location,
       requires_approval = false,
-      quantity = 1,
+      quantity = 1, // Number of identical items to create
       stock_threshold = 2
     } = req.body;
     
@@ -97,7 +101,7 @@ export const createEquipment = async (req, res) => {
     
     const createdEquipment = [];
     
-    // Generate base serial if none provided or empty
+    // Auto-generate serial number if not provided
     const timestamp = Date.now().toString();
     const baseSerial = (serial_number && serial_number.trim()) ? serial_number.trim() : `EQ${timestamp.slice(-6)}`;
     

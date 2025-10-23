@@ -3,10 +3,12 @@ import { requests } from '../api';
 import { useAuth } from '../AuthContext';
 import EarlyReturnModal from './EarlyReturnModal';
 
+// Component for managing equipment requests - displays user's requests or all requests for admins
 const RequestsTab = () => {
+  // State management
   const [requestsList, setRequestsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('all'); // Filter by request status
   const [isMobile, setIsMobile] = useState(false);
   const [showEarlyReturn, setShowEarlyReturn] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -36,14 +38,17 @@ const RequestsTab = () => {
     fetchRequests();
   }, [user]);
 
+  // Filter requests based on selected status
   const filteredRequests = requestsList.filter(request => {
     if (filter === 'all') return true;
     return request.status === filter;
   });
 
+  // Admin function to approve equipment requests
   const handleApprove = async (requestId) => {
     try {
       await requests.approve(requestId);
+      // Update local state to reflect approval
       setRequestsList(prev => prev.map(req => 
         req.id === requestId ? { ...req, status: 'approved' } : req
       ));
@@ -52,9 +57,11 @@ const RequestsTab = () => {
     }
   };
 
+  // Admin function to reject equipment requests
   const handleReject = async (requestId) => {
     try {
       await requests.reject(requestId);
+      // Update local state to reflect rejection
       setRequestsList(prev => prev.map(req => 
         req.id === requestId ? { ...req, status: 'rejected' } : req
       ));
@@ -63,13 +70,14 @@ const RequestsTab = () => {
     }
   };
 
+  // Returns color code for request status badges
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return '#f59e0b';
-      case 'approved': return '#10b981';
-      case 'rejected': return '#ef4444';
-      case 'returned': return '#6b7280';
-      case 'early_returned': return '#3b82f6';
+      case 'pending': return '#f59e0b';      // Orange
+      case 'approved': return '#10b981';     // Green
+      case 'rejected': return '#ef4444';     // Red
+      case 'returned': return '#6b7280';     // Gray
+      case 'early_returned': return '#3b82f6'; // Blue
       default: return '#6b7280';
     }
   };

@@ -1,43 +1,73 @@
+// SIMS Backend Server - Main Entry Point
+// Handles API routing, middleware setup, and service initialization
+
+// Core Express framework and middleware imports
 import express from 'express';
-import cors from 'cors';
-import compression from 'compression';
-import helmet from 'helmet';
-import dotenv from 'dotenv';
+import cors from 'cors';              // Cross-Origin Resource Sharing
+import compression from 'compression'; // Response compression for performance
+import helmet from 'helmet';          // Security headers
+import dotenv from 'dotenv';          // Environment variable management
+
+// Custom middleware imports
 import { apiLimiter, authLimiter, reportLimiter } from './middleware/rateLimiter.js';
 import { metricsMiddleware, metricsHandler } from './middleware/metrics.js';
+
+// Database and caching services
 import { initDB } from './database.js';
 import redisService from './utils/redis.js';
-import authRoutes from './routes/auth.js';
-import equipmentRoutes from './routes/equipment.js';
-import requestRoutes from './routes/requests.js';
-import reportRoutes from './routes/reports.js';
-import dashboardRoutes from './routes/dashboard.js';
-import alertRoutes from './routes/alerts.js';
-import documentRoutes from './routes/documents.js';
-import userRoutes from './routes/users.js';
-import alertService from './services/alertService.js';
-import emailService from './services/emailService.js';
-import { updateMissingQRCodes } from './utils/updateQRCodes.js';
 
+// Route handlers for different API endpoints
+import authRoutes from './routes/auth.js';         // User authentication
+import equipmentRoutes from './routes/equipment.js'; // Equipment CRUD operations
+import requestRoutes from './routes/requests.js';   // Equipment borrowing system
+import reportRoutes from './routes/reports.js';     // Analytics and reporting
+import dashboardRoutes from './routes/dashboard.js'; // Dashboard statistics
+import alertRoutes from './routes/alerts.js';       // System alerts
+import documentRoutes from './routes/documents.js'; // File management
+import userRoutes from './routes/users.js';         // User management
+
+// Background services
+import alertService from './services/alertService.js';   // Alert monitoring
+import emailService from './services/emailService.js';   // Email notifications
+import { updateMissingQRCodes } from './utils/updateQRCodes.js'; // QR code generation
+
+// Load environment variables from .env file
 dotenv.config();
 
+// Initialize Express application
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security and performance middleware
+// ===== MIDDLEWARE CONFIGURATION =====
+
+// Security middleware - adds security headers to prevent common attacks
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow cross-origin requests
 }));
+
+// Performance middleware - compresses responses to reduce bandwidth
 app.use(compression());
+
+// CORS middleware - enables cross-origin requests from frontend
 app.use(cors());
+
+// Body parsing middleware - handles JSON and URL-encoded data (10MB limit for file uploads)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static file serving - serves uploaded documents and images
 app.use('/uploads', express.static('uploads'));
+
+// Metrics collection middleware - tracks API performance and usage
 app.use(metricsMiddleware);
+
+// Request logging middleware - logs all incoming requests for debugging
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`, req.body);
   next();
 });
+
+// Rate limiting middleware - prevents API abuse (10 requests per second)
 app.use(apiLimiter);
 
 // Initialize database and Redis

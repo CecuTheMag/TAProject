@@ -149,7 +149,7 @@ const EquipmentTab = () => {
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
-        padding: isMobile ? '12px' : '32px',
+        padding: isMobile ? '12px' : '40px',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
         margin: '0',
@@ -238,7 +238,7 @@ const EquipmentTab = () => {
 
       {/* Controls */}
       <div style={{
-        padding: isMobile ? '12px' : '32px',
+        padding: isMobile ? '12px' : '32px 40px',
         background: 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
@@ -269,7 +269,7 @@ const EquipmentTab = () => {
 
       {/* Content */}
       <div style={{ 
-        padding: isMobile ? '12px' : '32px',
+        padding: isMobile ? '12px' : '40px',
         margin: '0'
       }}>
         {filteredEquipment.length === 0 ? (

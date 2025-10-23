@@ -466,7 +466,9 @@ const Dashboard = () => {
         {/* Content */}
         <div style={{ 
           padding: isMobile ? '12px' : '40px',
-          margin: '0'
+          margin: '0',
+          maxWidth: '100%',
+          overflow: 'hidden'
         }}>
           {showingIndividual && individualItem ? (
             <div>
