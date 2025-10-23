@@ -270,11 +270,7 @@ const EquipmentTab = () => {
       {/* Content */}
       <div style={{ 
         padding: isMobile ? '12px' : '40px',
-        margin: '0',
-        maxWidth: '100%',
-        overflow: 'hidden',
-        width: '100%',
-        boxSizing: 'border-box'
+        margin: '0'
       }}>
         {filteredEquipment.length === 0 ? (
           <div style={{
