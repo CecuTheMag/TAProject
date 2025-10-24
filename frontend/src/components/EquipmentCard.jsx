@@ -42,7 +42,10 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
         cursor: 'pointer',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
       }}>
       {/* Status Indicator */}
       <div style={{

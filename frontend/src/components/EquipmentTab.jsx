@@ -299,9 +299,11 @@ const EquipmentTab = () => {
             gridTemplateColumns: isMobile 
               ? '1fr' 
               : viewMode === 'grid' 
-                ? 'repeat(auto-fill, minmax(380px, 1fr))'
+                ? 'repeat(auto-fill, minmax(320px, 1fr))'
                 : '1fr',
-            gap: isMobile ? '12px' : '24px'
+            gap: isMobile ? '12px' : '24px',
+            width: '100%',
+            maxWidth: '100%'
           }}>
             {filteredEquipment.map((item) => (
               <EquipmentCard
