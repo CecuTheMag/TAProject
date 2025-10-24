@@ -294,17 +294,7 @@ const EquipmentTab = () => {
             </p>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile 
-              ? '1fr' 
-              : viewMode === 'grid' 
-                ? 'repeat(auto-fill, minmax(320px, 1fr))'
-                : '1fr',
-            gap: isMobile ? '12px' : '24px',
-            width: '100%',
-            maxWidth: '100%'
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {filteredEquipment.map((item) => (
               <EquipmentCard
                 key={item.id}

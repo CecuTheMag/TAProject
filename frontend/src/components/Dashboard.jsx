@@ -569,41 +569,18 @@ const Dashboard = () => {
               </button>
             </div>
           ) : (
-            <motion.div
-              layout
-              style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile 
-                  ? '1fr' 
-                  : viewMode === 'grid' 
-                    ? 'repeat(auto-fill, minmax(320px, 1fr))'
-                    : '1fr',
-                gap: isMobile ? '12px' : '24px',
-                width: '100%',
-                maxWidth: '100%'
-              }}
-            >
-              <AnimatePresence>
-                {paginatedEquipment.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ delay: index * 0.03, duration: 0.3 }}
-                  >
-                    <EquipmentCard
-                      item={item}
-                      onViewDetails={handleViewDetails}
-                      onRequest={handleRequest}
-                      user={user}
-                      isMobile={isMobile}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {paginatedEquipment.map((item) => (
+                <EquipmentCard
+                  key={item.id}
+                  item={item}
+                  onViewDetails={handleViewDetails}
+                  onRequest={handleRequest}
+                  user={user}
+                  isMobile={isMobile}
+                />
+              ))}
+            </div>
           )}
           
           {/* Pagination */}
