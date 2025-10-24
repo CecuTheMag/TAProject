@@ -185,7 +185,7 @@ const RequestEquipmentModal = ({ equipment, onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Notes (Optional)
+                Notes (Mandatory)
               </label>
               <textarea
                 name="notes"

@@ -31,7 +31,7 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick, isMob
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={onClick ? { y: -8, scale: 1.02 } : {}}
+      whileHover={onClick ? { y: -4, scale: 1.01 } : {}}
       whileTap={onClick ? { scale: 0.98 } : {}}
       transition={{ duration: 0.3, delay: delay / 1000 }}
       onClick={onClick}
@@ -39,12 +39,13 @@ const StatsCard = ({ title, value, icon, color, trend, delay = 0, onClick, isMob
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(20px)',
         borderRadius: '20px',
-        padding: '32px',
+        padding: isMobile ? '20px' : '32px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
-        overflow: 'hidden'
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
 
 

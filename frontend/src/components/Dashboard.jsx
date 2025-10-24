@@ -382,7 +382,7 @@ const Dashboard = () => {
             width: '100%',
             maxWidth: '100%',
             boxSizing: 'border-box',
-            overflowX: 'hidden'
+            padding: isMobile ? '0' : '10px 0 20px 0'
           }}>
             <StatsCard 
               title="Total Equipment" 
