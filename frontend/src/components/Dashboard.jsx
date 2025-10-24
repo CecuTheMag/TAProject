@@ -217,8 +217,11 @@ const Dashboard = () => {
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
       fontFamily: '"SF Pro Display", -apple-system, sans-serif',
-      display: 'flex'
-    }}>
+      display: 'flex',
+      width: '100%',
+      boxSizing: 'border-box',
+      overflowX: 'hidden'
+    }});
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
@@ -230,8 +233,11 @@ const Dashboard = () => {
         marginLeft: isMobile ? '0' : '300px',
         marginTop: isMobile ? '70px' : '0',
         minHeight: isMobile ? 'calc(100vh - 70px)' : '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)'
-      }}>
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)',
+        width: isMobile ? '100%' : 'calc(100% - 300px)',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
+      }});
         {activeTab === 'dashboard' ? (
           <>
             {/* Header */}
@@ -242,8 +248,11 @@ const Dashboard = () => {
           borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
           margin: '0',
-          borderRadius: '0'
-        }}>
+          borderRadius: '0',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowX: 'hidden'
+        }});
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -371,8 +380,10 @@ const Dashboard = () => {
             gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: isMobile ? '8px' : '24px',
             width: '100%',
-            maxWidth: '100%'
-          }}>
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            overflowX: 'hidden'
+          }});
             <StatsCard 
               title="Total Equipment" 
               value={stats.total} 
@@ -439,8 +450,11 @@ const Dashboard = () => {
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-          margin: '0'
-        }}>
+          margin: '0',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowX: 'hidden'
+        }});
           <div style={{
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
@@ -466,8 +480,11 @@ const Dashboard = () => {
         {/* Content */}
         <div style={{ 
           padding: isMobile ? '12px' : '40px',
-          margin: '0'
-        }}>
+          margin: '0',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowX: 'hidden'
+        }});
           {showingIndividual && individualItem ? (
             <div>
               <div style={{ marginBottom: '24px', textAlign: 'center' }}>
@@ -569,18 +586,43 @@ const Dashboard = () => {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {paginatedEquipment.map((item) => (
-                <EquipmentCard
-                  key={item.id}
-                  item={item}
-                  onViewDetails={handleViewDetails}
-                  onRequest={handleRequest}
-                  user={user}
-                  isMobile={isMobile}
-                />
-              ))}
-            </div>
+            <motion.div
+              layout
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile 
+                  ? '1fr' 
+                  : viewMode === 'grid' 
+                    ? 'repeat(auto-fill, minmax(320px, 1fr))'
+                    : '1fr',
+                gap: isMobile ? '12px' : '24px',
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                overflowX: 'hidden'
+              }}
+            >
+              <AnimatePresence>
+                {paginatedEquipment.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
+                  >
+                    <EquipmentCard
+                      item={item}
+                      onViewDetails={handleViewDetails}
+                      onRequest={handleRequest}
+                      user={user}
+                      isMobile={isMobile}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
           
           {/* Pagination */}

@@ -144,7 +144,11 @@ const EquipmentTab = () => {
   }
 
   return (
-    <div>
+    <div style={{
+      width: '100%',
+      boxSizing: 'border-box',
+      overflowX: 'hidden'
+    }});
       {/* Header */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
@@ -153,8 +157,11 @@ const EquipmentTab = () => {
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
         margin: '0',
-        borderRadius: '0'
-      }}>
+        borderRadius: '0',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
+      }});
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -243,8 +250,11 @@ const EquipmentTab = () => {
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
-        margin: '0'
-      }}>
+        margin: '0',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
+      }});
         <div style={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -270,8 +280,11 @@ const EquipmentTab = () => {
       {/* Content */}
       <div style={{ 
         padding: isMobile ? '12px' : '40px',
-        margin: '0'
-      }}>
+        margin: '0',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden'
+      }});
         {filteredEquipment.length === 0 ? (
           <div style={{
             textAlign: 'center',
@@ -294,7 +307,19 @@ const EquipmentTab = () => {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile 
+              ? '1fr' 
+              : viewMode === 'grid' 
+                ? 'repeat(auto-fill, minmax(320px, 1fr))'
+                : '1fr',
+            gap: isMobile ? '12px' : '24px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            overflowX: 'hidden'
+          }}>
             {filteredEquipment.map((item) => (
               <EquipmentCard
                 key={item.id}
