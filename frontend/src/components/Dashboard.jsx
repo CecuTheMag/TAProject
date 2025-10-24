@@ -221,7 +221,7 @@ const Dashboard = () => {
       width: '100%',
       boxSizing: 'border-box',
       overflowX: 'hidden'
-    }});
+    }}>
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
@@ -237,7 +237,7 @@ const Dashboard = () => {
         width: isMobile ? '100%' : 'calc(100% - 300px)',
         boxSizing: 'border-box',
         overflowX: 'hidden'
-      }});
+      }}>
         {activeTab === 'dashboard' ? (
           <>
             {/* Header */}
@@ -252,7 +252,7 @@ const Dashboard = () => {
           width: '100%',
           boxSizing: 'border-box',
           overflowX: 'hidden'
-        }});
+        }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -383,7 +383,7 @@ const Dashboard = () => {
             maxWidth: '100%',
             boxSizing: 'border-box',
             overflowX: 'hidden'
-          }});
+          }}>
             <StatsCard 
               title="Total Equipment" 
               value={stats.total} 
@@ -454,7 +454,7 @@ const Dashboard = () => {
           width: '100%',
           boxSizing: 'border-box',
           overflowX: 'hidden'
-        }});
+        }}>
           <div style={{
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
@@ -484,7 +484,7 @@ const Dashboard = () => {
           width: '100%',
           boxSizing: 'border-box',
           overflowX: 'hidden'
-        }});
+        }}>
           {showingIndividual && individualItem ? (
             <div>
               <div style={{ marginBottom: '24px', textAlign: 'center' }}>

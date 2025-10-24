@@ -148,7 +148,7 @@ const EquipmentTab = () => {
       width: '100%',
       boxSizing: 'border-box',
       overflowX: 'hidden'
-    }});
+    }}>
       {/* Header */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
@@ -161,7 +161,7 @@ const EquipmentTab = () => {
         width: '100%',
         boxSizing: 'border-box',
         overflowX: 'hidden'
-      }});
+      }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -254,7 +254,7 @@ const EquipmentTab = () => {
         width: '100%',
         boxSizing: 'border-box',
         overflowX: 'hidden'
-      }});
+      }}>
         <div style={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
@@ -284,7 +284,7 @@ const EquipmentTab = () => {
         width: '100%',
         boxSizing: 'border-box',
         overflowX: 'hidden'
-      }});
+      }}>
         {filteredEquipment.length === 0 ? (
           <div style={{
             textAlign: 'center',
