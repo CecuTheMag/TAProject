@@ -1,29 +1,55 @@
+// EquipmentCard Component - Individual equipment item display
+// Provides interactive card interface with status indicators, actions, and document access
+// Supports responsive design and role-based action visibility
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DocumentViewer from './DocumentViewer';
 
+/**
+ * Equipment Card Component
+ * Displays individual equipment items with:
+ * - Visual status and condition indicators
+ * - Interactive action buttons (view, request, documents)
+ * - Responsive layout for mobile and desktop
+ * - Smooth animations and hover effects
+ */
 const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, isMobile }) => {
+  const [showDocuments, setShowDocuments] = useState(false);
+  
+  /**
+   * Get current display status for the equipment
+   * Could be extended for custom status logic
+   */
   const getDisplayStatus = (item) => {
     return item.status;
   };
-  const [showDocuments, setShowDocuments] = useState(false);
+  
+  /**
+   * Status color mapping for visual indicators
+   * Provides consistent color scheme across the application
+   */
   const getStatusColor = (status) => {
     switch (status) {
-      case 'available': return '#10b981';
-      case 'checked_out': return '#f59e0b';
-      case 'under_repair': return '#ef4444';
-      case 'retired': return '#6b7280';
-      default: return '#6b7280';
+      case 'available': return '#10b981';    // Green - ready for use
+      case 'checked_out': return '#f59e0b';  // Amber - currently borrowed
+      case 'under_repair': return '#ef4444'; // Red - needs maintenance
+      case 'retired': return '#6b7280';      // Gray - no longer in service
+      default: return '#6b7280';             // Default gray
     }
   };
 
+  /**
+   * Condition color mapping for equipment state
+   * Helps users quickly assess equipment quality
+   */
   const getConditionColor = (condition) => {
     switch (condition) {
-      case 'excellent': return '#10b981';
-      case 'good': return '#3b82f6';
-      case 'fair': return '#f59e0b';
-      case 'poor': return '#ef4444';
-      default: return '#6b7280';
+      case 'excellent': return '#10b981';    // Green - perfect condition
+      case 'good': return '#3b82f6';         // Blue - good working order
+      case 'fair': return '#f59e0b';         // Amber - some wear
+      case 'poor': return '#ef4444';         // Red - needs attention
+      default: return '#6b7280';             // Default gray
     }
   };
 

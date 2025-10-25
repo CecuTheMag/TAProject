@@ -1,3 +1,7 @@
+// Dashboard Component - Main application interface
+// Handles equipment display, search/filtering, statistics, and user interactions
+// Supports responsive design and role-based access control
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { equipment, dashboard } from '../api';
@@ -23,30 +27,53 @@ import AddEquipmentModal from './AddEquipmentModal';
 import LoadingSpinner from './LoadingSpinner';
 import Footer from './Footer';
 
+/**
+ * Main Dashboard Component
+ * Provides comprehensive equipment management interface with:
+ * - Real-time statistics and analytics
+ * - Advanced search and filtering capabilities
+ * - Responsive grid/list view modes
+ * - QR code scanning integration
+ * - Role-based feature access
+ */
 const Dashboard = () => {
-  const [equipmentList, setEquipmentList] = useState([]);
-  const [dashboardStats, setDashboardStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [viewMode, setViewMode] = useState('grid');
+  // Core data state
+  const [equipmentList, setEquipmentList] = useState([]);     // All equipment items
+  const [dashboardStats, setDashboardStats] = useState(null); // Statistics from API
+  const [loading, setLoading] = useState(true);               // Initial loading state
+  
+  // UI interaction state
+  const [searchTerm, setSearchTerm] = useState('');           // Search query
+  const [activeFilters, setActiveFilters] = useState([]);     // Status filters
+  const [activeTab, setActiveTab] = useState('dashboard');    // Current tab
+  const [viewMode, setViewMode] = useState('grid');           // Grid or list view
+  
+  // Modal and selection state
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(12);
+  
+  // Responsive and pagination state
+  const [isMobile, setIsMobile] = useState(false);            // Mobile breakpoint detection
+  const [error, setError] = useState(null);                   // Error handling
+  const [currentPage, setCurrentPage] = useState(1);          // Pagination
+  const [itemsPerPage] = useState(12);                        // Items per page
+  
+  // Individual item search (QR code results)
   const [individualItem, setIndividualItem] = useState(null);
   const [showingIndividual, setShowingIndividual] = useState(false);
+  
   const { user } = useAuth();
-
-  // Students only get basic equipment view
+  
+  // Role-based access control
   const hasLimitedAccess = user?.role === 'student';
 
+  /**
+   * Responsive breakpoint detection
+   * Monitors window size changes to adjust UI layout
+   */
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -54,13 +81,19 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  /**
+   * Initial data loading with error handling and fallback
+   * Fetches equipment list and dashboard statistics concurrently
+   * Provides graceful degradation if statistics API fails
+   */
   useEffect(() => {
     const fetchData = async () => {
       try {
         setError(null);
+        // Parallel API calls for better performance
         const [equipmentResponse, statsResponse] = await Promise.all([
           equipment.getAll(),
-          dashboard.getStats().catch(() => ({ data: null }))
+          dashboard.getStats().catch(() => ({ data: null })) // Non-blocking stats failure
         ]);
         setEquipmentList(equipmentResponse.data);
         setDashboardStats(statsResponse.data);
@@ -68,7 +101,8 @@ const Dashboard = () => {
         console.error('Failed to fetch data:', error);
         setError('Failed to load dashboard data');
         toast.error('Failed to load dashboard data');
-        // Fallback to equipment list only
+        
+        // Fallback: try to load equipment list only
         try {
           const equipmentResponse = await equipment.getAll();
           setEquipmentList(equipmentResponse.data);
@@ -84,23 +118,38 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  /**
+   * Equipment filtering logic
+   * Combines search term matching (name, type, serial) with status filters
+   * Provides real-time filtering as user types or selects filters
+   */
   const filteredEquipment = equipmentList.filter(item => {
+    // Multi-field search: name, type, and serial number
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filtering: show all if no filters, otherwise match selected statuses
     const matchesFilters = activeFilters.length === 0 || activeFilters.includes(item.status);
+    
     return matchesSearch && matchesFilters;
   });
 
-  // Search for individual items when search term changes
+  /**
+   * Individual item search for QR code scanning
+   * Debounced search that looks for specific serial numbers
+   * Triggered when search term is longer than 3 characters
+   */
   useEffect(() => {
     const searchIndividualItem = async () => {
       if (searchTerm.length > 3) {
         try {
+          // Search for exact serial number matches (QR code scanning)
           const response = await equipment.searchIndividual(searchTerm);
           setIndividualItem(response.data);
           setShowingIndividual(true);
         } catch (error) {
+          // No individual item found, continue with normal search
           setIndividualItem(null);
           setShowingIndividual(false);
         }
@@ -110,26 +159,40 @@ const Dashboard = () => {
       }
     };
 
+    // Debounce search to avoid excessive API calls
     const timeoutId = setTimeout(searchIndividualItem, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
-  // Pagination
+  /**
+   * Pagination calculations
+   * Splits filtered equipment into pages for better performance
+   */
   const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedEquipment = filteredEquipment.slice(startIndex, startIndex + itemsPerPage);
 
-  // Reset to first page when filters change
+  /**
+   * Reset pagination when search or filters change
+   * Ensures user sees results from the beginning
+   */
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, activeFilters]);
 
+  /**
+   * Statistics calculation with fallback
+   * Uses API data when available, otherwise calculates from equipment list
+   * Provides real-time statistics for dashboard cards
+   */
   const stats = dashboardStats ? {
+    // Use API statistics (more accurate, includes historical data)
     total: parseInt(dashboardStats.equipment.total_equipment) || 0,
     available: parseInt(dashboardStats.equipment.available) || 0,
     checkedOut: parseInt(dashboardStats.equipment.checked_out) || 0,
     underRepair: parseInt(dashboardStats.equipment.under_repair) || 0
   } : {
+    // Fallback: calculate from current equipment list
     total: equipmentList.length,
     available: equipmentList.filter(item => item.status === 'available').length,
     checkedOut: equipmentList.filter(item => item.status === 'checked_out').length,

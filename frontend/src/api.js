@@ -1,56 +1,77 @@
 // API Configuration - Centralized HTTP client for backend communication
+// Handles authentication, request/response interceptors, and environment-specific routing
+
 import axios from 'axios';
 
-// Dynamic API URL based on environment
+/**
+ * Dynamic API URL configuration based on deployment environment
+ * Production: Routes through nginx proxy at /api
+ * Development: Direct connection to backend server on port 5000
+ */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? `${window.location.origin}/api`  // Production: use nginx proxy
-  : `http://${window.location.hostname}:5000`; // Development: direct backend
+  ? `${window.location.origin}/api`        // Production: nginx proxy routing
+  : `http://${window.location.hostname}:5000`; // Development: direct backend connection
 
-// Create axios instance with base configuration
+/**
+ * Create axios instance with centralized configuration
+ * All API calls use this instance for consistent behavior
+ */
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Automatically add JWT token to all requests
+/**
+ * Request interceptor - automatically adds JWT authentication to all requests
+ * Retrieves token from localStorage and adds to Authorization header
+ */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`; // JWT Bearer token format
   }
   return config;
 });
 
-// Authentication API endpoints
+/**
+ * Authentication API endpoints
+ * Handles user login, registration, and logout operations
+ */
 export const auth = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
-  logout: () => api.get('/auth/logout'),
+  login: (credentials) => api.post('/auth/login', credentials),    // User authentication
+  register: (userData) => api.post('/auth/register', userData),    // New user registration
+  logout: () => api.get('/auth/logout'),                          // Session termination
 };
 
-// Equipment management API endpoints
+/**
+ * Equipment management API endpoints
+ * Handles CRUD operations, bulk actions, and equipment tracking
+ */
 export const equipment = {
-  getAll: (params) => api.get('/equipment', { params }), // Get all with filtering
-  getById: (id) => api.get(`/equipment/${id}`),
-  create: (data) => api.post('/equipment', data), // Create new equipment
-  update: (id, data) => api.put(`/equipment/${id}`, data),
-  delete: (id) => api.delete(`/equipment/${id}`),
-  updateRepair: (data) => api.put('/equipment/repair', data), // Mark as under repair
-  completeRepair: (data) => api.put('/equipment/repair-complete', data), // Complete repair
-  retireFleet: (data) => api.put('/equipment/retire-fleet', data), // Bulk retire
-  getGroups: () => api.get('/equipment/groups'), // Get grouped equipment
-  getLowStock: () => api.get('/equipment/low-stock'), // Low stock alerts
-  searchIndividual: (serial) => api.get(`/equipment/search/${encodeURIComponent(serial)}`), // QR search
+  getAll: (params) => api.get('/equipment', { params }),           // Get all with filtering/search
+  getById: (id) => api.get(`/equipment/${id}`),                   // Get specific equipment details
+  create: (data) => api.post('/equipment', data),                 // Create new equipment (supports bulk)
+  update: (id, data) => api.put(`/equipment/${id}`, data),        // Update equipment details
+  delete: (id) => api.delete(`/equipment/${id}`),                 // Remove equipment from system
+  updateRepair: (data) => api.put('/equipment/repair', data),     // Mark items as under repair
+  completeRepair: (data) => api.put('/equipment/repair-complete', data), // Complete repair process
+  retireFleet: (data) => api.put('/equipment/retire-fleet', data), // Bulk retire equipment
+  getGroups: () => api.get('/equipment/groups'),                  // Get equipment grouped by type
+  getLowStock: () => api.get('/equipment/low-stock'),             // Get low stock alerts
+  searchIndividual: (serial) => api.get(`/equipment/search/${encodeURIComponent(serial)}`), // QR code search
 };
 
-// Equipment request/borrowing API endpoints
+/**
+ * Equipment request/borrowing API endpoints
+ * Manages the complete request lifecycle from submission to return
+ */
 export const requests = {
-  create: (data) => api.post('/request', data), // Submit new request
-  getUserRequests: () => api.get('/request'), // Get user's requests
-  getAllRequests: () => api.get('/request/manager'), // Admin: get all requests
-  approve: (id) => api.put(`/request/${id}/approve`), // Admin: approve request
-  reject: (id) => api.put(`/request/${id}/reject`), // Admin: reject request
-  return: (id, data) => api.put(`/request/${id}/return`, data), // Return equipment
-  earlyReturn: (id, data) => api.put(`/request/${id}/early-return`, data), // Early return
+  create: (data) => api.post('/request', data),                   // Submit new borrowing request
+  getUserRequests: () => api.get('/request'),                    // Get current user's requests
+  getAllRequests: () => api.get('/request/manager'),             // Admin: view all system requests
+  approve: (id) => api.put(`/request/${id}/approve`),            // Admin: approve pending request
+  reject: (id) => api.put(`/request/${id}/reject`),              // Admin: reject pending request
+  return: (id, data) => api.put(`/request/${id}/return`, data),  // Process equipment return
+  earlyReturn: (id, data) => api.put(`/request/${id}/early-return`, data), // Handle early returns
 };
 
 // Dashboard statistics API endpoints

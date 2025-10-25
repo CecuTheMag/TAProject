@@ -49,23 +49,26 @@ export const initDB = async () => {
       )
     `);
 
-    // equipment table
+    // ===== EQUIPMENT TABLE =====
+    // Stores all equipment/inventory items with tracking capabilities
     await pool.query(`
       CREATE TABLE IF NOT EXISTS equipment (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        type VARCHAR(50) NOT NULL,
-        serial_number VARCHAR(100) UNIQUE,
-        condition VARCHAR(20) DEFAULT 'good' CHECK (condition IN ('excellent', 'good', 'fair', 'poor')),
-        status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'checked_out', 'under_repair', 'retired')),
-        location VARCHAR(100),
-        photo VARCHAR(255),
-        qr_code TEXT,
-        requires_approval BOOLEAN DEFAULT false,
-        quantity INTEGER DEFAULT 1,
-        stock_threshold INTEGER DEFAULT 2,
-        documents TEXT[],
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY,                    -- Auto-incrementing equipment ID
+        name VARCHAR(100) NOT NULL,               -- Equipment name/title
+        type VARCHAR(50) NOT NULL,                -- Category (projector, laptop, etc.)
+        serial_number VARCHAR(100) UNIQUE,        -- Unique identifier for tracking
+        condition VARCHAR(20) DEFAULT 'good'      -- Physical condition assessment
+          CHECK (condition IN ('excellent', 'good', 'fair', 'poor')),
+        status VARCHAR(20) DEFAULT 'available'    -- Availability status
+          CHECK (status IN ('available', 'checked_out', 'under_repair', 'retired')),
+        location VARCHAR(100),                    -- Physical storage location
+        photo VARCHAR(255),                       -- Image URL for identification
+        qr_code TEXT,                            -- QR code for mobile scanning
+        requires_approval BOOLEAN DEFAULT false,  -- Admin approval required flag
+        quantity INTEGER DEFAULT 1,              -- Stock quantity available
+        stock_threshold INTEGER DEFAULT 2,       -- Low stock alert threshold
+        documents TEXT[],                        -- Associated document filenames
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Record creation date
       )
     `);
 
@@ -83,24 +86,27 @@ export const initDB = async () => {
       ALTER COLUMN qr_code TYPE TEXT
     `).catch(() => {});
 
-    // requests table
+    // ===== REQUESTS TABLE =====
+    // Tracks equipment borrowing requests and approval workflow
     await pool.query(`
       CREATE TABLE IF NOT EXISTS requests (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        equipment_id INTEGER REFERENCES equipment(id),
-        request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        start_date TIMESTAMP NOT NULL,
-        end_date TIMESTAMP NOT NULL,
-        due_date TIMESTAMP,
-        status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned', 'early_returned')),
-        manager_approved_by INTEGER REFERENCES users(id),
-        manager_approved_at TIMESTAMP,
-        approved_by INTEGER REFERENCES users(id),
-        approved_at TIMESTAMP,
-        returned_at TIMESTAMP,
-        return_condition VARCHAR(20) CHECK (return_condition IN ('excellent', 'good', 'fair', 'poor')),
-        notes TEXT
+        id SERIAL PRIMARY KEY,                    -- Auto-incrementing request ID
+        user_id INTEGER REFERENCES users(id),     -- Requesting user
+        equipment_id INTEGER REFERENCES equipment(id), -- Requested equipment
+        request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- When request was made
+        start_date TIMESTAMP NOT NULL,            -- Requested start date
+        end_date TIMESTAMP NOT NULL,              -- Requested end date
+        due_date TIMESTAMP,                       -- Actual due date (after approval)
+        status VARCHAR(20) DEFAULT 'pending'      -- Request workflow status
+          CHECK (status IN ('pending', 'approved', 'rejected', 'returned', 'early_returned')),
+        manager_approved_by INTEGER REFERENCES users(id), -- Manager who approved
+        manager_approved_at TIMESTAMP,            -- Manager approval timestamp
+        approved_by INTEGER REFERENCES users(id), -- Final approver
+        approved_at TIMESTAMP,                    -- Final approval timestamp
+        returned_at TIMESTAMP,                    -- Equipment return timestamp
+        return_condition VARCHAR(20)              -- Condition upon return
+          CHECK (return_condition IN ('excellent', 'good', 'fair', 'poor')),
+        notes TEXT                               -- Additional notes/comments
       )
     `);
 
@@ -147,30 +153,32 @@ export const initDB = async () => {
       console.log('Role constraint update:', constraintError.message);
     }
 
-    // condition logs table
+    // ===== CONDITION LOGS TABLE =====
+    // Audit trail for equipment condition changes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS condition_logs (
-        id SERIAL PRIMARY KEY,
-        equipment_id INTEGER REFERENCES equipment(id),
-        user_id INTEGER REFERENCES users(id),
-        old_condition VARCHAR(20),
-        new_condition VARCHAR(20),
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY,                    -- Auto-incrementing log ID
+        equipment_id INTEGER REFERENCES equipment(id), -- Equipment being logged
+        user_id INTEGER REFERENCES users(id),     -- User making the change
+        old_condition VARCHAR(20),                -- Previous condition
+        new_condition VARCHAR(20),                -- New condition
+        notes TEXT,                              -- Reason for condition change
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Log entry timestamp
       )
     `);
 
 
 
-    // Create indexes for better performance
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_user_id ON requests(user_id)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_equipment_id ON requests(equipment_id)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_due_date ON requests(due_date)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_equipment_status ON equipment(status)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_equipment_type ON equipment(type)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)');
-    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
+    // ===== PERFORMANCE INDEXES =====
+    // Optimize database queries for high-traffic operations
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_user_id ON requests(user_id)');         // User's request history
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_equipment_id ON requests(equipment_id)'); // Equipment usage tracking
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status)');           // Filter by request status
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_requests_due_date ON requests(due_date)');       // Overdue equipment alerts
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_equipment_status ON equipment(status)');         // Available equipment queries
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_equipment_type ON equipment(type)');             // Equipment category filtering
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)');                    // Role-based access control
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');                  // Login authentication
 
     
     console.log('Database tables and indexes initialized successfully');

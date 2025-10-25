@@ -18,13 +18,17 @@ const equipmentSchema = Joi.object({
   stock_threshold: Joi.number().integer().min(1).default(2)
 });
 
-// Get all equipment with optional filtering and caching
+/**
+ * Get all equipment with optional filtering and caching
+ * Supports search by name/serial, filtering by type/status/condition
+ * Uses Redis caching for improved performance on repeated queries
+ */
 export const getAllEquipment = async (req, res) => {
   try {
     const { search, type, status, condition } = req.query;
     const cacheKey = `equipment:${JSON.stringify(req.query)}`;
     
-    // Check Redis cache first for performance
+    // Check Redis cache first for performance optimization
     const cached = await redisService.get(cacheKey);
     if (cached) {
       return res.json(cached);
@@ -82,7 +86,11 @@ export const getEquipmentById = async (req, res) => {
   }
 };
 
-// Create new equipment items (supports bulk creation with quantity)
+/**
+ * Create new equipment items with bulk creation support
+ * Automatically generates serial numbers and QR codes for each item
+ * Supports creating multiple identical items with incremental serials
+ */
 export const createEquipment = async (req, res) => {
   try {
     const {
@@ -101,25 +109,26 @@ export const createEquipment = async (req, res) => {
     
     const createdEquipment = [];
     
-    // Auto-generate serial number if not provided
+    // Auto-generate unique serial numbers with timestamp if not provided
     const timestamp = Date.now().toString();
     const baseSerial = (serial_number && serial_number.trim()) ? serial_number.trim() : `EQ${timestamp.slice(-6)}`;
     
+    // Create multiple items with incremental serial numbers
     for (let i = 1; i <= parseInt(quantity); i++) {
-      const itemSerial = `${baseSerial}${i.toString().padStart(3, '0')}`;
+      const itemSerial = `${baseSerial}${i.toString().padStart(3, '0')}`; // Format: BASE001, BASE002, etc.
       
       console.log(`Creating item ${i}/${quantity} with serial: ${itemSerial}`);
       
-      // Check if serial already exists
+      // Ensure serial number uniqueness across database
       const existingSerial = await pool.query('SELECT id FROM equipment WHERE serial_number = $1', [itemSerial]);
       if (existingSerial.rows.length > 0) {
         throw new Error(`Serial number ${itemSerial} already exists`);
       }
       
-      // Generate QR code for each item
+      // Generate QR code for mobile scanning capability
       let qrCode = null;
       try {
-        qrCode = await QRCode.toDataURL(itemSerial);
+        qrCode = await QRCode.toDataURL(itemSerial); // Base64 encoded PNG image
       } catch (qrError) {
         console.error('QR generation error:', qrError);
       }
@@ -135,10 +144,10 @@ export const createEquipment = async (req, res) => {
 
     console.log(`Created ${createdEquipment.length} equipment items`);
     
-    // Invalidate related caches
-    cache.delete('dashboard_stats');
-    cache.delete('usage_report');
-    await redisService.flushAll();
+    // Invalidate related caches to ensure data consistency
+    cache.delete('dashboard_stats');  // Clear dashboard statistics
+    cache.delete('usage_report');     // Clear usage analytics
+    await redisService.flushAll();    // Clear all Redis cached queries
     
     res.status(201).json(createdEquipment);
   } catch (error) {
