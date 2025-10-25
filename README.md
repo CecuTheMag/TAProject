@@ -260,7 +260,7 @@ Password: password123
 ---
 
 <div align="center">
-  <strong>Built for Tech Academy</strong><br>
+  <strong>Built With ❤️ For Tech Academy</strong><br>
   <em>Demonstrating enterprise-grade full-stack development expertise</em><br><br>
   
   **System Status:** Production Ready ✅  
