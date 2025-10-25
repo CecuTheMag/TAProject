@@ -29,7 +29,7 @@ import userRoutes from './routes/users.js';         // User management
 // Background services
 import alertService from './services/alertService.js';   // Alert monitoring
 import emailService from './services/emailService.js';   // Email notifications
-import { updateMissingQRCodes } from './utils/updateQRCodes.js'; // QR code generation
+
 
 // Load environment variables from .env file
 dotenv.config();
@@ -75,14 +75,14 @@ initDB();
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
 // Routes with rate limiting
-app.use('/auth', authLimiter, authRoutes);
-app.use('/equipment', equipmentRoutes);
-app.use('/request', requestRoutes);
-app.use('/reports', reportLimiter, reportRoutes);
-app.use('/dashboard', dashboardRoutes);
-app.use('/alerts', alertRoutes);
-app.use('/documents', documentRoutes);
-app.use('/users', userRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/request', requestRoutes);
+app.use('/api/reports', reportLimiter, reportRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -137,10 +137,7 @@ app.listen(PORT, '0.0.0.0', () => {
 alertService.startScheduledChecks();
 emailService.startReminderScheduler();
 
-// Update missing QR codes on startup
-setTimeout(() => {
-  updateMissingQRCodes();
-}, 5000); // Wait 5 seconds after startup
+
 
 console.log(`Database: PostgreSQL (${process.env.DB_NAME})`);
 console.log(`JWT Secret configured: ${!!process.env.JWT_SECRET}`);
