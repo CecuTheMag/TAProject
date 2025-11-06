@@ -35,8 +35,55 @@ const pool = new Pool({
  */
 export const initDB = async () => {
   try {
+    // ===== SCHOOLS TABLE =====
+    // Multi-school district support
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS schools (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        district_id INTEGER,
+        address TEXT,
+        principal_name VARCHAR(100),
+        contact_email VARCHAR(100),
+        phone VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // ===== SUBJECTS TABLE =====
+    // Educational subjects for curriculum integration
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS subjects (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(20) UNIQUE,
+        description TEXT,
+        grade_level VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // ===== LESSON PLANS TABLE =====
+    // Teacher lesson planning integration
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lesson_plans (
+        id SERIAL PRIMARY KEY,
+        teacher_id INTEGER REFERENCES users(id),
+        subject_id INTEGER REFERENCES subjects(id),
+        title VARCHAR(200) NOT NULL,
+        description TEXT,
+        learning_objectives TEXT[],
+        required_equipment TEXT[],
+        suggested_equipment TEXT[],
+        lesson_date DATE,
+        duration_minutes INTEGER,
+        grade_level VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // ===== USERS TABLE =====
-    // Stores user accounts with role-based access control
+    // Enhanced user accounts with school association
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,                    -- Auto-incrementing user ID
@@ -44,13 +91,17 @@ export const initDB = async () => {
         email VARCHAR(100) UNIQUE NOT NULL,       -- Unique email address
         password VARCHAR(255) NOT NULL,           -- Hashed password (bcrypt)
         role VARCHAR(20) DEFAULT 'student'        -- User role for permissions
-          CHECK (role IN ('student', 'teacher', 'manager', 'admin')),
+          CHECK (role IN ('student', 'teacher', 'manager', 'admin', 'district_admin')),
+        school_id INTEGER REFERENCES schools(id), -- School association
+        grade_level VARCHAR(20),                  -- Student grade or teacher specialization
+        subject_specialization VARCHAR(100),      -- Teacher subject area
+        responsibility_score INTEGER DEFAULT 100, -- Student equipment responsibility score
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Account creation date
       )
     `);
 
     // ===== EQUIPMENT TABLE =====
-    // Stores all equipment/inventory items with tracking capabilities
+    // Enhanced equipment with educational metadata
     await pool.query(`
       CREATE TABLE IF NOT EXISTS equipment (
         id SERIAL PRIMARY KEY,                    -- Auto-incrementing equipment ID
@@ -68,16 +119,76 @@ export const initDB = async () => {
         quantity INTEGER DEFAULT 1,              -- Stock quantity available
         stock_threshold INTEGER DEFAULT 2,       -- Low stock alert threshold
         documents TEXT[],                        -- Associated document filenames
+        description TEXT,                        -- Equipment description
+        school_id INTEGER REFERENCES schools(id), -- School ownership
+        educational_subjects TEXT[],             -- Subjects this equipment supports
+        learning_impact_score DECIMAL(3,2) DEFAULT 0, -- AI-calculated learning impact
+        usage_analytics JSONB,                  -- Usage patterns and analytics
+        maintenance_schedule JSONB,             -- Predictive maintenance data
+        shareable_district BOOLEAN DEFAULT false, -- Can be shared across district
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Record creation date
       )
     `);
 
-    // Add columns if they don't exist
+    // ===== EQUIPMENT USAGE ANALYTICS TABLE =====
+    // Track equipment usage for learning analytics
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS equipment_usage_analytics (
+        id SERIAL PRIMARY KEY,
+        equipment_id INTEGER REFERENCES equipment(id),
+        user_id INTEGER REFERENCES users(id),
+        lesson_plan_id INTEGER REFERENCES lesson_plans(id),
+        subject_id INTEGER REFERENCES subjects(id),
+        usage_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        duration_minutes INTEGER,
+        learning_outcome_rating INTEGER CHECK (learning_outcome_rating BETWEEN 1 AND 5),
+        student_engagement_score INTEGER CHECK (student_engagement_score BETWEEN 1 AND 10),
+        technical_issues_reported TEXT[],
+        usage_effectiveness DECIMAL(3,2)
+      )
+    `);
+
+    // ===== DISTRICT SHARING TABLE =====
+    // Track inter-school equipment sharing
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS district_sharing (
+        id SERIAL PRIMARY KEY,
+        equipment_id INTEGER REFERENCES equipment(id),
+        owner_school_id INTEGER REFERENCES schools(id),
+        borrower_school_id INTEGER REFERENCES schools(id),
+        requested_by INTEGER REFERENCES users(id),
+        approved_by INTEGER REFERENCES users(id),
+        start_date DATE,
+        end_date DATE,
+        status VARCHAR(20) DEFAULT 'pending'
+          CHECK (status IN ('pending', 'approved', 'in_transit', 'delivered', 'returned', 'rejected')),
+        transport_method VARCHAR(50),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add new columns if they don't exist
     await pool.query(`
       ALTER TABLE equipment 
       ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1,
       ADD COLUMN IF NOT EXISTS stock_threshold INTEGER DEFAULT 2,
-      ADD COLUMN IF NOT EXISTS documents TEXT[]
+      ADD COLUMN IF NOT EXISTS documents TEXT[],
+      ADD COLUMN IF NOT EXISTS description TEXT,
+      ADD COLUMN IF NOT EXISTS school_id INTEGER REFERENCES schools(id),
+      ADD COLUMN IF NOT EXISTS educational_subjects TEXT[],
+      ADD COLUMN IF NOT EXISTS learning_impact_score DECIMAL(3,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS usage_analytics JSONB,
+      ADD COLUMN IF NOT EXISTS maintenance_schedule JSONB,
+      ADD COLUMN IF NOT EXISTS shareable_district BOOLEAN DEFAULT false
+    `);
+
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS school_id INTEGER REFERENCES schools(id),
+      ADD COLUMN IF NOT EXISTS grade_level VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS subject_specialization VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS responsibility_score INTEGER DEFAULT 100
     `);
 
     // Update qr_code column to TEXT
@@ -188,6 +299,10 @@ export const initDB = async () => {
     
     // create sample data
     await createSampleData();
+    
+    // create educational data
+    const { createEducationalData } = await import('./utils/createEducationalData.js');
+    await createEducationalData();
   } catch (error) {
     console.error('Database initialization error:', error);
   }

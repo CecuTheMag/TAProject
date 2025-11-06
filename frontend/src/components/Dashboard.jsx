@@ -20,6 +20,7 @@ import AnalyticsTab from './AnalyticsTab';
 import ReportsTab from './ReportsTab';
 import AlertsTab from './AlertsTab';
 import UsersTab from './UsersTab';
+import EducationTab from './EducationTab';
 import QRScanner from './QRScanner';
 import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
@@ -729,6 +730,11 @@ const Dashboard = () => {
         ) : activeTab === 'users' ? (
           <>
             <UsersTab />
+            <Footer isMobile={isMobile} />
+          </>
+        ) : activeTab === 'education' ? (
+          <>
+            <EducationTab />
             <Footer isMobile={isMobile} />
           </>
         ) : null}

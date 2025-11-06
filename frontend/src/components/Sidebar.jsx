@@ -40,10 +40,15 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
       return baseItems;
     }
 
-    // Teachers get analytics
+    // Teachers get analytics and education
     if (user?.role === 'teacher') {
       return [
         ...baseItems,
+        { id: 'education', label: 'Education', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+          </svg>
+        )},
         { id: 'analytics', label: 'Analytics', icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
@@ -56,6 +61,11 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
     if (user?.role === 'manager') {
       return [
         ...baseItems,
+        { id: 'education', label: 'Education', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+          </svg>
+        )},
         { id: 'analytics', label: 'Analytics', icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
@@ -78,6 +88,11 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
     if (user?.role === 'admin') {
       return [
         ...baseItems,
+        { id: 'education', label: 'Education', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+          </svg>
+        )},
         { id: 'analytics', label: 'Analytics', icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>

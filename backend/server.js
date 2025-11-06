@@ -25,6 +25,7 @@ import dashboardRoutes from './routes/dashboard.js'; // Dashboard statistics
 import alertRoutes from './routes/alerts.js';       // System alerts
 import documentRoutes from './routes/documents.js'; // File management
 import userRoutes from './routes/users.js';         // User management
+import educationRoutes from './routes/education.js'; // Educational features
 
 // Background services
 import alertService from './services/alertService.js';   // Alert monitoring
@@ -75,14 +76,15 @@ initDB();
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
 // Routes with rate limiting
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/equipment', equipmentRoutes);
-app.use('/api/request', requestRoutes);
-app.use('/api/reports', reportLimiter, reportRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/alerts', alertRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/users', userRoutes);
+app.use('/auth', authLimiter, authRoutes);
+app.use('/equipment', equipmentRoutes);
+app.use('/request', requestRoutes);
+app.use('/reports', reportLimiter, reportRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/alerts', alertRoutes);
+app.use('/documents', documentRoutes);
+app.use('/users', userRoutes);
+app.use('/education', educationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

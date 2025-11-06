@@ -7,6 +7,7 @@ import axios from 'axios';
  * Dynamic API URL configuration based on deployment environment
  * Production: Routes through nginx proxy at /api
  * Development: Direct connection to backend server on port 5000
+ * 🔥 HOT RELOAD TEST - You should see this change instantly!
  */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? `${window.location.origin}/api`        // Production: nginx proxy routing
@@ -118,4 +119,21 @@ export const reports = {
   })
 };
 
+// Educational features API endpoints
+export const education = {
+  getSubjects: () => api.get('/education/subjects'),
+  getLessonPlans: () => api.get('/education/lesson-plans'),
+  createLessonPlan: (data) => api.post('/education/lesson-plans', data),
+  getEquipmentRecommendations: (lessonId) => api.get(`/education/equipment-recommendations/${lessonId}`),
+  recordUsageAnalytics: (data) => api.post('/education/usage-analytics', data),
+  getLearningAnalytics: () => api.get('/education/learning-analytics')
+};
+
 export default api;
+
+// 🎓 EDUCATIONAL PLATFORM FEATURES:
+// - Smart curriculum integration with equipment booking
+// - AI-powered learning impact analytics
+// - Multi-school district resource sharing
+// - Teacher workflow optimization
+// - Student responsibility gamification

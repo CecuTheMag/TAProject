@@ -17,7 +17,7 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
   // Show loading state while checking authentication
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>🔥 HOT RELOAD WORKING! Loading...</div>;
   
   // Redirect to login if not authenticated, otherwise render children
   return user ? children : <Navigate to="/login" />;
