@@ -63,7 +63,7 @@ const EducationTab = () => {
           fontWeight: '700',
           fontFamily: '"SF Pro Display", -apple-system, sans-serif'
         }}>
-          📚 Smart Lesson Planning
+          Smart Lesson Planning
         </h2>
         <button
           style={{
@@ -188,7 +188,7 @@ const EducationTab = () => {
                       cursor: 'pointer',
                       outline: 'none'
                     }}>
-                      📋 Equipment
+                      Equipment
                     </button>
                     <button style={{
                       padding: '6px 12px',
@@ -199,7 +199,7 @@ const EducationTab = () => {
                       cursor: 'pointer',
                       outline: 'none'
                     }}>
-                      📊 Analytics
+                      Analytics
                     </button>
                   </div>
                 )}
@@ -319,7 +319,7 @@ const EducationTab = () => {
         fontWeight: '700',
         fontFamily: '"SF Pro Display", -apple-system, sans-serif'
       }}>
-        📈 Learning Impact Analytics
+        Learning Impact Analytics
       </h2>
 
       {analytics ? (
@@ -379,11 +379,11 @@ const EducationTab = () => {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ 
-                      color: item.learning_impact_score >= 4 ? '#059669' : '#d97706',
+                      color: (typeof item.learning_impact_score === 'number' && item.learning_impact_score >= 4) ? '#059669' : '#d97706',
                       fontWeight: '600',
                       fontSize: '16px'
                     }}>
-                      {item.learning_impact_score?.toFixed(1) || 'N/A'}
+                      {typeof item.learning_impact_score === 'number' ? item.learning_impact_score.toFixed(1) : 'N/A'}
                     </div>
                     <div style={{ color: '#6b7280', fontSize: '12px' }}>
                       Impact Score
@@ -459,11 +459,11 @@ const EducationTab = () => {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ 
-                      color: subject.avg_outcome >= 4 ? '#059669' : '#d97706',
+                      color: (typeof subject.avg_outcome === 'number' && subject.avg_outcome >= 4) ? '#059669' : '#d97706',
                       fontWeight: '600',
                       fontSize: '16px'
                     }}>
-                      {subject.avg_outcome?.toFixed(1) || 'N/A'}
+                      {typeof subject.avg_outcome === 'number' ? subject.avg_outcome.toFixed(1) : 'N/A'}
                     </div>
                     <div style={{ color: '#6b7280', fontSize: '12px' }}>
                       Avg Outcome
@@ -572,7 +572,7 @@ const EducationTab = () => {
           margin: '0 0 8px 0',
           fontFamily: '"SF Pro Display", -apple-system, sans-serif'
         }}>
-          🎓 Educational Platform
+          Educational Platform
         </h1>
         <p style={{
           color: '#64748b',
@@ -600,9 +600,9 @@ const EducationTab = () => {
           paddingBottom: isMobile ? '4px' : '0'
         }}>
           {[
-            { id: 'lesson-plans', label: isMobile ? '📚 Plans' : '📚 Lesson Plans' },
-            { id: 'analytics', label: isMobile ? '📊 Analytics' : '📊 Learning Analytics' },
-            { id: 'curriculum', label: isMobile ? '🎓 Curriculum' : '🎓 Curriculum Integration' }
+            { id: 'lesson-plans', label: isMobile ? 'Plans' : 'Lesson Plans' },
+            { id: 'analytics', label: isMobile ? 'Analytics' : 'Learning Analytics' },
+            { id: 'curriculum', label: isMobile ? 'Curriculum' : 'Curriculum Integration' }
           ].map((section) => (
             <button
               key={section.id}
