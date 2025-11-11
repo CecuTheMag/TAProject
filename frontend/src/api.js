@@ -124,16 +124,18 @@ export const education = {
   getSubjects: () => api.get('/education/subjects'),
   getLessonPlans: () => api.get('/education/lesson-plans'),
   createLessonPlan: (data) => api.post('/education/lesson-plans', data),
-  getEquipmentRecommendations: (lessonId) => api.get(`/education/equipment-recommendations/${lessonId}`),
-  recordUsageAnalytics: (data) => api.post('/education/usage-analytics', data),
-  getLearningAnalytics: () => api.get('/education/learning-analytics')
+  deleteLessonPlan: (id) => api.delete(`/education/lesson-plans/${id}`),
+  deleteSubject: (id) => api.delete(`/education/subjects/${id}`),
+  getCurriculum: () => api.get('/education/curriculum'),
+  getCurriculumRecommendations: (subjectCode) => api.get(`/education/curriculum/${subjectCode}/recommendations`),
+  requestLessonEquipment: (lessonId, data) => api.post(`/education/lesson-plans/${lessonId}/request-equipment`, data)
 };
 
 export default api;
 
 // 🎓 EDUCATIONAL PLATFORM FEATURES:
-// - Smart curriculum integration with equipment booking
-// - AI-powered learning impact analytics
+// - Curriculum integration with equipment booking
+// - Lesson plan management and equipment requests
 // - Multi-school district resource sharing
 // - Teacher workflow optimization
-// - Student responsibility gamification
+// - Student responsibility tracking

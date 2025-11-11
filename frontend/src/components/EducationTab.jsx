@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { education } from '../api';
+import { useAuth } from '../AuthContext';
+import CreateLessonPlanModal from './CreateLessonPlanModal';
+import RequestLessonEquipmentModal from './RequestLessonEquipmentModal';
 
 const EducationTab = () => {
   const [activeSection, setActiveSection] = useState('lesson-plans');
   const [lessonPlans, setLessonPlans] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
+  const [curriculum, setCurriculum] = useState({});
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [showModal, setShowModal] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -24,20 +30,29 @@ const EducationTab = () => {
 
   const fetchEducationData = async () => {
     try {
-      const [lessonResponse, subjectsResponse, analyticsResponse] = await Promise.all([
+      const [lessonResponse, subjectsResponse, curriculumResponse] = await Promise.all([
         education.getLessonPlans().catch(() => ({ data: [] })),
         education.getSubjects().catch(() => ({ data: [] })),
-        education.getLearningAnalytics().catch(() => ({ data: null }))
+        education.getCurriculum().catch(() => ({ data: { subjects: [], coverage_gaps: [], summary: {} } }))
       ]);
 
       setLessonPlans(lessonResponse.data || []);
       setSubjects(subjectsResponse.data || []);
-      setAnalytics(analyticsResponse.data);
+      setCurriculum(curriculumResponse.data || { subjects: [], coverage_gaps: [], summary: {} });
     } catch (error) {
       console.error('Error fetching education data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRequestEquipment = (lesson) => {
+    setSelectedLesson(lesson);
+    setShowRequestModal(true);
+  };
+
+  const handleModalSuccess = () => {
+    fetchEducationData();
   };
 
   const LessonPlansSection = () => (
@@ -63,24 +78,27 @@ const EducationTab = () => {
           fontWeight: '700',
           fontFamily: '"SF Pro Display", -apple-system, sans-serif'
         }}>
-          Smart Lesson Planning
+          Lesson Plans
         </h2>
-        <button
-          style={{
-            padding: isMobile ? '10px 16px' : '12px 24px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: isMobile ? '12px' : '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            width: isMobile ? '100%' : 'auto',
-            outline: 'none'
-          }}
-        >
-          + Create Lesson Plan
-        </button>
+        {['teacher', 'manager', 'admin'].includes(user?.role) && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            style={{
+              padding: isMobile ? '10px 16px' : '12px 24px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              width: isMobile ? '100%' : 'auto',
+              outline: 'none'
+            }}
+          >
+            + Create Lesson Plan
+          </button>
+        )}
       </div>
 
       <div style={{ 
@@ -116,7 +134,7 @@ const EducationTab = () => {
               fontSize: isMobile ? '14px' : '16px',
               color: '#64748b'
             }}>
-              Create your first lesson plan to get started with smart equipment integration.
+              Create your first lesson plan to get started with equipment integration.
             </p>
           </div>
         ) : (
@@ -172,47 +190,47 @@ const EducationTab = () => {
                     }}>
                       {lesson.subject_name}
                     </span>
-                    <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                      Grade {lesson.grade_level} • {lesson.duration_minutes} min
-                    </span>
+                    {lesson.grade_level && (
+                      <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                        Grade {lesson.grade_level}
+                      </span>
+                    )}
+                    {lesson.duration_minutes && (
+                      <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                        {lesson.duration_minutes} min
+                      </span>
+                    )}
                   </div>
                 </div>
                 {!isMobile && (
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button style={{
+                  <button 
+                    onClick={() => handleRequestEquipment(lesson)}
+                    style={{
                       padding: '6px 12px',
-                      background: '#f3f4f6',
+                      background: '#10b981',
+                      color: 'white',
                       border: 'none',
                       borderRadius: '6px',
                       fontSize: '12px',
                       cursor: 'pointer',
                       outline: 'none'
-                    }}>
-                      Equipment
-                    </button>
-                    <button style={{
-                      padding: '6px 12px',
-                      background: '#f3f4f6',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      outline: 'none'
-                    }}>
-                      Analytics
-                    </button>
-                  </div>
+                    }}
+                  >
+                    Request Equipment
+                  </button>
                 )}
               </div>
               
-              <p style={{ 
-                margin: '0 0 16px 0', 
-                color: '#4b5563', 
-                lineHeight: '1.5',
-                fontSize: isMobile ? '14px' : '16px'
-              }}>
-                {lesson.description}
-              </p>
+              {lesson.description && (
+                <p style={{ 
+                  margin: '0 0 16px 0', 
+                  color: '#4b5563', 
+                  lineHeight: '1.5',
+                  fontSize: isMobile ? '14px' : '16px'
+                }}>
+                  {lesson.description}
+                </p>
+              )}
 
               {lesson.required_equipment && lesson.required_equipment.length > 0 && (
                 <div style={{ marginBottom: '12px' }}>
@@ -242,7 +260,7 @@ const EducationTab = () => {
               )}
 
               {lesson.learning_objectives && lesson.learning_objectives.length > 0 && (
-                <div>
+                <div style={{ marginBottom: isMobile ? '16px' : '0' }}>
                   <h4 style={{ 
                     margin: '0 0 8px 0', 
                     color: '#374151', 
@@ -265,37 +283,24 @@ const EducationTab = () => {
               )}
               
               {isMobile && (
-                <div style={{ 
-                  display: 'flex', 
-                  gap: '8px', 
-                  marginTop: '16px',
-                  width: '100%'
-                }}>
-                  <button style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    background: '#f3f4f6',
+                <button 
+                  onClick={() => handleRequestEquipment(lesson)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: '#10b981',
+                    color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '12px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '600',
                     cursor: 'pointer',
-                    outline: 'none'
-                  }}>
-                    📋 Equipment
-                  </button>
-                  <button style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    background: '#f3f4f6',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    outline: 'none'
-                  }}>
-                    📊 Analytics
-                  </button>
-                </div>
+                    outline: 'none',
+                    marginTop: '16px'
+                  }}
+                >
+                  📋 Request Equipment
+                </button>
               )}
             </motion.div>
           ))
@@ -304,228 +309,586 @@ const EducationTab = () => {
     </div>
   );
 
-  const AnalyticsSection = () => (
-    <div style={{ 
-      padding: isMobile ? '12px' : '32px',
-      margin: '0',
-      width: '100%',
-      maxWidth: '100%',
-      boxSizing: 'border-box'
-    }}>
-      <h2 style={{ 
-        margin: '0 0 24px 0', 
-        color: '#0f172a', 
-        fontSize: isMobile ? '20px' : '24px', 
-        fontWeight: '700',
-        fontFamily: '"SF Pro Display", -apple-system, sans-serif'
-      }}>
-        Learning Impact Analytics
-      </h2>
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [recommendations, setRecommendations] = useState(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
-      {analytics ? (
+  const fetchRecommendations = async (subjectCode) => {
+    setLoadingRecommendations(true);
+    try {
+      const response = await education.getCurriculumRecommendations(subjectCode);
+      setRecommendations(response.data);
+    } catch (error) {
+      console.error('Failed to fetch recommendations:', error);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+
+  const getCoverageColor = (status) => {
+    switch (status) {
+      case 'Covered': return '#10b981';
+      case 'No Equipment': return '#ef4444';
+      case 'No Available Equipment': return '#f59e0b';
+      case 'No Lesson Plans': return '#8b5cf6';
+      default: return '#6b7280';
+    }
+  };
+
+  const getImpactColor = (score) => {
+    if (score >= 4.5) return '#10b981';
+    if (score >= 4.0) return '#3b82f6';
+    if (score >= 3.5) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  const CurriculumSection = () => {
+    if (!curriculum.subjects) return null;
+
+    return (
+      <div style={{ 
+        padding: isMobile ? '12px' : '32px',
+        margin: '0',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* Header with Summary */}
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ 
+            margin: '0 0 16px 0', 
+            color: '#0f172a', 
+            fontSize: isMobile ? '20px' : '24px', 
+            fontWeight: '700',
+            fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+          }}>
+            Curriculum-Equipment Integration
+          </h2>
+          
+          {curriculum.summary && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                color: 'white',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: '700' }}>
+                  {curriculum.summary.total_subjects}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>Total Subjects</div>
+              </div>
+              <div style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: '700' }}>
+                  {curriculum.summary.subjects_with_equipment}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>With Equipment</div>
+              </div>
+              <div style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                color: 'white',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: '700' }}>
+                  {curriculum.summary.subjects_with_lessons}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>With Lessons</div>
+              </div>
+              <div style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: 'white',
+                padding: '16px',
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: '700' }}>
+                  {curriculum.summary.total_equipment_mapped}
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>Equipment Items</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Coverage Gaps Alert */}
+        {curriculum.coverage_gaps && curriculum.coverage_gaps.filter(gap => gap.coverage_status !== 'Covered').length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+            border: '1px solid #f59e0b',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 12px 0', 
+              color: '#92400e', 
+              fontSize: '18px', 
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              ⚠️ Coverage Gaps Detected
+            </h3>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {curriculum.coverage_gaps.filter(gap => gap.coverage_status !== 'Covered').map(gap => (
+                <div key={gap.code} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  borderRadius: '8px'
+                }}>
+                  <div>
+                    <span style={{ fontWeight: '600', color: '#92400e' }}>{gap.name}</span>
+                    <span style={{ color: '#6b7280', fontSize: '12px', marginLeft: '8px' }}>({gap.code})</span>
+                  </div>
+                  <span style={{
+                    padding: '4px 8px',
+                    backgroundColor: getCoverageColor(gap.coverage_status),
+                    color: 'white',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    {gap.coverage_status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Subject Cards */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: isMobile ? '12px' : '24px',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))', 
+          gap: isMobile ? '16px' : '24px',
           width: '100%',
           maxWidth: '100%'
         }}>
-          {/* Equipment Analytics */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '12px',
-            padding: isMobile ? '16px' : '20px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-            width: '100%',
-            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
-            minWidth: 0,
-            boxSizing: 'border-box'
-          }}>
-            <h3 style={{ 
-              margin: '0 0 16px 0', 
-              color: '#0f172a', 
-              fontSize: '18px', 
-              fontWeight: '600',
-              fontFamily: '"SF Pro Display", -apple-system, sans-serif'
-            }}>
-              🔧 Equipment Learning Impact
-            </h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {analytics.equipment_analytics?.slice(0, 5).map((item) => (
-                <div key={item.name} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px',
-                  background: '#f9fafb',
-                  borderRadius: '8px'
-                }}>
-                  <div>
-                    <div style={{ 
-                      fontWeight: '600', 
-                      color: '#0f172a', 
-                      fontSize: isMobile ? '13px' : '14px' 
-                    }}>
-                      {item.name}
-                    </div>
-                    <div style={{ 
-                      color: '#6b7280', 
-                      fontSize: '12px' 
-                    }}>
-                      {item.usage_count} uses
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ 
-                      color: (typeof item.learning_impact_score === 'number' && item.learning_impact_score >= 4) ? '#059669' : '#d97706',
-                      fontWeight: '600',
-                      fontSize: '16px'
-                    }}>
-                      {typeof item.learning_impact_score === 'number' ? item.learning_impact_score.toFixed(1) : 'N/A'}
-                    </div>
-                    <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                      Impact Score
-                    </div>
-                  </div>
-                </div>
-              )) || []}
-            </div>
-            {isMobile && (
-              <button
-                onClick={() => setShowModal('equipment')}
+          {curriculum.subjects.map((subject) => {
+            const coverageGap = curriculum.coverage_gaps?.find(gap => gap.code === subject.code);
+            const hasEquipment = parseInt(subject.equipment_count) > 0;
+            const impactScore = parseFloat(subject.avg_impact_score) || 0;
+            
+            return (
+              <motion.div
+                key={subject.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 style={{
-                  marginTop: '12px',
-                  padding: '8px 16px',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '12px',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(20px)',
+                  border: `2px solid ${hasEquipment ? '#10b981' : '#e5e7eb'}`,
+                  borderRadius: '16px',
+                  padding: '24px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
                   cursor: 'pointer',
-                  width: '100%',
-                  outline: 'none'
+                  transition: 'all 0.3s ease'
+                }}
+                whileHover={{ scale: 1.02, boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)' }}
+                onClick={() => {
+                  setSelectedSubject(subject);
+                  fetchRecommendations(subject.code);
                 }}
               >
-                View All Equipment Analytics
-              </button>
-            )}
-          </div>
+                {/* Subject Header */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <h3 style={{ 
+                      margin: 0, 
+                      color: '#0f172a', 
+                      fontSize: '18px', 
+                      fontWeight: '700',
+                      fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+                    }}>
+                      {subject.name}
+                    </h3>
+                    {coverageGap && (
+                      <span style={{
+                        padding: '4px 8px',
+                        backgroundColor: getCoverageColor(coverageGap.coverage_status),
+                        color: 'white',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: '600'
+                      }}>
+                        {coverageGap.coverage_status}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ 
+                      background: '#dbeafe', 
+                      color: '#1d4ed8', 
+                      padding: '4px 8px', 
+                      borderRadius: '6px', 
+                      fontSize: '12px', 
+                      fontWeight: '600' 
+                    }}>
+                      {subject.code}
+                    </span>
+                    {subject.grade_level && (
+                      <span style={{ color: '#6b7280', fontSize: '12px' }}>
+                        Grades {subject.grade_level}
+                      </span>
+                    )}
+                    {impactScore > 0 && (
+                      <span style={{
+                        color: getImpactColor(impactScore),
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        ★ {impactScore.toFixed(1)} Impact
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-          {/* Subject Analytics */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '12px',
-            padding: isMobile ? '16px' : '20px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-            width: '100%',
-            maxWidth: isMobile ? 'calc(100vw - 24px)' : '100%',
-            minWidth: 0,
-            boxSizing: 'border-box'
-          }}>
-            <h3 style={{ 
-              margin: '0 0 16px 0', 
-              color: '#0f172a', 
-              fontSize: '18px', 
-              fontWeight: '600',
-              fontFamily: '"SF Pro Display", -apple-system, sans-serif'
-            }}>
-              📚 Subject Performance
-            </h3>
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {analytics.subject_analytics?.map((subject) => (
-                <div key={subject.code} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px',
-                  background: '#f9fafb',
-                  borderRadius: '8px'
-                }}>
-                  <div>
-                    <div style={{ 
-                      fontWeight: '600', 
-                      color: '#0f172a', 
-                      fontSize: isMobile ? '13px' : '14px' 
-                    }}>
-                      {subject.subject_name}
+                {/* Equipment Overview */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>Equipment Portfolio</span>
+                    <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                      {subject.equipment_count} items • {subject.available_equipment} available
+                    </span>
+                  </div>
+                  
+                  {hasEquipment ? (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {subject.equipment.slice(0, 4).map((eq, idx) => (
+                        <span key={idx} style={{
+                          padding: '2px 6px',
+                          backgroundColor: eq.status === 'available' ? '#dcfce7' : '#fef3c7',
+                          color: eq.status === 'available' ? '#166534' : '#92400e',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: '500'
+                        }}>
+                          {eq.type}
+                        </span>
+                      ))}
+                      {subject.equipment.length > 4 && (
+                        <span style={{
+                          padding: '2px 6px',
+                          backgroundColor: '#f3f4f6',
+                          color: '#6b7280',
+                          borderRadius: '4px',
+                          fontSize: '10px'
+                        }}>
+                          +{subject.equipment.length - 4} more
+                        </span>
+                      )}
                     </div>
-                    <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                      {subject.total_usage} sessions
+                  ) : (
+                    <div style={{
+                      padding: '12px',
+                      backgroundColor: '#fef2f2',
+                      border: '1px dashed #fca5a5',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      color: '#dc2626',
+                      fontSize: '12px'
+                    }}>
+                      No equipment mapped to this subject
+                    </div>
+                  )}
+                </div>
+
+                {/* Statistics Grid */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '12px'
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ 
+                      fontSize: '20px', 
+                      fontWeight: '700', 
+                      color: '#3b82f6' 
+                    }}>
+                      {subject.lesson_count || 0}
+                    </div>
+                    <div style={{ 
+                      fontSize: '10px', 
+                      color: '#6b7280',
+                      fontWeight: '500'
+                    }}>
+                      Lessons
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: 'center' }}>
                     <div style={{ 
-                      color: (typeof subject.avg_outcome === 'number' && subject.avg_outcome >= 4) ? '#059669' : '#d97706',
-                      fontWeight: '600',
-                      fontSize: '16px'
+                      fontSize: '20px', 
+                      fontWeight: '700', 
+                      color: '#10b981' 
                     }}>
-                      {typeof subject.avg_outcome === 'number' ? subject.avg_outcome.toFixed(1) : 'N/A'}
+                      {subject.teacher_count || 0}
                     </div>
-                    <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                      Avg Outcome
+                    <div style={{ 
+                      fontSize: '10px', 
+                      color: '#6b7280',
+                      fontWeight: '500'
+                    }}>
+                      Teachers
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ 
+                      fontSize: '20px', 
+                      fontWeight: '700', 
+                      color: '#f59e0b' 
+                    }}>
+                      {subject.total_requests || 0}
+                    </div>
+                    <div style={{ 
+                      fontSize: '10px', 
+                      color: '#6b7280',
+                      fontWeight: '500'
+                    }}>
+                      Requests
                     </div>
                   </div>
                 </div>
-              )) || []}
-            </div>
-            {isMobile && (
-              <button
-                onClick={() => setShowModal('subjects')}
-                style={{
-                  marginTop: '12px',
-                  padding: '8px 16px',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  width: '100%',
-                  outline: 'none'
-                }}
-              >
-                View All Subject Analytics
-              </button>
-            )}
-          </div>
+
+                {/* Usage Trend Indicator */}
+                {subject.trends && subject.trends.length > 0 && (
+                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: '#6b7280' }}>Recent Activity</span>
+                      <div style={{ display: 'flex', gap: '2px' }}>
+                        {subject.trends.slice(0, 6).map((trend, idx) => {
+                          const height = Math.max(4, (trend.request_count / 10) * 16);
+                          return (
+                            <div key={idx} style={{
+                              width: '3px',
+                              height: `${height}px`,
+                              backgroundColor: '#3b82f6',
+                              borderRadius: '2px'
+                            }} />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
-      ) : (
-        <div style={{
-          textAlign: 'center',
-          padding: isMobile ? '40px 20px' : '60px 24px',
-          color: '#64748b',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-        }}>
+
+        {/* Subject Detail Modal */}
+        {selectedSubject && (
           <div style={{
-            fontSize: isMobile ? '32px' : '48px',
-            marginBottom: '16px'
-          }}>📊</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: isMobile ? '18px' : '20px', 
-            color: '#0f172a', 
-            fontWeight: '600'
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
           }}>
-            No analytics data yet
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            fontSize: isMobile ? '14px' : '16px',
-            color: '#64748b'
-          }}>
-            Start using equipment in lessons to see learning impact analytics.
-          </p>
-        </div>
-      )}
-    </div>
-  );
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '20px',
+                padding: '32px',
+                maxWidth: '800px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 4px 0', fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
+                    {selectedSubject.name} Integration
+                  </h2>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '16px' }}>
+                    Equipment mapping and recommendations
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedSubject(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    padding: '4px'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {loadingRecommendations ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid #e2e8f0',
+                    borderTop: '4px solid #3b82f6',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 16px'
+                  }}></div>
+                  <p style={{ color: '#64748b' }}>Loading recommendations...</p>
+                </div>
+              ) : recommendations ? (
+                <div style={{ display: 'grid', gap: '24px' }}>
+                  {/* Current Equipment */}
+                  <div>
+                    <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
+                      📋 Current Equipment Portfolio
+                    </h3>
+                    {recommendations.current_equipment.length > 0 ? (
+                      <div style={{ display: 'grid', gap: '8px' }}>
+                        {recommendations.current_equipment.map((eq, idx) => (
+                          <div key={idx} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 16px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                          }}>
+                            <div>
+                              <span style={{ fontWeight: '600', color: '#0f172a' }}>{eq.type}</span>
+                              <span style={{ color: '#64748b', fontSize: '14px', marginLeft: '8px' }}>({eq.count} items)</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{
+                                color: getImpactColor(eq.avg_score),
+                                fontWeight: '600',
+                                fontSize: '14px'
+                              }}>
+                                ★ {eq.avg_score?.toFixed(1) || 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{
+                        padding: '20px',
+                        backgroundColor: '#fef2f2',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        color: '#dc2626'
+                      }}>
+                        No equipment currently mapped to this subject
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recommendations */}
+                  {recommendations.recommended_additions.length > 0 && (
+                    <div>
+                      <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
+                        💡 Recommended Additions
+                      </h3>
+                      <div style={{ display: 'grid', gap: '8px' }}>
+                        {recommendations.recommended_additions.map((eq, idx) => (
+                          <div key={idx} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 16px',
+                            backgroundColor: '#f0f9ff',
+                            borderRadius: '8px',
+                            border: '1px solid #bae6fd'
+                          }}>
+                            <div>
+                              <span style={{ fontWeight: '600', color: '#0f172a' }}>{eq.type}</span>
+                              <span style={{ color: '#64748b', fontSize: '14px', marginLeft: '8px' }}>Used by {eq.usage_count} other subjects</span>
+                            </div>
+                            <div style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#3b82f6',
+                              color: 'white',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}>
+                              ★ {eq.avg_score?.toFixed(1)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Gap Analysis */}
+                  {recommendations.gap_analysis.length > 0 && (
+                    <div>
+                      <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
+                        🎯 High-Impact Gaps
+                      </h3>
+                      <div style={{ display: 'grid', gap: '8px' }}>
+                        {recommendations.gap_analysis.map((gap, idx) => (
+                          <div key={idx} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 16px',
+                            backgroundColor: '#fef3c7',
+                            borderRadius: '8px',
+                            border: '1px solid #fcd34d'
+                          }}>
+                            <div>
+                              <span style={{ fontWeight: '600', color: '#92400e' }}>{gap.type}</span>
+                              <span style={{ color: '#6b7280', fontSize: '14px', marginLeft: '8px' }}>Used by {gap.subject_count} subjects</span>
+                            </div>
+                            <div style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#f59e0b',
+                              color: 'white',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}>
+                              ★ {gap.avg_impact?.toFixed(1)} Impact
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </motion.div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -601,7 +964,6 @@ const EducationTab = () => {
         }}>
           {[
             { id: 'lesson-plans', label: isMobile ? 'Plans' : 'Lesson Plans' },
-            { id: 'analytics', label: isMobile ? 'Analytics' : 'Learning Analytics' },
             { id: 'curriculum', label: isMobile ? 'Curriculum' : 'Curriculum Integration' }
           ].map((section) => (
             <button
@@ -630,163 +992,25 @@ const EducationTab = () => {
 
       {/* Content */}
       {activeSection === 'lesson-plans' && <LessonPlansSection />}
-      {activeSection === 'analytics' && <AnalyticsSection />}
-      {activeSection === 'curriculum' && (
-        <div style={{ 
-          padding: isMobile ? '40px 20px' : '60px 32px', 
-          textAlign: 'center', 
-          color: '#64748b'
-        }}>
-          <div style={{
-            fontSize: isMobile ? '32px' : '48px',
-            marginBottom: '16px'
-          }}>🚧</div>
-          <h3 style={{ 
-            margin: '0 0 8px 0', 
-            fontSize: isMobile ? '18px' : '20px', 
-            color: '#0f172a', 
-            fontWeight: '600'
-          }}>
-            Coming Soon
-          </h3>
-          <p style={{ 
-            margin: 0, 
-            fontSize: isMobile ? '14px' : '16px'
-          }}>
-            Curriculum Integration features are under development.
-          </p>
-        </div>
-      )}
+      {activeSection === 'curriculum' && <CurriculumSection />}
 
-      {/* Mobile Modal */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '100%',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              marginBottom: '20px' 
-            }}>
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '20px', 
-                fontWeight: '700', 
-                color: '#0f172a' 
-              }}>
-                {showModal === 'equipment' && '🔧 Equipment Analytics'}
-                {showModal === 'subjects' && '📚 Subject Analytics'}
-              </h3>
-              <button
-                onClick={() => setShowModal(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  padding: '4px',
-                  outline: 'none'
-                }}
-              >
-                ×
-              </button>
-            </div>
-            
-            {showModal === 'equipment' && analytics?.equipment_analytics && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {analytics.equipment_analytics.map((item) => (
-                  <div key={item.name} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px',
-                    background: '#f9fafb',
-                    borderRadius: '8px'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '14px' }}>
-                        {item.name}
-                      </div>
-                      <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                        {item.usage_count} uses
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        color: item.learning_impact_score >= 4 ? '#059669' : '#d97706',
-                        fontWeight: '600',
-                        fontSize: '16px'
-                      }}>
-                        {item.learning_impact_score?.toFixed(1) || 'N/A'}
-                      </div>
-                      <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                        Impact Score
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {showModal === 'subjects' && analytics?.subject_analytics && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {analytics.subject_analytics.map((subject) => (
-                  <div key={subject.code} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px',
-                    background: '#f9fafb',
-                    borderRadius: '8px'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '14px' }}>
-                        {subject.subject_name}
-                      </div>
-                      <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                        {subject.total_usage} sessions
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        color: subject.avg_outcome >= 4 ? '#059669' : '#d97706',
-                        fontWeight: '600',
-                        fontSize: '16px'
-                      }}>
-                        {subject.avg_outcome?.toFixed(1) || 'N/A'}
-                      </div>
-                      <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                        Avg Outcome
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Modals */}
+      {showCreateModal && (
+        <CreateLessonPlanModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleModalSuccess}
+        />
+      )}
+      
+      {showRequestModal && selectedLesson && (
+        <RequestLessonEquipmentModal
+          lessonPlan={selectedLesson}
+          onClose={() => {
+            setShowRequestModal(false);
+            setSelectedLesson(null);
+          }}
+          onSuccess={handleModalSuccess}
+        />
       )}
     </div>
   );
