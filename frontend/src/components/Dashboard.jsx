@@ -270,7 +270,7 @@ const Dashboard = () => {
           transition={{ delay: 0.2 }}
           style={{ textAlign: 'center' }}
         >
-          <h2 style={{ color: '#0f172a', fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0' }}>Loading SIMS</h2>
+          <h2 style={{ color: '#0f172a', fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0' }}>Loading AssetFlow</h2>
           <p style={{ color: '#64748b', fontSize: '16px', fontWeight: '500', margin: 0 }}>Preparing your dashboard...</p>
         </motion.div>
       </motion.div>
@@ -301,7 +301,9 @@ const Dashboard = () => {
         background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)',
         width: isMobile ? '100%' : 'calc(100% - 300px)',
         boxSizing: 'border-box',
-        overflowX: 'hidden'
+        overflowX: 'hidden',
+        display: isMobile ? 'flex' : 'block',
+        flexDirection: isMobile ? 'column' : 'initial'
       }}>
         {activeTab === 'dashboard' ? (
           <>
@@ -458,7 +460,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#0f172a" 
-              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.new_equipment_day - dashboardStats.dailyTrends.prev_equipment_day) : null}
+              trend={null}
               delay={0}
               onClick={() => setActiveFilters([])}
               isMobile={isMobile}
@@ -472,7 +474,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#10b981" 
-              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.returns_day - dashboardStats.dailyTrends.prev_returns_day) : null}
+              trend={null}
               delay={200}
               onClick={() => handleFilterChange('available')}
               isMobile={isMobile}
@@ -486,7 +488,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#f59e0b" 
-              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.new_checkouts_day - dashboardStats.dailyTrends.prev_checkouts_day) : null}
+              trend={null}
               delay={400}
               onClick={() => handleFilterChange('checked_out')}
               isMobile={isMobile}
@@ -500,7 +502,7 @@ const Dashboard = () => {
                 </svg>
               }
               color="#ef4444" 
-              trend={dashboardStats?.dailyTrends ? (dashboardStats.dailyTrends.new_repairs_day - dashboardStats.dailyTrends.prev_repairs_day) : null}
+              trend={null}
               delay={600}
               onClick={() => handleFilterChange('under_repair')}
               isMobile={isMobile}

@@ -1,11 +1,11 @@
-# SIMS - School Inventory Management System
+# AssetFlow - Professional Inventory Management System
 
 <div align="center">
-  <img src="team.png" alt="SIMS Logo" width="200"/>
+  <img src="team.png" alt="AssetFlow Logo" width="200"/>
   
   **Enterprise-Grade Full-Stack Inventory Management Solution**
   
-  [![Tech Academy](https://img.shields.io/badge/Tech%20Academy-Project-blue)](https://tech.academy)
+  [![Professional](https://img.shields.io/badge/Professional-Solution-blue)](https://assetflow.bg)
   [![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org)
   [![React](https://img.shields.io/badge/React-18+-blue)](https://reactjs.org)
   [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)](https://postgresql.org)
@@ -17,7 +17,7 @@
 
 ## Executive Summary
 
-SIMS is a production-ready, enterprise-grade inventory management system engineered for educational institutions. The platform delivers comprehensive equipment tracking, automated workflow management, and advanced analytics through a modern microservices architecture with horizontal scalability.
+AssetFlow is a production-ready, enterprise-grade inventory management system engineered for educational institutions and organizations. The platform delivers comprehensive equipment tracking, automated workflow management, and advanced analytics through a modern microservices architecture with horizontal scalability.
 
 **Key Metrics:**
 - 10,000+ concurrent users supported
@@ -62,7 +62,7 @@ SIMS is a production-ready, enterprise-grade inventory management system enginee
 ## Core Capabilities
 
 ### Authentication & Authorization
-- **Multi-role access control** (Student, Teacher, Administrator)
+- **Multi-role access control** (Student, Teacher, Manager, Administrator)
 - **JWT-based authentication** with secure token management
 - **Password encryption** using industry-standard bcryptjs
 - **Session management** with Redis-backed storage
@@ -89,6 +89,13 @@ SIMS is a production-ready, enterprise-grade inventory management system enginee
 - **Export capabilities** (CSV, PDF) for external reporting
 - **Performance metrics** with caching optimization
 - **Predictive analytics** for maintenance scheduling
+
+### Educational Integration
+- **Curriculum mapping** with equipment requirements
+- **Lesson plan integration** for automated equipment requests
+- **Subject-based equipment categorization**
+- **Teacher workflow optimization**
+- **Learning impact analytics**
 
 ---
 
@@ -148,6 +155,14 @@ GET    /api/request/manager   # Admin: all requests
 PUT    /api/request/{id}/approve  # Approve request
 PUT    /api/request/{id}/reject   # Reject request
 PUT    /api/request/{id}/return   # Process return
+```
+
+### Educational Features
+```http
+GET    /api/education/subjects        # Curriculum subjects
+POST   /api/education/lesson-plans    # Create lesson plan
+GET    /api/education/curriculum      # Curriculum integration
+POST   /api/education/lesson-plans/{id}/request-equipment  # Request equipment for lesson
 ```
 
 ### Analytics & Reporting
@@ -231,8 +246,8 @@ GET    /api/dashboard/stats   # Real-time metrics
 
 ```
 Administrator Access:
-Email: sims@tech.academy
-Password: starazagora
+Email: admin@assetflow.bg
+Password: assetflow2024
 
 Student Access:
 Email: student@test.com
@@ -241,7 +256,7 @@ Password: password123
 
 ---
 
-## Project Achievements
+## Project Features
 
 ### Technical Excellence
 ✅ **Full-stack implementation** with modern technologies  
@@ -256,11 +271,14 @@ Password: password123
 📊 **Real-time analytics** with interactive dashboards  
 🔄 **Horizontal auto-scaling** with load balancing  
 📱 **Mobile-responsive** design with PWA capabilities  
+🎓 **Educational integration** with curriculum mapping  
+📋 **Lesson plan management** with equipment automation  
+👥 **Multi-role user management** with subject assignments  
 
 ---
 
 <div align="center">
-  <strong>Built With ❤️ For Tech Academy</strong><br>
+  <strong>Built With ❤️ For Professional Excellence</strong><br>
   <em>Demonstrating enterprise-grade full-stack development expertise</em><br><br>
   
   **System Status:** Production Ready ✅  

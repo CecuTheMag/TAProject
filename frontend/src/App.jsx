@@ -1,4 +1,4 @@
-// SIMS Frontend Application - Main Entry Point
+// AssetFlow Frontend Application - Main Entry Point
 // Handles routing, authentication, and global state management
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';

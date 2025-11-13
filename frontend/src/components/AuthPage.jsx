@@ -63,14 +63,14 @@ const AuthPage = () => {
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <h1 style={{ 
             color: '#0f172a',
-            fontSize: window.innerWidth < 768 ? '48px' : '72px',
+            fontSize: window.innerWidth < 768 ? '36px' : '56px',
             fontWeight: '900',
             margin: '0 0 12px 0',
-            letterSpacing: '0.15em',
+            letterSpacing: '0.05em',
             fontFamily: '"SF Pro Display", "Helvetica Neue", -apple-system, sans-serif',
             textShadow: '0 2px 4px rgba(15, 23, 42, 0.1)'
           }}>
-            SIMS
+            AssetFlow
           </h1>
           <h2 style={{ 
             color: '#475569',
@@ -81,7 +81,7 @@ const AuthPage = () => {
             textTransform: 'uppercase',
             fontFamily: '"SF Pro Text", -apple-system, sans-serif'
           }}>
-            School Inventory Management System
+            Professional Inventory Management
           </h2>
           <div style={{
             width: '60px',

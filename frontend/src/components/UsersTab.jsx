@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { users } from '../api';
 import { useAuth } from '../AuthContext';
 import ConfirmDialog from './ConfirmDialog';
+import EditUserModal from './EditUserModal';
 import { toast } from './Toast';
 import { useFormValidation, validationRules } from '../hooks/useFormValidation';
 
@@ -10,6 +11,7 @@ const UsersTab = () => {
   const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [userActivity, setUserActivity] = useState([]);
@@ -68,6 +70,11 @@ const UsersTab = () => {
       },
       onCancel: () => setConfirmDialog({ isOpen: false })
     });
+  };
+
+  const handleEditUser = (userItem) => {
+    setSelectedUser(userItem);
+    setShowEditModal(true);
   };
 
   const handleViewActivity = async (userId) => {
@@ -191,6 +198,7 @@ const UsersTab = () => {
                 userItem={userItem} 
                 currentUser={user}
                 onRoleChange={handleRoleChange}
+                onEditUser={handleEditUser}
                 onViewActivity={handleViewActivity}
                 onDeleteUser={handleDeleteUser}
                 getRoleBadgeColor={getRoleBadgeColor}
@@ -217,6 +225,7 @@ const UsersTab = () => {
                 }}>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>User</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Role</th>
+                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Subject</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Requests</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Joined</th>
                   <th style={{ padding: '20px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>Actions</th>
@@ -273,6 +282,16 @@ const UsersTab = () => {
                       </select>
                     </td>
                     <td style={{ padding: '20px' }}>
+                      {userItem.role === 'teacher' && userItem.subject_name ? (
+                        <div style={{ fontSize: '14px' }}>
+                          <div style={{ fontWeight: '600', color: '#0f172a' }}>{userItem.subject_name}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>({userItem.subject_code})</div>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '20px' }}>
                       <div style={{ fontSize: '14px', color: '#64748b' }}>
                         <div>Total: {userItem.total_requests}</div>
                         <div>Pending: {userItem.pending_requests}</div>
@@ -284,6 +303,20 @@ const UsersTab = () => {
                     </td>
                     <td style={{ padding: '20px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => handleEditUser(userItem)}
+                          style={{
+                            padding: '8px 12px',
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
                         <button
                           onClick={() => handleViewActivity(userItem.id)}
                           style={{
@@ -335,6 +368,22 @@ const UsersTab = () => {
         />
       )}
 
+      {/* Edit User Modal */}
+      {showEditModal && selectedUser && (
+        <EditUserModal
+          user={selectedUser}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedUser(null);
+          }}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setSelectedUser(null);
+            fetchUsers();
+          }}
+        />
+      )}
+
       {/* Activity Modal */}
       {showActivityModal && (
         <UserActivityModal
@@ -350,7 +399,7 @@ const UsersTab = () => {
   );
 };
 
-const UserCard = ({ userItem, currentUser, onRoleChange, onViewActivity, onDeleteUser, getRoleBadgeColor }) => {
+const UserCard = ({ userItem, currentUser, onRoleChange, onEditUser, onViewActivity, onDeleteUser, getRoleBadgeColor }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   return (
@@ -437,6 +486,28 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onViewActivity, onDelet
               >
                 <button
                   onClick={() => {
+                    onEditUser(userItem);
+                    setShowDropdown(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#374151',
+                    borderBottom: '1px solid #f3f4f6'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
+                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+                  </svg>
+                  Edit User
+                </button>
+                <button
+                  onClick={() => {
                     onViewActivity(userItem.id);
                     setShowDropdown(false);
                   }}
@@ -488,26 +559,40 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onViewActivity, onDelet
       
       {/* Role Badge */}
       <div style={{ marginBottom: '16px' }}>
-        <select
-          value={userItem.role}
-          onChange={(e) => onRoleChange(userItem.id, e.target.value)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '20px',
-            border: 'none',
-            backgroundColor: getRoleBadgeColor(userItem.role),
-            color: 'white',
-            fontWeight: '600',
-            fontSize: '14px',
-            textTransform: 'capitalize',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="student">Student</option>
-          <option value="teacher">Teacher</option>
-          <option value="manager">Manager</option>
-          <option value="admin">Admin</option>
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <select
+            value={userItem.role}
+            onChange={(e) => onRoleChange(userItem.id, e.target.value)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              border: 'none',
+              backgroundColor: getRoleBadgeColor(userItem.role),
+              color: 'white',
+              fontWeight: '600',
+              fontSize: '14px',
+              textTransform: 'capitalize',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Admin</option>
+          </select>
+          {userItem.role === 'teacher' && userItem.subject_name && (
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#dbeafe',
+              color: '#1d4ed8',
+              borderRadius: '16px',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              {userItem.subject_name} ({userItem.subject_code})
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Stats */}

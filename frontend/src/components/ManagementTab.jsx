@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { equipment, education } from '../api';
 import { toast } from './Toast';
 import ConfirmDialog from './ConfirmDialog';
+import SubjectModal from './SubjectModal';
 
 const ManagementTab = () => {
   const [activeSection, setActiveSection] = useState('equipment');
@@ -14,6 +15,8 @@ const ManagementTab = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteType, setDeleteType] = useState('');
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -357,14 +360,42 @@ const ManagementTab = () => {
 
   const CurriculumSection = () => (
     <div style={{ padding: isMobile ? '12px' : '32px' }}>
-      <h2 style={{ 
-        margin: '0 0 24px 0', 
-        color: '#0f172a', 
-        fontSize: isMobile ? '20px' : '24px', 
-        fontWeight: '700' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '12px' : '0'
       }}>
-        Curriculum Management
-      </h2>
+        <h2 style={{ 
+          margin: 0, 
+          color: '#0f172a', 
+          fontSize: isMobile ? '20px' : '24px', 
+          fontWeight: '700' 
+        }}>
+          Curriculum Management
+        </h2>
+        <button
+          onClick={() => {
+            setEditingSubject(null);
+            setShowSubjectModal(true);
+          }}
+          style={{
+            padding: '12px 20px',
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            width: isMobile ? '100%' : 'auto'
+          }}
+        >
+          + Add Subject
+        </button>
+      </div>
 
       {subjects.length === 0 ? (
         <div style={{
@@ -422,24 +453,43 @@ const ManagementTab = () => {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setSelectedItems([subject.id]);
-                    setDeleteType('subject');
-                    setShowDeleteDialog(true);
-                  }}
-                  style={{
-                    padding: '6px 12px',
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => {
+                      setEditingSubject(subject);
+                      setShowSubjectModal(true);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedItems([subject.id]);
+                      setDeleteType('subject');
+                      setShowDeleteDialog(true);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
               
               {subject.description && (
@@ -583,6 +633,22 @@ const ManagementTab = () => {
           }}
           confirmText="Delete"
           cancelText="Cancel"
+        />
+      )}
+
+      {/* Subject Modal */}
+      {showSubjectModal && (
+        <SubjectModal
+          subject={editingSubject}
+          onClose={() => {
+            setShowSubjectModal(false);
+            setEditingSubject(null);
+          }}
+          onSuccess={() => {
+            fetchData();
+            setShowSubjectModal(false);
+            setEditingSubject(null);
+          }}
         />
       )}
     </div>

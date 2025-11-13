@@ -25,7 +25,7 @@ export const createSampleData = async () => {
 
       for (const item of sampleEquipment) {
         // Generate QR code for the equipment
-        const qrCodeData = `SIMS-${item.serial_number}`;
+        const qrCodeData = `AssetFlow-${item.serial_number}`;
         const qrCodeUrl = await QRCode.toDataURL(qrCodeData);
         const description = `QR Code: ${qrCodeData}\nSerial: ${item.serial_number}\nLocation: ${item.location}`;
         

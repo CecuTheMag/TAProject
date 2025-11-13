@@ -73,7 +73,7 @@ class EmailService {
             <strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}
           </div>
           <p>Please return the equipment as soon as possible to avoid any penalties.</p>
-          <p>Thank you,<br>SIMS Team</p>
+          <p>Thank you,<br>AssetFlow Team</p>
         </div>
       `
     };
@@ -101,7 +101,7 @@ class EmailService {
             <strong>Approved by:</strong> ${approvedBy}
           </div>
           <p>You can now collect your equipment. Please return it by the due date.</p>
-          <p>Thank you,<br>SIMS Team</p>
+          <p>Thank you,<br>AssetFlow Team</p>
         </div>
       `
     };
@@ -130,7 +130,7 @@ class EmailService {
             <strong>Threshold:</strong> ${threshold}
           </div>
           <p>Please consider restocking this equipment soon.</p>
-          <p>Best regards,<br>SIMS System</p>
+          <p>Best regards,<br>AssetFlow System</p>
         </div>
       `
     };

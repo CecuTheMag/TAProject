@@ -29,30 +29,14 @@ export const getDashboardStats = async (req, res) => {
         FROM requests
       `;
       
-      const dailyTrendsQuery = `
-        SELECT 
-          COUNT(CASE WHEN e.created_at >= NOW() - INTERVAL '1 day' THEN 1 END) as new_equipment_day,
-          COUNT(CASE WHEN e.created_at >= NOW() - INTERVAL '2 days' AND e.created_at < NOW() - INTERVAL '1 day' THEN 1 END) as prev_equipment_day,
-          COUNT(CASE WHEN r.request_date >= NOW() - INTERVAL '1 day' AND r.status = 'approved' THEN 1 END) as new_checkouts_day,
-          COUNT(CASE WHEN r.request_date >= NOW() - INTERVAL '2 days' AND r.request_date < NOW() - INTERVAL '1 day' AND r.status = 'approved' THEN 1 END) as prev_checkouts_day,
-          COUNT(CASE WHEN r.returned_at >= NOW() - INTERVAL '1 day' THEN 1 END) as returns_day,
-          COUNT(CASE WHEN r.returned_at >= NOW() - INTERVAL '2 days' AND r.returned_at < NOW() - INTERVAL '1 day' THEN 1 END) as prev_returns_day,
-          COUNT(CASE WHEN e.status = 'under_repair' AND e.created_at >= NOW() - INTERVAL '1 day' THEN 1 END) as new_repairs_day,
-          COUNT(CASE WHEN e.status = 'under_repair' AND e.created_at >= NOW() - INTERVAL '2 days' AND e.created_at < NOW() - INTERVAL '1 day' THEN 1 END) as prev_repairs_day
-        FROM equipment e
-        LEFT JOIN requests r ON e.id = r.equipment_id
-      `;
-
-      const [equipmentStats, requestStats, dailyTrends] = await Promise.all([
+      const [equipmentStats, requestStats] = await Promise.all([
         pool.query(statsQuery),
-        pool.query(requestsQuery),
-        pool.query(dailyTrendsQuery)
+        pool.query(requestsQuery)
       ]);
 
       stats = {
         equipment: equipmentStats.rows[0],
-        requests: requestStats.rows[0],
-        dailyTrends: dailyTrends.rows[0]
+        requests: requestStats.rows[0]
       };
       
       cache.set(cacheKey, stats, 5); // Cache for 5 seconds only

@@ -158,7 +158,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
                 <path d="M2,10H7V9H2M2,12H7V11H2M20,12H22V10H20M20,9H22V7H20M20,15H22V13H20M11,9H13V7H11M11,12H13V10H11M11,15H13V13H11M11,18H13V16H11M14,9H16V7H14M14,12H16V10H14M14,15H16V13H14M14,18H16V16H14M17,9H19V7H17M17,12H19V10H17M17,15H19V13H17M17,18H19V16H17M8,18H10V16H8M8,15H10V13H8M8,12H10V10H8M8,9H10V7H8M5,18H7V16H5M5,15H7V13H5M5,12H7V10H5M5,9H7V7H5M2,18H4V16H2M2,15H4V13H2M20,18H22V16H20Z"/>
               </svg>
             </div>
-            <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', margin: 0 }}>SIMS</h1>
+            <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', margin: 0 }}>AssetFlow</h1>
           </div>
           
           <button
@@ -285,7 +285,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           fontFamily: '"SF Pro Display", -apple-system, sans-serif',
           textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
         }}>
-          SIMS
+          AssetFlow
         </h1>
         <p style={{
           color: 'rgba(255, 255, 255, 0.7)',
@@ -296,7 +296,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           textTransform: 'uppercase',
           textAlign: 'center'
         }}>
-          Inventory Management
+          Professional Solution
         </p>
         </div>
 

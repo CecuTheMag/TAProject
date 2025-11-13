@@ -1,4 +1,4 @@
-// SIMS Backend Server - Main Entry Point
+// AssetFlow Backend Server - Main Entry Point
 // Handles API routing, middleware setup, and service initialization
 
 // Core Express framework and middleware imports

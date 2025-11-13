@@ -106,6 +106,7 @@ export const users = {
   getAll: () => api.get('/users'),
   create: (userData) => api.post('/users', userData),
   updateRole: (id, role) => api.put(`/users/${id}/role`, { role }),
+  updateSubject: (id, subject_id) => api.put(`/users/${id}/subject`, { subject_id }),
   delete: (id) => api.delete(`/users/${id}`),
   getActivity: (id) => api.get(`/users/${id}/activity`)
 };
@@ -122,10 +123,12 @@ export const reports = {
 // Educational features API endpoints
 export const education = {
   getSubjects: () => api.get('/education/subjects'),
+  createSubject: (data) => api.post('/education/subjects', data),
+  updateSubject: (id, data) => api.put(`/education/subjects/${id}`, data),
+  deleteSubject: (id) => api.delete(`/education/subjects/${id}`),
   getLessonPlans: () => api.get('/education/lesson-plans'),
   createLessonPlan: (data) => api.post('/education/lesson-plans', data),
   deleteLessonPlan: (id) => api.delete(`/education/lesson-plans/${id}`),
-  deleteSubject: (id) => api.delete(`/education/subjects/${id}`),
   getCurriculum: () => api.get('/education/curriculum'),
   getCurriculumRecommendations: (subjectCode) => api.get(`/education/curriculum/${subjectCode}/recommendations`),
   requestLessonEquipment: (lessonId, data) => api.post(`/education/lesson-plans/${lessonId}/request-equipment`, data)

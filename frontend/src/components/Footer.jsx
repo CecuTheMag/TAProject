@@ -11,7 +11,8 @@ const Footer = ({ isMobile }) => {
       border: 'none',
       textAlign: 'center',
       width: '100%',
-      display: 'block'
+      display: 'block',
+      marginTop: 'auto'
     }}>
       <div style={{
         color: '#ffffff',
@@ -20,7 +21,7 @@ const Footer = ({ isMobile }) => {
         fontFamily: '"SF Pro Text", -apple-system, sans-serif',
         marginBottom: '8px'
       }}>
-        SIMS - School Inventory Management System
+        AssetFlow - Inventory Management System
       </div>
       <div style={{
         color: 'rgba(255, 255, 255, 0.7)',
@@ -28,7 +29,7 @@ const Footer = ({ isMobile }) => {
         fontWeight: '400',
         fontFamily: '"SF Pro Text", -apple-system, sans-serif'
       }}>
-        Tech Academy Project © 2024
+        Professional IT Solution © 2024
       </div>
     </div>
   );

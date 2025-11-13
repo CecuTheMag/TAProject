@@ -789,7 +789,7 @@ const EducationTab = () => {
                                 fontWeight: '600',
                                 fontSize: '14px'
                               }}>
-                                ★ {eq.avg_score?.toFixed(1) || 'N/A'}
+                                ★ {typeof eq.avg_score === 'number' ? eq.avg_score.toFixed(1) : 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -837,7 +837,7 @@ const EducationTab = () => {
                               fontSize: '12px',
                               fontWeight: '600'
                             }}>
-                              ★ {eq.avg_score?.toFixed(1)}
+                              ★ {typeof eq.avg_score === 'number' ? eq.avg_score.toFixed(1) : 'N/A'}
                             </div>
                           </div>
                         ))}
@@ -874,7 +874,7 @@ const EducationTab = () => {
                               fontSize: '12px',
                               fontWeight: '600'
                             }}>
-                              ★ {gap.avg_impact?.toFixed(1)} Impact
+                              ★ {typeof gap.avg_impact === 'number' ? gap.avg_impact.toFixed(1) : 'N/A'} Impact
                             </div>
                           </div>
                         ))}
