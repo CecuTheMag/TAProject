@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { education } from '../api';
 import { toast } from './Toast';
+import { useTranslation } from '../translations';
 
 const SubjectModal = ({ subject, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -74,7 +76,7 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
-            {isEdit ? 'Edit Subject' : 'Add Subject'}
+            {isEdit ? t('editSubject') : t('addSubject')}
           </h2>
           <button
             onClick={onClose}
@@ -94,7 +96,7 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>
-              Subject Name *
+              {t('subjectName')} *
             </label>
             <input
               type="text"
@@ -114,14 +116,14 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
 
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>
-              Subject Code *
+              {t('subjectCode')} *
             </label>
             <input
               type="text"
               value={formData.code}
               onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
               required
-              placeholder="e.g., MATH, SCI, ENG"
+              placeholder={t('subjectCodePlaceholder')}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -135,13 +137,13 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
 
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>
-              Grade Level
+              {t('gradeLevel')}
             </label>
             <input
               type="text"
               value={formData.grade_level}
               onChange={(e) => setFormData(prev => ({ ...prev, grade_level: e.target.value }))}
-              placeholder="e.g., 6-12, K-5"
+              placeholder={t('gradeLevelPlaceholder')}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -155,7 +157,7 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
 
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>
-              Description
+              {t('description')}
             </label>
             <textarea
               value={formData.description}
@@ -188,7 +190,7 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
                 cursor: 'pointer'
               }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -204,7 +206,7 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Subject' : 'Create Subject')}
+              {loading ? (isEdit ? t('updating') : t('creating')) : (isEdit ? t('updateSubject') : t('createSubject'))}
             </button>
           </div>
         </form>

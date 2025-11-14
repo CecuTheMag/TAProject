@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { equipment } from '../api';
+import { useTranslation } from '../translations';
 
 const AddEquipmentModal = ({ onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -30,7 +32,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
     } catch (err) {
       console.error('Equipment creation error:', err);
       console.error('Error response:', err.response);
-      setError(err.response?.data?.error || err.message || 'Failed to add equipment');
+      setError(err.response?.data?.error || err.message || t('failedToAdd'));
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
             margin: 0,
             fontFamily: '"SF Pro Display", -apple-system, sans-serif'
           }}>
-            Add New Equipment
+            {t('addNewEquipment')}
           </h2>
           <button
             onClick={onClose}
@@ -127,7 +129,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Equipment Name *
+                {t('equipmentName')} *
               </label>
               <input
                 type="text"
@@ -135,7 +137,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                placeholder="e.g., MacBook Pro 16-inch"
+                placeholder={t('equipmentNamePlaceholder')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -156,7 +158,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Type *
+                {t('type')} *
               </label>
               <input
                 type="text"
@@ -164,7 +166,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 value={formData.type}
                 onChange={handleChange}
                 required
-                placeholder="e.g., Laptop, Projector, Camera"
+                placeholder={t('typePlaceholder')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -185,14 +187,14 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Serial Number
+                {t('serialNumber')}
               </label>
               <input
                 type="text"
                 name="serial_number"
                 value={formData.serial_number}
                 onChange={handleChange}
-                placeholder="e.g., ABC123456789"
+                placeholder={t('serialPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -213,14 +215,14 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Location
+                {t('location')}
               </label>
               <input
                 type="text"
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="e.g., Room 101, IT Department"
+                placeholder={t('locationPlaceholder')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -241,7 +243,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Condition *
+                {t('condition')} *
               </label>
               <select
                 name="condition"
@@ -257,10 +259,10 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="poor">Poor</option>
+                <option value="excellent">{t('excellent')}</option>
+                <option value="good">{t('good')}</option>
+                <option value="fair">{t('fair')}</option>
+                <option value="poor">{t('poor')}</option>
               </select>
             </div>
 
@@ -272,7 +274,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Status *
+                {t('status')} *
               </label>
               <select
                 name="status"
@@ -288,9 +290,9 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                   boxSizing: 'border-box'
                 }}
               >
-                <option value="available">Available</option>
-                <option value="under_repair">Under Repair</option>
-                <option value="retired">Retired</option>
+                <option value="available">{t('available')}</option>
+                <option value="under_repair">{t('underRepair')}</option>
+                <option value="retired">{t('retired')}</option>
               </select>
             </div>
 
@@ -303,7 +305,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Quantity *
+                {t('quantity')} *
               </label>
               <input
                 type="number"
@@ -332,7 +334,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 color: '#374151',
                 marginBottom: '8px'
               }}>
-                Low Stock Threshold *
+                {t('lowStockThreshold')} *
               </label>
               <input
                 type="number"
@@ -378,14 +380,14 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                   fontWeight: '600',
                   color: '#374151'
                 }}>
-                  Requires admin approval for requests
+                  {t('requiresApproval')}
                 </span>
                 <div style={{
                   fontSize: '12px',
                   color: '#64748b',
                   marginTop: '4px'
                 }}>
-                  When checked, all requests for this equipment must be approved by an admin before being granted
+                  {t('requiresApprovalDesc')}
                 </div>
               </div>
             </label>
@@ -415,7 +417,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -431,7 +433,7 @@ const AddEquipmentModal = ({ onClose, onSuccess }) => {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Adding...' : 'Add Equipment'}
+              {loading ? t('adding') : t('addEquipmentBtn')}
             </button>
           </div>
         </form>

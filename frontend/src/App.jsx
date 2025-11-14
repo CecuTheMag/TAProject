@@ -3,6 +3,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
+import HomePage from './components/HomePage';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -32,11 +33,14 @@ const AppContent = () => {
 
   return (
     <Routes>
+      {/* Landing page - shows HomePage if not authenticated, redirects to dashboard if authenticated */}
+      <Route path="/" element={user ? <Navigate to="/dashboard" /> : <HomePage onGetStarted={() => window.location.href = '/login'} />} />
+      
       {/* Login route - redirects to dashboard if already authenticated */}
-      <Route path="/login" element={user ? <Navigate to="/" /> : <AuthPage />} />
+      <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <AuthPage />} />
       
       {/* Main dashboard route - protected, requires authentication */}
-      <Route path="/" element={
+      <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>

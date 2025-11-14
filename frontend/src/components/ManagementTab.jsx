@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { equipment, education } from '../api';
 import { toast } from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 import SubjectModal from './SubjectModal';
+import UsersTab from './UsersTab';
+import EquipmentFleetSection from './EquipmentFleetSection';
+import LessonPlansSection from './LessonPlansSection';
+import CurriculumSection from './CurriculumSection';
+import { useTranslation } from '../translations';
 
 const ManagementTab = () => {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('equipment');
   const [equipmentFleets, setEquipmentFleets] = useState([]);
   const [lessonPlans, setLessonPlans] = useState([]);
@@ -102,412 +107,7 @@ const ManagementTab = () => {
     }
   };
 
-  const EquipmentSection = () => (
-    <div style={{ padding: isMobile ? '12px' : '32px' }}>
-      <h2 style={{ 
-        margin: '0 0 24px 0', 
-        color: '#0f172a', 
-        fontSize: isMobile ? '20px' : '24px', 
-        fontWeight: '700' 
-      }}>
-        Equipment Fleet Management
-      </h2>
 
-      {equipmentFleets.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 24px',
-          color: '#64748b',
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '12px'
-        }}>
-          <h3>No equipment fleets found</h3>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gap: '16px' }}>
-          {equipmentFleets.map((fleet) => (
-            <motion.div
-              key={fleet.base_serial}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                border: '1px solid #e5e7eb',
-                borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: '16px',
-                flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? '12px' : '0'
-              }}>
-                <div>
-                  <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
-                    {fleet.name}
-                  </h3>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ 
-                      background: '#dbeafe', 
-                      color: '#1d4ed8', 
-                      padding: '4px 8px', 
-                      borderRadius: '6px', 
-                      fontSize: '12px' 
-                    }}>
-                      {fleet.type}
-                    </span>
-                    <span style={{ color: '#6b7280', fontSize: '14px' }}>
-                      {fleet.total_count} items • {fleet.available_count} available
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setSelectedItems([fleet.base_serial]);
-                    setDeleteType('fleet');
-                    setShowDeleteDialog(true);
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete Fleet
-                </button>
-              </div>
-
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', 
-                gap: '8px' 
-              }}>
-                {fleet.items.map((item) => (
-                  <div key={item.id} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '8px',
-                    border: '1px solid #e5e7eb'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: '600', fontSize: '14px', color: '#0f172a' }}>
-                        {item.serial_number}
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                        <span style={{
-                          padding: '2px 6px',
-                          backgroundColor: getStatusColor(item.status),
-                          color: 'white',
-                          borderRadius: '4px',
-                          fontSize: '10px'
-                        }}>
-                          {item.status}
-                        </span>
-                        <span style={{
-                          padding: '2px 6px',
-                          backgroundColor: getConditionColor(item.condition),
-                          color: 'white',
-                          borderRadius: '4px',
-                          fontSize: '10px'
-                        }}>
-                          {item.condition}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedItems([item.id]);
-                        setDeleteType('equipment');
-                        setShowDeleteDialog(true);
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        backgroundColor: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const LessonPlansSection = () => (
-    <div style={{ padding: isMobile ? '12px' : '32px' }}>
-      <h2 style={{ 
-        margin: '0 0 24px 0', 
-        color: '#0f172a', 
-        fontSize: isMobile ? '20px' : '24px', 
-        fontWeight: '700' 
-      }}>
-        Lesson Plan Management
-      </h2>
-
-      {lessonPlans.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 24px',
-          color: '#64748b',
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '12px'
-        }}>
-          <h3>No lesson plans found</h3>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gap: '12px' }}>
-          {lessonPlans.map((lesson) => (
-            <motion.div
-              key={lesson.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                border: '1px solid #e5e7eb',
-                borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'start',
-                flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? '12px' : '0'
-              }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
-                    {lesson.title}
-                  </h3>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ 
-                      background: '#dbeafe', 
-                      color: '#1d4ed8', 
-                      padding: '4px 8px', 
-                      borderRadius: '6px', 
-                      fontSize: '12px' 
-                    }}>
-                      {lesson.subject_name}
-                    </span>
-                    {lesson.grade_level && (
-                      <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                        Grade {lesson.grade_level}
-                      </span>
-                    )}
-                    {lesson.duration_minutes && (
-                      <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                        {lesson.duration_minutes} min
-                      </span>
-                    )}
-                  </div>
-                  {lesson.description && (
-                    <p style={{ 
-                      margin: '8px 0 0 0', 
-                      color: '#4b5563', 
-                      fontSize: '14px',
-                      lineHeight: '1.4'
-                    }}>
-                      {lesson.description}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setSelectedItems([lesson.id]);
-                    setDeleteType('lesson');
-                    setShowDeleteDialog(true);
-                  }}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const CurriculumSection = () => (
-    <div style={{ padding: isMobile ? '12px' : '32px' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '12px' : '0'
-      }}>
-        <h2 style={{ 
-          margin: 0, 
-          color: '#0f172a', 
-          fontSize: isMobile ? '20px' : '24px', 
-          fontWeight: '700' 
-        }}>
-          Curriculum Management
-        </h2>
-        <button
-          onClick={() => {
-            setEditingSubject(null);
-            setShowSubjectModal(true);
-          }}
-          style={{
-            padding: '12px 20px',
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            width: isMobile ? '100%' : 'auto'
-          }}
-        >
-          + Add Subject
-        </button>
-      </div>
-
-      {subjects.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 24px',
-          color: '#64748b',
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '12px'
-        }}>
-          <h3>No subjects found</h3>
-        </div>
-      ) : (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: '16px' 
-        }}>
-          {subjects.map((subject) => (
-            <motion.div
-              key={subject.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                border: '1px solid #e5e7eb',
-                borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'start',
-                marginBottom: '12px'
-              }}>
-                <div>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
-                    {subject.name}
-                  </h3>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span style={{ 
-                      background: '#e0f2fe', 
-                      color: '#0369a1', 
-                      padding: '4px 8px', 
-                      borderRadius: '6px', 
-                      fontSize: '12px' 
-                    }}>
-                      {subject.code}
-                    </span>
-                    {subject.grade_level && (
-                      <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                        Grades {subject.grade_level}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => {
-                      setEditingSubject(subject);
-                      setShowSubjectModal(true);
-                    }}
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedItems([subject.id]);
-                      setDeleteType('subject');
-                      setShowDeleteDialog(true);
-                    }}
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#ef4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              
-              {subject.description && (
-                <p style={{ 
-                  margin: 0, 
-                  color: '#4b5563', 
-                  fontSize: '14px',
-                  lineHeight: '1.4'
-                }}>
-                  {subject.description}
-                </p>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   const handleConfirmDelete = async () => {
     try {
@@ -541,7 +141,7 @@ const ManagementTab = () => {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
-        <p style={{ color: '#64748b', fontSize: '16px' }}>Loading management data...</p>
+        <p style={{ color: '#64748b', fontSize: '16px' }}>{t('loadingManagementData')}</p>
       </div>
     );
   }
@@ -563,7 +163,7 @@ const ManagementTab = () => {
           color: '#0f172a',
           margin: '0 0 8px 0'
         }}>
-          System Management
+          {t('systemManagement')}
         </h1>
         <p style={{
           color: '#64748b',
@@ -571,7 +171,7 @@ const ManagementTab = () => {
           fontWeight: '500',
           margin: 0
         }}>
-          Manage equipment fleets, lesson plans, and curriculum
+          {t('manageEquipmentFleets')}
         </p>
       </div>
 
@@ -589,9 +189,10 @@ const ManagementTab = () => {
           paddingBottom: isMobile ? '4px' : '0'
         }}>
           {[
-            { id: 'equipment', label: isMobile ? 'Equipment' : 'Equipment Fleets' },
-            { id: 'lessons', label: isMobile ? 'Lessons' : 'Lesson Plans' },
-            { id: 'curriculum', label: 'Curriculum' }
+            { id: 'equipment', label: isMobile ? t('equipment') : t('equipmentFleet') },
+            { id: 'lessons', label: isMobile ? t('lessons') : t('lessonPlans') },
+            { id: 'curriculum', label: t('curriculum') },
+            { id: 'users', label: t('users') }
           ].map((section) => (
             <button
               key={section.id}
@@ -616,23 +217,62 @@ const ManagementTab = () => {
       </div>
 
       {/* Content */}
-      {activeSection === 'equipment' && <EquipmentSection />}
-      {activeSection === 'lessons' && <LessonPlansSection />}
-      {activeSection === 'curriculum' && <CurriculumSection />}
+      {activeSection === 'equipment' && (
+        <EquipmentFleetSection 
+          equipmentFleets={equipmentFleets}
+          isMobile={isMobile}
+          onDelete={(id, type) => {
+            setSelectedItems([id]);
+            setDeleteType(type);
+            setShowDeleteDialog(true);
+          }}
+        />
+      )}
+      {activeSection === 'lessons' && (
+        <LessonPlansSection 
+          lessonPlans={lessonPlans}
+          isMobile={isMobile}
+          onDelete={(id, type) => {
+            setSelectedItems([id]);
+            setDeleteType(type);
+            setShowDeleteDialog(true);
+          }}
+        />
+      )}
+      {activeSection === 'curriculum' && (
+        <CurriculumSection 
+          subjects={subjects}
+          isMobile={isMobile}
+          onDelete={(id, type) => {
+            setSelectedItems([id]);
+            setDeleteType(type);
+            setShowDeleteDialog(true);
+          }}
+          onEdit={(subject) => {
+            setEditingSubject(subject);
+            setShowSubjectModal(true);
+          }}
+          onAdd={() => {
+            setEditingSubject(null);
+            setShowSubjectModal(true);
+          }}
+        />
+      )}
+      {activeSection === 'users' && <UsersTab />}
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
         <ConfirmDialog
           isOpen={showDeleteDialog}
-          title={`Delete ${deleteType === 'fleet' ? 'Fleet' : deleteType}`}
-          message={`Are you sure you want to delete this ${deleteType}? This action cannot be undone.`}
+          title={`${t('delete')} ${deleteType === 'fleet' ? t('deleteFleet') : deleteType}`}
+          message={`${t('deleteConfirmMessage')} ${deleteType}? ${t('deleteCannotBeUndone')}`}
           onConfirm={handleConfirmDelete}
           onCancel={() => {
             setShowDeleteDialog(false);
             setSelectedItems([]);
           }}
-          confirmText="Delete"
-          cancelText="Cancel"
+          confirmText={t('delete')}
+          cancelText={t('cancel')}
         />
       )}
 

@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { requests } from '../api';
 import { useAuth } from '../AuthContext';
 import EarlyReturnModal from './EarlyReturnModal';
+import { useTranslation } from '../translations';
 
 // Component for managing equipment requests - displays user's requests or all requests for admins
 const RequestsTab = () => {
+  const { t } = useTranslation();
   // State management
   const [requestsList, setRequestsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,7 +125,7 @@ const RequestsTab = () => {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
-        <p style={{ color: '#64748b', fontSize: '16px' }}>Loading requests...</p>
+        <p style={{ color: '#64748b', fontSize: '16px' }}>{t('loadingRequests')}</p>
       </div>
     );
   }
@@ -156,7 +158,7 @@ const RequestsTab = () => {
               margin: '0 0 8px 0',
               fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
-              {user?.role === 'admin' ? 'All Requests' : 'My Requests'}
+              {user?.role === 'admin' ? t('allRequests') : t('myRequests')}
             </h1>
             <p style={{
               color: '#64748b',
@@ -165,8 +167,8 @@ const RequestsTab = () => {
               margin: 0
             }}>
               {user?.role === 'admin' 
-                ? 'Review and manage equipment requests'
-                : 'Track your equipment requests'
+                ? t('reviewManageRequests')
+                : t('trackYourRequests')
               }
             </p>
           </div>
@@ -197,7 +199,7 @@ const RequestsTab = () => {
                   minWidth: 'fit-content'
                 }}
               >
-                {status === 'early_returned' ? 'Early Returned' : status}
+                {status === 'all' ? t('all') : status === 'early_returned' ? t('earlyReturned') : t(status)}
               </button>
             ))}
           </div>
@@ -221,13 +223,13 @@ const RequestsTab = () => {
               color: '#0f172a', 
               fontWeight: '700'
             }}>
-              No requests found
+              {t('noRequestsFound')}
             </h3>
             <p style={{ 
               margin: '0 0 24px 0', 
               fontSize: '16px'
             }}>
-              {filter === 'all' ? 'No requests available.' : `No ${filter} requests found.`}
+              {filter === 'all' ? t('noRequestsAvailable') : `${t('noFilteredRequests').replace('{filter}', filter === 'early_returned' ? t('earlyReturned') : t(filter))}`}
             </p>
           </div>
         ) : (
@@ -265,7 +267,7 @@ const RequestsTab = () => {
                       fontSize: '14px',
                       margin: '0 0 8px 0'
                     }}>
-                      Requested by: {request.username || request.user_name || 'Unknown User'}
+                      {t('requestedBy')}: {request.username || request.user_name || t('unknownUser')}
                     </p>
                     <p style={{
                       color: '#64748b',
@@ -285,7 +287,7 @@ const RequestsTab = () => {
                         margin: 0,
                         fontWeight: '600'
                       }}>
-                        Due: {new Date(request.due_date).toLocaleDateString()}
+                        {t('due')}: {new Date(request.due_date).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -307,7 +309,7 @@ const RequestsTab = () => {
                       fontWeight: '600',
                       textTransform: 'capitalize'
                     }}>
-                      {request.status === 'early_returned' ? 'Early Returned' : request.status.replace('_', ' ')}
+                      {request.status === 'early_returned' ? t('earlyReturned') : t(request.status)}
                     </span>
                     
                     {user?.role === 'admin' && request.status === 'pending' && (
@@ -329,7 +331,7 @@ const RequestsTab = () => {
                             cursor: 'pointer'
                           }}
                         >
-                          Approve
+                          {t('approve')}
                         </button>
                         <button
                           onClick={() => handleReject(request.id)}
@@ -344,7 +346,7 @@ const RequestsTab = () => {
                             cursor: 'pointer'
                           }}
                         >
-                          Reject
+                          {t('reject')}
                         </button>
                       </div>
                     )}
@@ -363,7 +365,7 @@ const RequestsTab = () => {
                           cursor: 'pointer'
                         }}
                       >
-                        Return Early
+                        {t('returnEarly')}
                       </button>
                     )}
                   </div>

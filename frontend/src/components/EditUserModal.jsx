@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { users, education } from '../api';
 import { toast } from './Toast';
+import { useTranslation } from '../translations';
 
 const EditUserModal = ({ user, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [subjects, setSubjects] = useState([]);
   const [formData, setFormData] = useState({
@@ -110,14 +112,14 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
           marginBottom: '24px'
         }}>
           <h2 id="modal-title" style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700' }}>
-            Edit User: {user?.username}
+            {t('editUser')}: {user?.username}
           </h2>
         </div>
         
         <form onSubmit={handleSubmit} style={{ padding: isMobile ? '0 20px 20px' : '0 32px 32px' }}>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#0f172a' }}>
-              Role
+              {t('role')}
             </label>
             <select
               value={formData.role}
@@ -131,17 +133,17 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
                 fontSize: '14px'
               }}
             >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="manager">Manager</option>
-              <option value="admin">Admin</option>
+              <option value="student">{t('student')}</option>
+              <option value="teacher">{t('teacher')}</option>
+              <option value="manager">{t('manager')}</option>
+              <option value="admin">{t('admin')}</option>
             </select>
           </div>
 
           {formData.role === 'teacher' && (
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#0f172a' }}>
-                Subject
+                {t('subject')}
               </label>
               <select
                 value={formData.subject_id}
@@ -155,7 +157,7 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
                   fontSize: '14px'
                 }}
               >
-                <option value="">Select a subject...</option>
+                <option value="">{t('selectSubject')}</option>
                 {subjects.map(subject => (
                   <option key={subject.id} value={subject.id}>
                     {subject.name} ({subject.code})
@@ -180,7 +182,7 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
                 fontWeight: '600'
               }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -196,7 +198,7 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
                 fontWeight: '600'
               }}
             >
-              {loading ? 'Updating...' : 'Update User'}
+              {loading ? t('updating') : t('updateUser')}
             </button>
           </div>
         </form>

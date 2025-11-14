@@ -8,8 +8,10 @@ import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
 import AddEquipmentModal from './AddEquipmentModal';
 import EarlyReturnModal from './EarlyReturnModal';
+import { useTranslation } from '../translations';
 
 const EquipmentTab = () => {
+  const { t } = useTranslation();
   const [equipmentList, setEquipmentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -102,10 +104,10 @@ const EquipmentTab = () => {
   }) : [];
 
   const filters = [
-    { key: 'available', label: 'Available', color: '#10b981' },
-    { key: 'checked_out', label: 'Checked Out', color: '#f59e0b' },
-    { key: 'under_repair', label: 'Under Repair', color: '#ef4444' },
-    { key: 'retired', label: 'Retired', color: '#6b7280' }
+    { key: 'available', label: t('available'), color: '#10b981' },
+    { key: 'checked_out', label: t('checkedOut'), color: '#f59e0b' },
+    { key: 'under_repair', label: t('underRepair'), color: '#ef4444' },
+    { key: 'retired', label: t('retired'), color: '#6b7280' }
   ];
 
   const handleFilterChange = (filterKey) => {
@@ -138,7 +140,7 @@ const EquipmentTab = () => {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
-        <p style={{ color: '#64748b', fontSize: '16px' }}>Loading equipment...</p>
+        <p style={{ color: '#64748b', fontSize: '16px' }}>{t('loadingEquipment')}</p>
       </div>
     );
   }
@@ -178,7 +180,7 @@ const EquipmentTab = () => {
               margin: '0 0 8px 0',
               fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
-              Equipment Management
+              {t('equipmentManagement')}
             </h1>
             <p style={{
               color: '#64748b',
@@ -186,7 +188,7 @@ const EquipmentTab = () => {
               fontWeight: '500',
               margin: 0
             }}>
-              Manage and track all school equipment inventory
+              {t('manageTrackEquipment')}
             </p>
           </div>
           
@@ -214,7 +216,7 @@ const EquipmentTab = () => {
                 minWidth: isMobile ? '120px' : 'auto'
               }}
             >
-              {viewMode === 'grid' ? 'List View' : 'Grid View'}
+              {viewMode === 'grid' ? t('listView') : t('gridView')}
             </button>
             
             {user?.role === 'admin' && (
@@ -236,7 +238,7 @@ const EquipmentTab = () => {
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
               >
-                + Add Equipment
+                + {t('addEquipment')}
               </button>
             )}
           </div>
@@ -265,7 +267,7 @@ const EquipmentTab = () => {
           <SearchBar 
             searchTerm={searchTerm} 
             setSearchTerm={setSearchTerm}
-            placeholder="Search equipment by name or type..."
+            placeholder={t('searchEquipmentByName')}
           />
           
           <FilterBar 
@@ -297,13 +299,13 @@ const EquipmentTab = () => {
               color: '#0f172a', 
               fontWeight: '700'
             }}>
-              No equipment found
+              {t('noEquipmentFound')}
             </h3>
             <p style={{ 
               margin: '0 0 24px 0', 
               fontSize: '16px'
             }}>
-              Try adjusting your search terms or filters.
+              {t('tryAdjustingSearch')}
             </p>
           </div>
         ) : (

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { alerts } from '../api';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from '../translations';
 
 const AlertsTab = () => {
+  const { t } = useTranslation();
   const [lowStockItems, setLowStockItems] = useState([]);
   const [overdueItems, setOverdueItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +75,8 @@ const AlertsTab = () => {
             <path d="M12,2L13.09,8.26L22,9L17,14L18.18,22L12,19L5.82,22L7,14L2,9L10.91,8.26L12,2Z"/>
           </svg>
         </div>
-        <h2 style={{ color: '#0f172a', margin: 0 }}>Access Restricted</h2>
-        <p style={{ color: '#64748b', margin: 0 }}>Only teachers and administrators can view system alerts.</p>
+        <h2 style={{ color: '#0f172a', margin: 0 }}>{t('accessRestricted')}</h2>
+        <p style={{ color: '#64748b', margin: 0 }}>{t('onlyTeachersAdmins')}</p>
       </div>
     );
   }
@@ -97,7 +99,7 @@ const AlertsTab = () => {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
-        <p style={{ color: '#64748b' }}>Loading system alerts...</p>
+        <p style={{ color: '#64748b' }}>{t('loadingSystemAlerts')}</p>
       </div>
     );
   }
@@ -142,7 +144,7 @@ const AlertsTab = () => {
               margin: '0 0 8px 0',
               textAlign: isMobile ? 'center' : 'left'
             }}>
-              System Alerts
+              {t('systemAlerts')}
             </h1>
             <p style={{ 
               color: '#64748b', 
@@ -150,7 +152,7 @@ const AlertsTab = () => {
               textAlign: isMobile ? 'center' : 'left',
               fontSize: isMobile ? '14px' : '16px'
             }}>
-              Monitor equipment status and take action on critical issues
+              {t('monitorEquipmentStatus')}
             </p>
           </div>
           
@@ -178,7 +180,7 @@ const AlertsTab = () => {
             }}>
               <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
             </svg>
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? t('refreshing') : t('refresh')}
           </button>
         </div>
 
@@ -215,7 +217,7 @@ const AlertsTab = () => {
               fontWeight: '600',
               color: '#374151'
             }}>
-              Total Alerts
+              {t('totalAlerts')}
             </div>
           </div>
           
@@ -244,7 +246,7 @@ const AlertsTab = () => {
               fontWeight: '600',
               color: '#374151'
             }}>
-              Critical (7+ days)
+              {t('criticalDays')}
             </div>
           </div>
           
@@ -273,7 +275,7 @@ const AlertsTab = () => {
               fontWeight: '600',
               color: '#374151'
             }}>
-              Low Stock
+              {t('lowStock')}
             </div>
           </div>
         </div>
@@ -298,9 +300,9 @@ const AlertsTab = () => {
           justifyContent: isMobile ? 'center' : 'flex-start'
         }}>
           {[
-            { id: 'overview', label: 'Overview', count: totalAlerts },
-            { id: 'stock', label: 'Low Stock', count: lowStockItems.length },
-            { id: 'overdue', label: 'Overdue', count: overdueItems.length }
+            { id: 'overview', label: t('overview'), count: totalAlerts },
+            { id: 'stock', label: t('lowStock'), count: lowStockItems.length },
+            { id: 'overdue', label: t('overdue'), count: overdueItems.length }
           ].map(tab => (
             <button
               key={tab.id}
@@ -375,17 +377,17 @@ const AlertsTab = () => {
                   </svg>
                 </div>
                 <h3 style={{ color: '#0f172a', fontSize: '24px', fontWeight: '700', margin: '0 0 12px 0' }}>
-                  All Systems Normal
+                  {t('allSystemsNormal')}
                 </h3>
                 <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>
-                  No alerts detected. All equipment is properly stocked and returned on time.
+                  {t('noAlertsDetected')}
                 </p>
               </div>
             ) : (
               <>
                 {lowStockItems.length > 0 && (
                   <AlertSection
-                    title="Low Stock Items"
+                    title={t('lowStockItems')}
                     items={lowStockItems.slice(0, 3)}
                     type="stock"
                     onUpdateThreshold={updateThreshold}
@@ -396,7 +398,7 @@ const AlertsTab = () => {
                 )}
                 {overdueItems.length > 0 && (
                   <AlertSection
-                    title="Overdue Equipment"
+                    title={t('overdueEquipment')}
                     items={overdueItems.slice(0, 3)}
                     type="overdue"
                     showMore={overdueItems.length > 3}
@@ -411,7 +413,7 @@ const AlertsTab = () => {
 
         {activeTab === 'stock' && (
           <AlertSection
-            title="Low Stock Management"
+            title={t('lowStockManagement')}
             items={lowStockItems}
             type="stock"
             onUpdateThreshold={updateThreshold}
@@ -422,7 +424,7 @@ const AlertsTab = () => {
 
         {activeTab === 'overdue' && (
           <AlertSection
-            title="Overdue Equipment Management"
+            title={t('overdueEquipmentManagement')}
             items={overdueItems}
             type="overdue"
             fullView
@@ -435,6 +437,7 @@ const AlertsTab = () => {
 };
 
 const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowMore, fullView, isMobile }) => {
+  const { t } = useTranslation();
   if (items.length === 0) {
     return (
       <div style={{
@@ -450,10 +453,10 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
         boxSizing: 'border-box'
       }}>
         <h3 style={{ color: '#065f46', margin: '0 0 8px 0' }}>
-          {type === 'stock' ? 'All Equipment Adequately Stocked' : 'No Overdue Equipment'}
+          {type === 'stock' ? t('allEquipmentStocked') : t('noOverdueEquipment')}
         </h3>
         <p style={{ color: '#047857', margin: 0 }}>
-          {type === 'stock' ? 'All items are above their stock thresholds.' : 'All borrowed equipment has been returned on time.'}
+          {type === 'stock' ? t('allItemsAboveThreshold') : t('allEquipmentReturned')}
         </p>
       </div>
     );
@@ -499,7 +502,7 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
               cursor: 'pointer'
             }}
           >
-            View All ({items.length})
+            {t('viewAll')} ({items.length})
           </button>
         )}
       </div>
@@ -523,6 +526,7 @@ const AlertSection = ({ title, items, type, onUpdateThreshold, showMore, onShowM
 };
 
 const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [threshold, setThreshold] = useState(item.stock_threshold || 0);
 
@@ -565,9 +569,9 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
             {item.name}
           </h4>
           <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#6b7280', flexWrap: 'wrap' }}>
-            <span>Available: <strong>{item.available_count || item.available || 0}</strong></span>
-            <span>Threshold: <strong>{item.stock_threshold}</strong></span>
-            {!isMobile && <span>Type: <strong>{item.type}</strong></span>}
+            <span>{t('available')}: <strong>{item.available_count || item.available || 0}</strong></span>
+            <span>{t('threshold')}: <strong>{item.stock_threshold}</strong></span>
+            {!isMobile && <span>{t('type')}: <strong>{item.type}</strong></span>}
           </div>
         </div>
         
@@ -606,7 +610,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
                   cursor: 'pointer'
                 }}
               >
-                Save
+                {t('save')}
               </button>
               <button
                 onClick={() => setIsEditing(false)}
@@ -620,7 +624,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
                   cursor: 'pointer'
                 }}
               >
-                Cancel
+                {t('cancel')}
               </button>
             </>
           ) : (
@@ -637,7 +641,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
                   cursor: 'pointer'
                 }}
               >
-                Edit Threshold
+                {t('editThreshold')}
               </button>
               <span style={{
                 padding: '8px 16px',
@@ -647,7 +651,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
                 fontSize: '12px',
                 fontWeight: '700'
               }}>
-                LOW STOCK
+                {t('lowStockLabel')}
               </span>
             </>
           )}
@@ -691,8 +695,8 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
             {item.equipment_name}
           </h4>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-            <div>Borrowed by: <strong>{item.username}</strong> ({item.email})</div>
-            <div>Due date: <strong>{new Date(item.due_date).toLocaleDateString()}</strong></div>
+            <div>{t('borrowedBy')}: <strong>{item.username}</strong> ({item.email})</div>
+            <div>{t('dueDate')}: <strong>{new Date(item.due_date).toLocaleDateString()}</strong></div>
           </div>
         </div>
         
@@ -704,7 +708,7 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
           fontSize: '12px',
           fontWeight: '700'
         }}>
-          {isCritical ? 'CRITICAL' : 'OVERDUE'}
+          {isCritical ? t('criticalLabel') : t('overdueLabel')}
         </span>
       </div>
       
@@ -727,8 +731,8 @@ const AlertCard = ({ item, type, onUpdateThreshold, isMobile }) => {
             fontSize: '14px',
             fontWeight: '600'
           }}>
-            {daysOverdue} days overdue
-            {isCritical && ' - Requires immediate attention'}
+            {daysOverdue} {t('daysOverdue')}
+            {isCritical && ` - ${t('requiresAttention')}`}
           </span>
         </div>
       </div>

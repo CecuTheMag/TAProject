@@ -35,7 +35,10 @@ const FilterChip = ({ label, isActive, onClick, color = '#0f172a', isMobile = fa
   );
 };
 
+import { useTranslation } from '../translations';
+
 const FilterBar = ({ filters, activeFilters, onFilterChange, isMobile }) => {
+  const { t } = useTranslation();
   return (
     <div style={{
       display: 'flex',
@@ -54,7 +57,7 @@ const FilterBar = ({ filters, activeFilters, onFilterChange, isMobile }) => {
           fontFamily: '"SF Pro Text", -apple-system, sans-serif',
           whiteSpace: 'nowrap'
         }}>
-          Filter:
+          {t('filterLabel')}
         </span>
       )}
       

@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DocumentViewer from './DocumentViewer';
+import { useTranslation } from '../translations';
 
 /**
  * Equipment Card Component
@@ -15,6 +16,7 @@ import DocumentViewer from './DocumentViewer';
  * - Smooth animations and hover effects
  */
 const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, isMobile }) => {
+  const { t } = useTranslation();
   const [showDocuments, setShowDocuments] = useState(false);
   
   /**
@@ -113,7 +115,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
             textTransform: 'capitalize',
             whiteSpace: 'nowrap'
           }}>
-            {getDisplayStatus(item).replace('_', ' ')}
+            {t(getDisplayStatus(item))}
           </span>
 
         </div>
@@ -128,7 +130,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
             </svg>
           </div>
           <div>
-            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>Type: </span>
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>{t('type')}: </span>
             <span style={{ color: '#0f172a', fontSize: '14px', fontWeight: '600' }}>{item.type}</span>
           </div>
         </div>
@@ -140,14 +142,14 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
             </svg>
           </div>
           <div>
-            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>Condition: </span>
+            <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>{t('condition')}: </span>
             <span style={{
               color: getConditionColor(item.condition),
               fontSize: '14px',
               fontWeight: '600',
               textTransform: 'capitalize'
             }}>
-              {item.condition}
+              {t(item.condition)}
             </span>
           </div>
         </div>
@@ -160,7 +162,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
               </svg>
             </div>
             <div>
-              <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>Serial: </span>
+              <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>{t('serial')}: </span>
               <span style={{
                 color: '#0f172a',
                 fontSize: '14px',
@@ -183,7 +185,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
               </svg>
             </div>
             <div>
-              <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>Location: </span>
+              <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>{t('location')}: </span>
               <span style={{ color: '#0f172a', fontSize: '14px', fontWeight: '600' }}>{item.location}</span>
             </div>
           </div>
@@ -223,7 +225,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
             onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'}
             onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'}
           >
-            View Details
+            {t('viewDetails')}
           </button>
           
           <button
@@ -277,7 +279,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M5,17H19V19H5V17M12,5A4,4 0 0,1 16,9C16,10.88 14.88,12.53 13.25,13.31L15,22H9L10.75,13.31C9.13,12.53 8,10.88 8,9A4,4 0 0,1 12,5Z"/>
             </svg>
-            Request Equipment
+            {t('requestEquipment')}
           </button>
         )}
         

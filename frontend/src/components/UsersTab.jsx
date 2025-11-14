@@ -6,8 +6,10 @@ import ConfirmDialog from './ConfirmDialog';
 import EditUserModal from './EditUserModal';
 import { toast } from './Toast';
 import { useFormValidation, validationRules } from '../hooks/useFormValidation';
+import { useTranslation } from '../translations';
 
 const UsersTab = () => {
+  const { t } = useTranslation();
   const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -128,67 +130,42 @@ const UsersTab = () => {
   }
 
   return (
-    <div>
-      {/* Header */}
+    <div style={{ padding: isMobile ? '12px' : '32px' }}>
       <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(20px)',
-        padding: isMobile ? '20px' : '40px',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        margin: isMobile ? '0 12px' : '0',
-        borderRadius: isMobile ? '12px 12px 0 0' : '0'
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '12px' : '0'
       }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: isMobile ? '16px' : '0'
+        <h2 style={{ 
+          margin: 0, 
+          color: '#0f172a', 
+          fontSize: isMobile ? '20px' : '24px', 
+          fontWeight: '700' 
         }}>
-          <div>
-            <h1 style={{
-              fontSize: isMobile ? '24px' : '32px',
-              fontWeight: '800',
-              color: '#0f172a',
-              margin: '0 0 8px 0',
-              textAlign: isMobile ? 'center' : 'left'
-            }}>
-              User Management
-            </h1>
-            <p style={{
-              color: '#64748b',
-              fontSize: isMobile ? '14px' : '16px',
-              margin: 0,
-              textAlign: isMobile ? 'center' : 'left'
-            }}>
-              Manage user accounts and permissions
-            </p>
-          </div>
-          
-          <button
-            onClick={() => setShowCreateModal(true)}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
-          >
-            + Add User
-          </button>
-        </div>
+          {t('userManagement')}
+        </h2>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          style={{
+            padding: '12px 20px',
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            width: isMobile ? '100%' : 'auto'
+          }}
+        >
+          + {t('createNewUser')}
+        </button>
       </div>
 
-      {/* Users List */}
-      <div style={{ 
-        padding: isMobile ? '16px 12px' : '40px',
-        margin: '0'
-      }}>
+      <div>
         {isMobile ? (
           // Mobile Card Layout
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -224,7 +201,7 @@ const UsersTab = () => {
                   borderBottom: '1px solid rgba(226, 232, 240, 0.5)'
                 }}>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>User</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Role</th>
+                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>{t('role')}</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Subject</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Requests</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Joined</th>
@@ -275,10 +252,10 @@ const UsersTab = () => {
                           fontSize: '12px'
                         }}
                       >
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Admin</option>
+                        <option value="student">{t('student')}</option>
+                        <option value="teacher">{t('teacher')}</option>
+                        <option value="manager">{t('manager')}</option>
+                        <option value="admin">{t('admin')}</option>
                       </select>
                     </td>
                     <td style={{ padding: '20px' }}>
@@ -293,7 +270,7 @@ const UsersTab = () => {
                     </td>
                     <td style={{ padding: '20px' }}>
                       <div style={{ fontSize: '14px', color: '#64748b' }}>
-                        <div>Total: {userItem.total_requests}</div>
+                        <div>{t('totalRequests')}: {userItem.total_requests}</div>
                         <div>Pending: {userItem.pending_requests}</div>
                         <div>Approved: {userItem.approved_requests}</div>
                       </div>
@@ -315,7 +292,7 @@ const UsersTab = () => {
                             cursor: 'pointer'
                           }}
                         >
-                          Edit
+                          {t('edit')}
                         </button>
                         <button
                           onClick={() => handleViewActivity(userItem.id)}
@@ -329,7 +306,7 @@ const UsersTab = () => {
                             cursor: 'pointer'
                           }}
                         >
-                          Activity
+                          {t('activity')}
                         </button>
                         {userItem.id !== user.id && (
                           <button
@@ -344,7 +321,7 @@ const UsersTab = () => {
                               cursor: 'pointer'
                             }}
                           >
-                            Delete
+                            {t('delete')}
                           </button>
                         )}
                       </div>
@@ -650,6 +627,7 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onEditUser, onViewActiv
 };
 
 const CreateUserModal = ({ onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
@@ -742,13 +720,13 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
           marginBottom: '24px',
           borderBottom: '1px solid #e2e8f0'
         }}>
-          <h2 id="modal-title" style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700' }}>Create New User</h2>
+          <h2 id="modal-title" style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700' }}>{t('createNewUser')}</h2>
         </div>
         
         <form onSubmit={handleSubmit} style={{ padding: isMobile ? '0 20px 20px' : '0 32px 32px' }}>
           <div style={{ marginBottom: '16px' }}>
             <label htmlFor="username" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              Username
+              {t('username')}
             </label>
             <input
               id="username"
@@ -775,7 +753,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
           
           <div style={{ marginBottom: '16px' }}>
             <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              Email
+              {t('email')}
             </label>
             <input
               id="email"
@@ -802,7 +780,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
           
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              Password
+              {t('password')}
             </label>
             <input
               type="password"
@@ -826,7 +804,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
           
           <div style={{ marginBottom: '24px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              Role
+              {t('role')}
             </label>
             <select
               value={validation.values.role}
@@ -839,10 +817,10 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
                 boxSizing: 'border-box'
               }}
             >
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="manager">Manager</option>
-              <option value="admin">Admin</option>
+              <option value="student">{t('student')}</option>
+              <option value="teacher">{t('teacher')}</option>
+              <option value="manager">{t('manager')}</option>
+              <option value="admin">{t('admin')}</option>
             </select>
           </div>
           
@@ -859,7 +837,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
                 cursor: 'pointer'
               }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               type="submit"
@@ -873,7 +851,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              {loading ? 'Creating...' : 'Create User'}
+              {loading ? t('creating') : t('createNewUser')}
             </button>
           </div>
         </form>
@@ -883,6 +861,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
 };
 
 const UserActivityModal = ({ user, activity, onClose }) => {
+  const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -942,10 +921,10 @@ const UserActivityModal = ({ user, activity, onClose }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 style={{ margin: '0 0 4px 0', fontSize: '24px', fontWeight: '700' }}>
-                {user?.username}'s Activity
+                {user?.username}{t('userActivity')}
               </h2>
               <p style={{ margin: 0, opacity: 0.9, fontSize: '14px' }}>
-                {activity.length} total requests
+                {activity.length} {t('totalRequests')}
               </p>
             </div>
             <button
@@ -988,10 +967,10 @@ const UserActivityModal = ({ user, activity, onClose }) => {
                 </svg>
               </div>
               <h3 style={{ color: '#6b7280', fontSize: '18px', fontWeight: '600', margin: '0 0 8px 0' }}>
-                No Activity Found
+                {t('noActivityFound')}
               </h3>
               <p style={{ color: '#9ca3af', margin: 0 }}>
-                This user hasn't made any equipment requests yet.
+                {t('noActivityMessage')}
               </p>
             </div>
           ) : (
@@ -1021,7 +1000,7 @@ const UserActivityModal = ({ user, activity, onClose }) => {
                         </h4>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '14px', color: '#6b7280' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>📅 Requested: {new Date(item.request_date).toLocaleDateString('en-US', { 
+                            <span>📅 {t('requested')}: {new Date(item.request_date).toLocaleDateString('en-US', { 
                               year: 'numeric', 
                               month: 'short', 
                               day: 'numeric' 
@@ -1029,7 +1008,7 @@ const UserActivityModal = ({ user, activity, onClose }) => {
                           </div>
                           {item.start_date && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>⏰ Period: {new Date(item.start_date).toLocaleDateString('en-US', { 
+                              <span>⏰ {t('period')}: {new Date(item.start_date).toLocaleDateString('en-US', { 
                                 month: 'short', 
                                 day: 'numeric' 
                               })} - {new Date(item.end_date).toLocaleDateString('en-US', { 
@@ -1064,7 +1043,7 @@ const UserActivityModal = ({ user, activity, onClose }) => {
                         borderRadius: '6px',
                         fontSize: '13px'
                       }}>
-                        <span style={{ fontWeight: '600', color: '#374151' }}>Return Condition:</span>
+                        <span style={{ fontWeight: '600', color: '#374151' }}>{t('returnCondition')}:</span>
                         <span style={{ color: '#6b7280', marginLeft: '8px', textTransform: 'capitalize' }}>
                           {item.return_condition}
                         </span>
@@ -1080,7 +1059,7 @@ const UserActivityModal = ({ user, activity, onClose }) => {
                         borderRadius: '8px'
                       }}>
                         <div style={{ fontSize: '12px', fontWeight: '600', color: '#0369a1', marginBottom: '4px' }}>
-                          📝 NOTES
+                          📝 {t('notes')}
                         </div>
                         <p style={{ margin: 0, fontSize: '14px', color: '#374151', lineHeight: '1.5' }}>
                           {item.notes}

@@ -107,6 +107,8 @@ export const users = {
   create: (userData) => api.post('/users', userData),
   updateRole: (id, role) => api.put(`/users/${id}/role`, { role }),
   updateSubject: (id, subject_id) => api.put(`/users/${id}/subject`, { subject_id }),
+  updateProfile: (id, data) => api.put(`/users/${id}/profile`, data),
+  updatePassword: (id, data) => api.put(`/users/${id}/password`, data),
   delete: (id) => api.delete(`/users/${id}`),
   getActivity: (id) => api.get(`/users/${id}/activity`)
 };

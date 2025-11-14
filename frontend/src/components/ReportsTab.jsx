@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { reports } from '../api';
+import { useTranslation } from '../translations';
 
 const ReportsTab = () => {
+  const { t } = useTranslation();
   const [selectedReport, setSelectedReport] = useState('inventory');
   const [dateRange, setDateRange] = useState('last30days');
   const [generating, setGenerating] = useState(false);
@@ -17,8 +19,8 @@ const ReportsTab = () => {
   const reportTypes = [
     {
       id: 'inventory',
-      title: 'Inventory Report',
-      description: 'Complete overview of all equipment and their current status',
+      title: t('inventoryReport'),
+      description: t('inventoryDescription'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -27,8 +29,8 @@ const ReportsTab = () => {
     },
     {
       id: 'usage',
-      title: 'Usage Report',
-      description: 'Equipment usage patterns and frequency analysis',
+      title: t('usageReport'),
+      description: t('usageDescription'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
@@ -37,8 +39,8 @@ const ReportsTab = () => {
     },
     {
       id: 'requests',
-      title: 'Request History',
-      description: 'Historical data of all equipment requests and approvals',
+      title: t('requestHistory'),
+      description: t('requestHistoryDescription'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
@@ -47,8 +49,8 @@ const ReportsTab = () => {
     },
     {
       id: 'maintenance',
-      title: 'Maintenance Report',
-      description: 'Equipment maintenance schedules and repair history',
+      title: t('maintenanceReport'),
+      description: t('maintenanceDescription'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
@@ -58,11 +60,11 @@ const ReportsTab = () => {
   ];
 
   const dateRanges = [
-    { id: 'last7days', label: 'Last 7 days' },
-    { id: 'last30days', label: 'Last 30 days' },
-    { id: 'last90days', label: 'Last 90 days' },
-    { id: 'lastyear', label: 'Last year' },
-    { id: 'custom', label: 'Custom range' }
+    { id: 'last7days', label: t('last7days') },
+    { id: 'last30days', label: t('last30days') },
+    { id: 'last90days', label: t('last90days') },
+    { id: 'lastyear', label: t('lastyear') },
+    { id: 'custom', label: t('customRange') }
   ];
 
   const handleGenerateReport = async (format) => {
@@ -85,7 +87,7 @@ const ReportsTab = () => {
       
     } catch (error) {
       console.error('Failed to generate report:', error);
-      alert('Failed to generate report. Please try again.');
+      alert(t('failedToGenerate'));
     } finally {
       setGenerating(false);
     }
@@ -111,7 +113,7 @@ const ReportsTab = () => {
           fontFamily: '"SF Pro Display", -apple-system, sans-serif',
           textAlign: isMobile ? 'center' : 'left'
         }}>
-          Reports & Analytics
+          {t('reportsAnalytics')}
         </h1>
         <p style={{
           color: '#64748b',
@@ -120,7 +122,7 @@ const ReportsTab = () => {
           margin: 0,
           textAlign: isMobile ? 'center' : 'left'
         }}>
-          Generate comprehensive reports for your inventory system
+          {t('generateReports')}
         </p>
       </div>
 
@@ -147,7 +149,7 @@ const ReportsTab = () => {
               textAlign: isMobile ? 'center' : 'left',
               fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
-              Select Report Type
+              {t('selectReportType')}
             </h2>
             
             <div style={{
@@ -244,7 +246,7 @@ const ReportsTab = () => {
               textAlign: isMobile ? 'center' : 'left',
               fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
-              Report Configuration
+              {t('reportConfiguration')}
             </h3>
 
             {/* Date Range */}
@@ -262,7 +264,7 @@ const ReportsTab = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z"/>
                 </svg>
-                Date Range Filter
+                {t('dateRangeFilter')}
               </label>
               <select
                 value={dateRange}
@@ -304,7 +306,7 @@ const ReportsTab = () => {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
                 </svg>
-                Reports will include data from the selected time period
+                {t('reportsIncludeData')}
               </div>
             </div>
 
@@ -317,7 +319,7 @@ const ReportsTab = () => {
                 color: '#374151',
                 marginBottom: '12px'
               }}>
-                Export Report
+                {t('exportReport')}
               </label>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -346,7 +348,7 @@ const ReportsTab = () => {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                   </svg>
-                  {generating ? 'Generating Report...' : 'Export as CSV'}
+                  {generating ? t('generatingReport') : t('exportAsCSV')}
                 </button>
                 
                 <button
@@ -374,7 +376,7 @@ const ReportsTab = () => {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                   </svg>
-                  {generating ? 'Generating Report...' : 'Export as PDF'}
+                  {generating ? t('generatingReport') : t('exportAsPDF')}
                 </button>
               </div>
             </div>
@@ -393,7 +395,7 @@ const ReportsTab = () => {
                 margin: isMobile ? '0 0 8px 0' : '0 0 12px 0',
                 fontFamily: '"SF Pro Text", -apple-system, sans-serif'
               }}>
-                Report Preview
+                {t('reportPreview')}
               </h4>
               <p style={{
                 fontSize: isMobile ? '12px' : '14px',
@@ -404,7 +406,7 @@ const ReportsTab = () => {
               }}>
                 {reportTypes.find(r => r.id === selectedReport)?.description}
                 <br />
-                Date range: {dateRanges.find(r => r.id === dateRange)?.label}
+                {t('dateRange')}: {dateRanges.find(r => r.id === dateRange)?.label}
               </p>
             </div>
           </div>

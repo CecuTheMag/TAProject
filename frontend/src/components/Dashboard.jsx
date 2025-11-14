@@ -13,6 +13,7 @@ import StatsCard from './StatsCard';
 import SearchBar from './SearchBar';
 import FilterBar from './FilterBar';
 import EquipmentCard from './EquipmentCard';
+import { useTranslation } from '../translations';
 
 import EquipmentTab from './EquipmentTab';
 import RequestsTab from './RequestsTab';
@@ -22,6 +23,7 @@ import AlertsTab from './AlertsTab';
 import UsersTab from './UsersTab';
 import EducationTab from './EducationTab';
 import ManagementTab from './ManagementTab';
+import SettingsTab from './SettingsTab';
 import QRScanner from './QRScanner';
 import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
@@ -39,6 +41,7 @@ import Footer from './Footer';
  * - Role-based feature access
  */
 const Dashboard = () => {
+  const { t } = useTranslation();
   // Core data state
   const [equipmentList, setEquipmentList] = useState([]);     // All equipment items
   const [dashboardStats, setDashboardStats] = useState(null); // Statistics from API
@@ -202,10 +205,10 @@ const Dashboard = () => {
   };
 
   const filters = [
-    { key: 'available', label: 'Available', color: '#10b981' },
-    { key: 'checked_out', label: 'Checked Out', color: '#f59e0b' },
-    { key: 'under_repair', label: 'Under Repair', color: '#ef4444' },
-    { key: 'retired', label: 'Retired', color: '#6b7280' }
+    { key: 'available', label: t('availableFilter'), color: '#10b981' },
+    { key: 'checked_out', label: t('checkedOutFilter'), color: '#f59e0b' },
+    { key: 'under_repair', label: t('underRepairFilter'), color: '#ef4444' },
+    { key: 'retired', label: t('retiredFilter'), color: '#6b7280' }
   ];
 
   const handleFilterChange = (filterKey) => {
@@ -336,7 +339,7 @@ const Dashboard = () => {
                 margin: '0 0 8px 0',
                 fontFamily: '"SF Pro Display", -apple-system, sans-serif'
               }}>
-                Dashboard
+                {t('dashboardTitle')}
               </h1>
               <p style={{
                 color: '#64748b',
@@ -344,7 +347,7 @@ const Dashboard = () => {
                 fontWeight: '500',
                 margin: 0
               }}>
-                Overview of your school inventory system
+                {t('dashboardSubtitle')}
               </p>
             </div>
             
@@ -377,14 +380,14 @@ const Dashboard = () => {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
                       <path d="M3,5H21V7H3V5M3,13V11H21V13H3M3,19V17H21V19H3Z"/>
                     </svg>
-                    List
+                    {t('list')}
                   </>
                 ) : (
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px' }}>
                       <path d="M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3"/>
                     </svg>
-                    Grid
+                    {t('grid')}
                   </>
                 )}
               </button>
@@ -413,7 +416,7 @@ const Dashboard = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,7H9V11H5V7M3,5H5V7H3V5M3,13H5V15H3V13M7,5H9V7H7V5M3,19H5V21H3V19M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19M19,19H21V21H19V19M15,5H17V7H15V5M19,5H21V7H19V5M15,7H17V9H15V7M19,7H21V9H19V7M15,13H17V15H15V13M19,13H21V15H19V13M15,15H17V17H15V15M19,15H21V17H19V15M15,17H17V19H15V17M19,17H21V19H19V17Z"/>
                 </svg>
-                Scan QR
+                {t('scanQR')}
               </button>
               
               {['teacher', 'manager', 'admin'].includes(user?.role) && (
@@ -435,7 +438,7 @@ const Dashboard = () => {
                   onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
                 >
-                  + Add Equipment
+                  + {t('addEquipmentButton')}
                 </button>
               )}
             </div>
@@ -452,7 +455,7 @@ const Dashboard = () => {
             padding: isMobile ? '0' : '10px 0 20px 0'
           }}>
             <StatsCard 
-              title="Total Equipment" 
+              title={t('totalEquipmentTitle')} 
               value={stats.total} 
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -466,7 +469,7 @@ const Dashboard = () => {
               isMobile={isMobile}
             />
             <StatsCard 
-              title="Available" 
+              title={t('availableTitle')} 
               value={stats.available} 
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -480,7 +483,7 @@ const Dashboard = () => {
               isMobile={isMobile}
             />
             <StatsCard 
-              title="Checked Out" 
+              title={t('checkedOutTitle')} 
               value={stats.checkedOut} 
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -494,7 +497,7 @@ const Dashboard = () => {
               isMobile={isMobile}
             />
             <StatsCard 
-              title="Under Repair" 
+              title={t('underRepairTitle')} 
               value={stats.underRepair} 
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -532,7 +535,7 @@ const Dashboard = () => {
             <SearchBar 
               searchTerm={searchTerm} 
               setSearchTerm={setSearchTerm}
-              placeholder={isMobile ? "Search..." : "Search equipment by name or type..."}
+              placeholder={isMobile ? t('searchPlaceholder') : t('searchEquipmentByName')}
             />
             
             <FilterBar 
@@ -556,7 +559,7 @@ const Dashboard = () => {
             <div>
               <div style={{ marginBottom: '24px', textAlign: 'center' }}>
                 <h3 style={{ color: '#0f172a', fontSize: '20px', fontWeight: '600', margin: '0 0 8px 0' }}>
-                  Individual Item Found
+                  {t('individualItemFound')}
                 </h3>
                 <button
                   onClick={() => {
@@ -574,7 +577,7 @@ const Dashboard = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  Back to Equipment List
+                  {t('backToEquipmentList')}
                 </button>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -620,7 +623,7 @@ const Dashboard = () => {
                 fontWeight: '700',
                 fontFamily: '"SF Pro Display", -apple-system, sans-serif'
               }}>
-                No equipment found
+                {t('noEquipmentFound')}
               </h3>
               <p style={{ 
                 margin: '0 0 20px 0', 
@@ -630,7 +633,7 @@ const Dashboard = () => {
                 marginRight: 'auto',
                 lineHeight: '1.6'
               }}>
-                Try adjusting your search terms or filters to find what you're looking for.
+                {t('tryAdjustingSearch')}
               </p>
               <button
                 onClick={() => {
@@ -649,7 +652,7 @@ const Dashboard = () => {
                   fontFamily: '"SF Pro Text", -apple-system, sans-serif'
                 }}
               >
-                Clear search
+                {t('clearSearch')}
               </button>
             </div>
           ) : (
@@ -743,6 +746,11 @@ const Dashboard = () => {
         ) : activeTab === 'management' ? (
           <>
             <ManagementTab />
+            <Footer isMobile={isMobile} />
+          </>
+        ) : activeTab === 'settings' ? (
+          <>
+            <SettingsTab />
             <Footer isMobile={isMobile} />
           </>
         ) : null}

@@ -1,7 +1,7 @@
 # AssetFlow - Professional Inventory Management System
 
 <div align="center">
-  <img src="team.png" alt="AssetFlow Logo" width="200"/>
+  <img src="frontend/src/assets/logotp.png" alt="AssetFlow Logo" width="200"/>
   
   **Enterprise-Grade Full-Stack Inventory Management Solution**
   

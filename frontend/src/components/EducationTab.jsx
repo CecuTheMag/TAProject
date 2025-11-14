@@ -4,8 +4,10 @@ import { education } from '../api';
 import { useAuth } from '../AuthContext';
 import CreateLessonPlanModal from './CreateLessonPlanModal';
 import RequestLessonEquipmentModal from './RequestLessonEquipmentModal';
+import { useTranslation } from '../translations';
 
 const EducationTab = () => {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('lesson-plans');
   const [lessonPlans, setLessonPlans] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -78,7 +80,7 @@ const EducationTab = () => {
           fontWeight: '700',
           fontFamily: '"SF Pro Display", -apple-system, sans-serif'
         }}>
-          Lesson Plans
+          {t('lessonPlans')}
         </h2>
         {['teacher', 'manager', 'admin'].includes(user?.role) && (
           <button
@@ -96,7 +98,7 @@ const EducationTab = () => {
               outline: 'none'
             }}
           >
-            + Create Lesson Plan
+            + {t('createLessonPlan')}
           </button>
         )}
       </div>
@@ -127,14 +129,14 @@ const EducationTab = () => {
               color: '#0f172a', 
               fontWeight: '600'
             }}>
-              No lesson plans yet
+              {t('noLessonPlansYet')}
             </h3>
             <p style={{ 
               margin: 0, 
               fontSize: isMobile ? '14px' : '16px',
               color: '#64748b'
             }}>
-              Create your first lesson plan to get started with equipment integration.
+              {t('createFirstLessonPlan')}
             </p>
           </div>
         ) : (
@@ -192,12 +194,12 @@ const EducationTab = () => {
                     </span>
                     {lesson.grade_level && (
                       <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                        Grade {lesson.grade_level}
+                        {t('gradeLevel')} {lesson.grade_level}
                       </span>
                     )}
                     {lesson.duration_minutes && (
                       <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                        {lesson.duration_minutes} min
+                        {lesson.duration_minutes} {t('minutes')}
                       </span>
                     )}
                   </div>
@@ -216,7 +218,7 @@ const EducationTab = () => {
                       outline: 'none'
                     }}
                   >
-                    Request Equipment
+                    {t('requestEquipment')}
                   </button>
                 )}
               </div>
@@ -240,7 +242,7 @@ const EducationTab = () => {
                     fontSize: '14px', 
                     fontWeight: '600' 
                   }}>
-                    Required Equipment:
+                    {t('requiredEquipment')}:
                   </h4>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {lesson.required_equipment.map((equipment, index) => (
@@ -267,7 +269,7 @@ const EducationTab = () => {
                     fontSize: '14px', 
                     fontWeight: '600' 
                   }}>
-                    Learning Objectives:
+                    {t('learningObjectives')}:
                   </h4>
                   <ul style={{ 
                     margin: 0, 
@@ -299,7 +301,7 @@ const EducationTab = () => {
                     marginTop: '16px'
                   }}
                 >
-                  📋 Request Equipment
+                  📋 {t('requestEquipment')}
                 </button>
               )}
             </motion.div>
@@ -362,7 +364,7 @@ const EducationTab = () => {
             fontWeight: '700',
             fontFamily: '"SF Pro Display", -apple-system, sans-serif'
           }}>
-            Curriculum-Equipment Integration
+            {t('curriculumEquipmentIntegration')}
           </h2>
           
           {curriculum.summary && (
@@ -382,7 +384,7 @@ const EducationTab = () => {
                 <div style={{ fontSize: '24px', fontWeight: '700' }}>
                   {curriculum.summary.total_subjects}
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>Total Subjects</div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>{t('totalSubjects')}</div>
               </div>
               <div style={{
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -394,7 +396,7 @@ const EducationTab = () => {
                 <div style={{ fontSize: '24px', fontWeight: '700' }}>
                   {curriculum.summary.subjects_with_equipment}
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>With Equipment</div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>{t('withEquipment')}</div>
               </div>
               <div style={{
                 background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
@@ -406,7 +408,7 @@ const EducationTab = () => {
                 <div style={{ fontSize: '24px', fontWeight: '700' }}>
                   {curriculum.summary.subjects_with_lessons}
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>With Lessons</div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>{t('withLessons')}</div>
               </div>
               <div style={{
                 background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
@@ -418,7 +420,7 @@ const EducationTab = () => {
                 <div style={{ fontSize: '24px', fontWeight: '700' }}>
                   {curriculum.summary.total_equipment_mapped}
                 </div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>Equipment Items</div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>{t('equipmentItems')}</div>
               </div>
             </div>
           )}
@@ -442,7 +444,7 @@ const EducationTab = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              ⚠️ Coverage Gaps Detected
+              ⚠️ {t('coverageGapsDetected')}
             </h3>
             <div style={{ display: 'grid', gap: '8px' }}>
               {curriculum.coverage_gaps.filter(gap => gap.coverage_status !== 'Covered').map(gap => (
@@ -547,7 +549,7 @@ const EducationTab = () => {
                     </span>
                     {subject.grade_level && (
                       <span style={{ color: '#6b7280', fontSize: '12px' }}>
-                        Grades {subject.grade_level}
+                        {t('grades')} {subject.grade_level}
                       </span>
                     )}
                     {impactScore > 0 && (
@@ -565,9 +567,9 @@ const EducationTab = () => {
                 {/* Equipment Overview */}
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>Equipment Portfolio</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>{t('equipmentPortfolio')}</span>
                     <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                      {subject.equipment_count} items • {subject.available_equipment} available
+                      {subject.equipment_count} {t('items')} • {subject.available_equipment} {t('available')}
                     </span>
                   </div>
                   
@@ -593,7 +595,7 @@ const EducationTab = () => {
                           borderRadius: '4px',
                           fontSize: '10px'
                         }}>
-                          +{subject.equipment.length - 4} more
+                          +{subject.equipment.length - 4} {t('more')}
                         </span>
                       )}
                     </div>
@@ -607,7 +609,7 @@ const EducationTab = () => {
                       color: '#dc2626',
                       fontSize: '12px'
                     }}>
-                      No equipment mapped to this subject
+                      {t('noEquipmentMapped')}
                     </div>
                   )}
                 </div>
@@ -631,7 +633,7 @@ const EducationTab = () => {
                       color: '#6b7280',
                       fontWeight: '500'
                     }}>
-                      Lessons
+                      {t('lessons')}
                     </div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
@@ -647,7 +649,7 @@ const EducationTab = () => {
                       color: '#6b7280',
                       fontWeight: '500'
                     }}>
-                      Teachers
+                      {t('teachers')}
                     </div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
@@ -663,7 +665,7 @@ const EducationTab = () => {
                       color: '#6b7280',
                       fontWeight: '500'
                     }}>
-                      Requests
+                      {t('requests')}
                     </div>
                   </div>
                 </div>
@@ -672,7 +674,7 @@ const EducationTab = () => {
                 {subject.trends && subject.trends.length > 0 && (
                   <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '12px', color: '#6b7280' }}>Recent Activity</span>
+                      <span style={{ fontSize: '12px', color: '#6b7280' }}>{t('recentActivity')}</span>
                       <div style={{ display: 'flex', gap: '2px' }}>
                         {subject.trends.slice(0, 6).map((trend, idx) => {
                           const height = Math.max(4, (trend.request_count / 10) * 16);
@@ -726,10 +728,10 @@ const EducationTab = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                   <h2 style={{ margin: '0 0 4px 0', fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
-                    {selectedSubject.name} Integration
+                    {selectedSubject.name} {t('integration')}
                   </h2>
                   <p style={{ margin: 0, color: '#64748b', fontSize: '16px' }}>
-                    Equipment mapping and recommendations
+                    {t('equipmentMappingRecommendations')}
                   </p>
                 </div>
                 <button
@@ -758,14 +760,14 @@ const EducationTab = () => {
                     animation: 'spin 1s linear infinite',
                     margin: '0 auto 16px'
                   }}></div>
-                  <p style={{ color: '#64748b' }}>Loading recommendations...</p>
+                  <p style={{ color: '#64748b' }}>{t('loadingRecommendations')}</p>
                 </div>
               ) : recommendations ? (
                 <div style={{ display: 'grid', gap: '24px' }}>
                   {/* Current Equipment */}
                   <div>
                     <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
-                      📋 Current Equipment Portfolio
+                      📋 {t('currentEquipmentPortfolio')}
                     </h3>
                     {recommendations.current_equipment.length > 0 ? (
                       <div style={{ display: 'grid', gap: '8px' }}>
@@ -803,7 +805,7 @@ const EducationTab = () => {
                         textAlign: 'center',
                         color: '#dc2626'
                       }}>
-                        No equipment currently mapped to this subject
+                        {t('noEquipmentCurrentlyMapped')}
                       </div>
                     )}
                   </div>
@@ -812,7 +814,7 @@ const EducationTab = () => {
                   {recommendations.recommended_additions.length > 0 && (
                     <div>
                       <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
-                        💡 Recommended Additions
+                        💡 {t('recommendedAdditions')}
                       </h3>
                       <div style={{ display: 'grid', gap: '8px' }}>
                         {recommendations.recommended_additions.map((eq, idx) => (
@@ -827,7 +829,7 @@ const EducationTab = () => {
                           }}>
                             <div>
                               <span style={{ fontWeight: '600', color: '#0f172a' }}>{eq.type}</span>
-                              <span style={{ color: '#64748b', fontSize: '14px', marginLeft: '8px' }}>Used by {eq.usage_count} other subjects</span>
+                              <span style={{ color: '#64748b', fontSize: '14px', marginLeft: '8px' }}>{t('usedByOtherSubjects')} {eq.usage_count} {t('otherSubjects')}</span>
                             </div>
                             <div style={{
                               padding: '4px 8px',
@@ -849,7 +851,7 @@ const EducationTab = () => {
                   {recommendations.gap_analysis.length > 0 && (
                     <div>
                       <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#0f172a' }}>
-                        🎯 High-Impact Gaps
+                        🎯 {t('highImpactGaps')}
                       </h3>
                       <div style={{ display: 'grid', gap: '8px' }}>
                         {recommendations.gap_analysis.map((gap, idx) => (
@@ -864,7 +866,7 @@ const EducationTab = () => {
                           }}>
                             <div>
                               <span style={{ fontWeight: '600', color: '#92400e' }}>{gap.type}</span>
-                              <span style={{ color: '#6b7280', fontSize: '14px', marginLeft: '8px' }}>Used by {gap.subject_count} subjects</span>
+                              <span style={{ color: '#6b7280', fontSize: '14px', marginLeft: '8px' }}>{t('usedByOtherSubjects')} {gap.subject_count} {t('subjects')}</span>
                             </div>
                             <div style={{
                               padding: '4px 8px',
@@ -874,7 +876,7 @@ const EducationTab = () => {
                               fontSize: '12px',
                               fontWeight: '600'
                             }}>
-                              ★ {typeof gap.avg_impact === 'number' ? gap.avg_impact.toFixed(1) : 'N/A'} Impact
+                              ★ {typeof gap.avg_impact === 'number' ? gap.avg_impact.toFixed(1) : 'N/A'} {t('impact')}
                             </div>
                           </div>
                         ))}
@@ -908,7 +910,7 @@ const EducationTab = () => {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
-        <p style={{ color: '#64748b', fontSize: '16px' }}>Loading educational data...</p>
+        <p style={{ color: '#64748b', fontSize: '16px' }}>{t('loadingEducationalData')}</p>
       </div>
     );
   }
@@ -935,7 +937,7 @@ const EducationTab = () => {
           margin: '0 0 8px 0',
           fontFamily: '"SF Pro Display", -apple-system, sans-serif'
         }}>
-          Educational Platform
+          {t('educationalPlatform')}
         </h1>
         <p style={{
           color: '#64748b',
@@ -943,7 +945,7 @@ const EducationTab = () => {
           fontWeight: '500',
           margin: 0
         }}>
-          Smart curriculum integration and learning analytics
+          {t('smartCurriculumIntegration')}
         </p>
       </div>
 
@@ -963,8 +965,8 @@ const EducationTab = () => {
           paddingBottom: isMobile ? '4px' : '0'
         }}>
           {[
-            { id: 'lesson-plans', label: isMobile ? 'Plans' : 'Lesson Plans' },
-            { id: 'curriculum', label: isMobile ? 'Curriculum' : 'Curriculum Integration' }
+            { id: 'lesson-plans', label: isMobile ? t('plans') : t('lessonPlans') },
+            { id: 'curriculum', label: isMobile ? t('curriculum') : t('curriculumIntegrationFull') }
           ].map((section) => (
             <button
               key={section.id}

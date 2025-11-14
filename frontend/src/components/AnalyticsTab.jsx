@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { dashboard } from '../api';
+import { useTranslation } from '../translations';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,6 +24,7 @@ ChartJS.register(
 );
 
 const AnalyticsTab = () => {
+  const { t } = useTranslation();
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -68,7 +70,7 @@ const AnalyticsTab = () => {
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }}></div>
-        <p style={{ color: '#64748b', fontSize: '16px' }}>Loading analytics...</p>
+        <p style={{ color: '#64748b', fontSize: '16px' }}>{t('loadingAnalytics')}</p>
       </div>
     );
   }
@@ -98,7 +100,7 @@ const AnalyticsTab = () => {
           margin: '0 0 8px 0',
           fontFamily: '"SF Pro Display", -apple-system, sans-serif'
         }}>
-          Analytics Dashboard
+          {t('analyticsDashboard')}
         </h1>
         <p style={{
           color: '#64748b',
@@ -106,7 +108,7 @@ const AnalyticsTab = () => {
           fontWeight: '500',
           margin: 0
         }}>
-          Insights and trends for your inventory system
+          {t('insightsAndTrends')}
         </p>
       </div>
 
@@ -145,29 +147,29 @@ const AnalyticsTab = () => {
               color: '#0f172a',
               margin: '0 0 16px 0'
             }}>
-              Equipment Overview
+              {t('equipmentOverview')}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Total Equipment:</span>
+                <span style={{ color: '#64748b' }}>{t('totalEquipment')}:</span>
                 <span style={{ fontWeight: '600', color: '#0f172a' }}>
                   {equipmentStats.total_equipment || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Available:</span>
+                <span style={{ color: '#64748b' }}>{t('available')}:</span>
                 <span style={{ fontWeight: '600', color: '#10b981' }}>
                   {equipmentStats.available || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Checked Out:</span>
+                <span style={{ color: '#64748b' }}>{t('checkedOut')}:</span>
                 <span style={{ fontWeight: '600', color: '#f59e0b' }}>
                   {equipmentStats.checked_out || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Under Repair:</span>
+                <span style={{ color: '#64748b' }}>{t('underRepair')}:</span>
                 <span style={{ fontWeight: '600', color: '#ef4444' }}>
                   {equipmentStats.under_repair || 0}
                 </span>
@@ -213,41 +215,41 @@ const AnalyticsTab = () => {
               color: '#0f172a',
               margin: '0 0 16px 0'
             }}>
-              Request Statistics
+              {t('requestStatistics')}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Total Requests:</span>
+                <span style={{ color: '#64748b' }}>{t('totalRequests')}:</span>
                 <span style={{ fontWeight: '600', color: '#0f172a' }}>
                   {requestStats.total_requests || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Pending:</span>
+                <span style={{ color: '#64748b' }}>{t('pending')}:</span>
                 <span style={{ fontWeight: '600', color: '#f59e0b' }}>
                   {requestStats.pending_requests || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Approved:</span>
+                <span style={{ color: '#64748b' }}>{t('approved')}:</span>
                 <span style={{ fontWeight: '600', color: '#10b981' }}>
                   {requestStats.approved_requests || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Rejected:</span>
+                <span style={{ color: '#64748b' }}>{t('rejected')}:</span>
                 <span style={{ fontWeight: '600', color: '#ef4444' }}>
                   {requestStats.rejected_requests || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Returned:</span>
+                <span style={{ color: '#64748b' }}>{t('returned')}:</span>
                 <span style={{ fontWeight: '600', color: '#6b7280' }}>
                   {requestStats.total_returned_requests || 0}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Early Returns:</span>
+                <span style={{ color: '#64748b' }}>{t('earlyReturns')}:</span>
                 <span style={{ fontWeight: '600', color: '#3b82f6' }}>
                   {requestStats.early_returned_requests || 0}
                 </span>
@@ -293,7 +295,7 @@ const AnalyticsTab = () => {
               color: '#0f172a',
               margin: '0 0 16px 0'
             }}>
-              Utilization Rate
+              {t('utilizationRate')}
             </h3>
             <div style={{
               display: 'flex',
@@ -357,7 +359,7 @@ const AnalyticsTab = () => {
               color: '#0f172a',
               margin: '0 0 16px 0'
             }}>
-              Equipment Status Distribution
+              {t('equipmentStatusDistribution')}
             </h3>
             <div style={{ 
               height: isMobile ? '200px' : '300px', 
@@ -368,7 +370,7 @@ const AnalyticsTab = () => {
             }}>
               <Doughnut
                 data={{
-                  labels: ['Available', 'Checked Out', 'Under Repair', 'Retired'],
+                  labels: [t('available'), t('checkedOut'), t('underRepair'), t('retired')],
                   datasets: [{
                     data: [
                       equipmentStats.available || 0,
@@ -417,7 +419,7 @@ const AnalyticsTab = () => {
               color: '#0f172a',
               margin: '0 0 16px 0'
             }}>
-              Request Status Overview
+              {t('requestStatusOverview')}
             </h3>
             <div style={{ 
               height: isMobile ? '200px' : '300px',
@@ -426,9 +428,9 @@ const AnalyticsTab = () => {
             }}>
               <Bar
                 data={{
-                  labels: ['Pending', 'Approved', 'Rejected', 'Returned', 'Early Returns'],
+                  labels: [t('pending'), t('approved'), t('rejected'), t('returned'), t('earlyReturns')],
                   datasets: [{
-                    label: 'Number of Requests',
+                    label: t('numberOfRequests'),
                     data: [
                       requestStats.pending_requests || 0,
                       requestStats.approved_requests || 0,
@@ -490,8 +492,8 @@ const AnalyticsTab = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#0f172a' }}>
-                  {showModal === 'equipment' && 'Equipment Overview'}
-                  {showModal === 'requests' && 'Request Statistics'}
+                  {showModal === 'equipment' && t('equipmentOverview')}
+                  {showModal === 'requests' && t('requestStatistics')}
                 </h3>
                 <button
                   onClick={() => setShowModal(null)}
@@ -512,19 +514,19 @@ const AnalyticsTab = () => {
               {showModal === 'equipment' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Total Equipment:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('totalEquipment')}:</span>
                     <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '18px' }}>{equipmentStats.total_equipment || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Available:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('available')}:</span>
                     <span style={{ fontWeight: '700', color: '#10b981', fontSize: '18px' }}>{equipmentStats.available || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fffbeb', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Checked Out:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('checkedOut')}:</span>
                     <span style={{ fontWeight: '700', color: '#f59e0b', fontSize: '18px' }}>{equipmentStats.checked_out || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Under Repair:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('underRepair')}:</span>
                     <span style={{ fontWeight: '700', color: '#ef4444', fontSize: '18px' }}>{equipmentStats.under_repair || 0}</span>
                   </div>
                 </div>
@@ -533,27 +535,27 @@ const AnalyticsTab = () => {
               {showModal === 'requests' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Total Requests:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('totalRequests')}:</span>
                     <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '18px' }}>{requestStats.total_requests || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fffbeb', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Pending:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('pending')}:</span>
                     <span style={{ fontWeight: '700', color: '#f59e0b', fontSize: '18px' }}>{requestStats.pending_requests || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Approved:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('approved')}:</span>
                     <span style={{ fontWeight: '700', color: '#10b981', fontSize: '18px' }}>{requestStats.approved_requests || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Rejected:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('rejected')}:</span>
                     <span style={{ fontWeight: '700', color: '#ef4444', fontSize: '18px' }}>{requestStats.rejected_requests || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f1f5f9', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Returned:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('returned')}:</span>
                     <span style={{ fontWeight: '700', color: '#6b7280', fontSize: '18px' }}>{requestStats.total_returned_requests || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
-                    <span style={{ color: '#64748b', fontWeight: '500' }}>Early Returns:</span>
+                    <span style={{ color: '#64748b', fontWeight: '500' }}>{t('earlyReturns')}:</span>
                     <span style={{ fontWeight: '700', color: '#3b82f6', fontSize: '18px' }}>{requestStats.early_returned_requests || 0}</span>
                   </div>
                 </div>
