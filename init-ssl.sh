@@ -7,6 +7,7 @@ echo "Starting SSL initialization for $DOMAIN..."
 
 # Create directories
 mkdir -p /etc/letsencrypt/live/$DOMAIN
+mkdir -p /var/www/certbot/.well-known/acme-challenge
 
 # Check if certificates exist
 if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
