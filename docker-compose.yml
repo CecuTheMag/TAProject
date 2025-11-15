@@ -136,7 +136,7 @@ services:
       - ./frontend/nginx-production.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
 
-  # Load Balancer
+  # Load Balancer with SSL
   nginx:
     image: nginx:alpine
     ports:
@@ -144,9 +144,9 @@ services:
       - "0.0.0.0:443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./certs/selfsigned.crt:/etc/ssl/certs/selfsigned.crt
-      - ./certs/selfsigned.key:/etc/ssl/private/selfsigned.key
-    command: ["nginx", "-g", "daemon off;"]
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: ["/bin/sh", "-c", "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"]
     depends_on:
       - backend-1
       - backend-2
@@ -157,6 +157,15 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    restart: unless-stopped
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     restart: unless-stopped
 
   # Monitoring Stack
