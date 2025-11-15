@@ -6,7 +6,7 @@ export const createDefaultAdmin = async () => {
     const existingAdmin = await pool.query('SELECT * FROM users WHERE email = $1', ['admin@assetflow.bg']);
     
     if (existingAdmin.rows.length === 0) {
-      const hashedPassword = await bcrypt.hash('assetflow2024', 12);
+      const hashedPassword = await bcrypt.hash('assetflow2025', 12);
       
       await pool.query(
         'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4)',

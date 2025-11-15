@@ -29,7 +29,7 @@ const Footer = ({ isMobile }) => {
         fontWeight: '400',
         fontFamily: '"SF Pro Text", -apple-system, sans-serif'
       }}>
-        Professional IT Solution © 2024
+        Professional IT Solution © 2025
       </div>
     </div>
   );

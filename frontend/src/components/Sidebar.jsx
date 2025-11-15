@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from '../translations';
+import logoImage from '../assets/logotp.png';
 
 const Sidebar = ({ activeTab, setActiveTab, user }) => {
   const { logout } = useAuth();
@@ -162,7 +163,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
               justifyContent: 'center',
               overflow: 'hidden'
             }}>
-              <img src="/src/assets/logotp.png" alt="AssetFlow Logo" style={{
+              <img src={logoImage} alt="AssetFlow Logo" style={{
                 width: '40px',
                 height: '40px',
                 objectFit: 'contain'
@@ -281,7 +282,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           marginBottom: '16px',
           overflow: 'hidden'
         }}>
-          <img src="/src/assets/logotp.png" alt="AssetFlow Logo" style={{
+          <img src={logoImage} alt="AssetFlow Logo" style={{
             width: '80px',
             height: '80px',
             objectFit: 'contain'

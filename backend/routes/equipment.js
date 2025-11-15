@@ -16,6 +16,11 @@ import {
 
 const router = express.Router();
 
+// Test route without auth
+router.get('/test', (req, res) => {
+  res.json({ message: 'Equipment endpoint working', timestamp: new Date().toISOString() });
+});
+
 router.get('/', authenticateToken, getAllEquipment);
 router.get('/groups', authenticateToken, getEquipmentGroups);
 router.get('/low-stock', authenticateToken, getLowStockAlerts);
@@ -27,7 +32,7 @@ router.post('/', authenticateToken, requireAdmin, createEquipment);
 router.put('/:id', authenticateToken, requireAdmin, updateEquipment);
 router.put('/:id/status', authenticateToken, requireAdmin, updateEquipmentStatus);
 router.delete('/:id', authenticateToken, requireAdmin, deleteEquipment);
-router.get('/test', (req, res) => res.json({ message: 'Equipment router working' }));
+
 
 
 export default router;

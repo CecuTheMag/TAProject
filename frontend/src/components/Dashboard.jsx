@@ -549,11 +549,11 @@ const Dashboard = () => {
 
         {/* Content */}
         <div style={{ 
-          padding: isMobile ? '12px' : '40px',
+          padding: isMobile ? '12px' : '40px 60px',
           margin: '0',
           width: '100%',
           boxSizing: 'border-box',
-          overflowX: 'hidden'
+          overflow: 'visible'
         }}>
           {showingIndividual && individualItem ? (
             <div>
@@ -669,7 +669,7 @@ const Dashboard = () => {
                 width: '100%',
                 maxWidth: '100%',
                 boxSizing: 'border-box',
-                overflowX: 'hidden'
+                overflow: 'visible'
               }}
             >
               <AnimatePresence>

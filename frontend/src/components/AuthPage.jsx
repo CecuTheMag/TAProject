@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { auth } from '../api';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from '../translations';
+import logoImage from '../assets/logotp.png';
 
 const AuthPage = () => {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ const AuthPage = () => {
               margin: '0 auto 24px auto'
             }}>
               <img 
-                src="/src/assets/logotp.png" 
+                src={logoImage} 
                 alt="AssetFlow Logo" 
                 style={{
                   width: isMobile ? '50px' : '70px',

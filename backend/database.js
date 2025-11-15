@@ -63,6 +63,24 @@ export const initDB = async () => {
       )
     `);
 
+    // ===== USERS TABLE =====
+    // Enhanced user accounts with school association
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,                    -- Auto-incrementing user ID
+        username VARCHAR(50) UNIQUE NOT NULL,     -- Unique username for login
+        email VARCHAR(100) UNIQUE NOT NULL,       -- Unique email address
+        password VARCHAR(255) NOT NULL,           -- Hashed password (bcrypt)
+        role VARCHAR(20) DEFAULT 'student'        -- User role for permissions
+          CHECK (role IN ('student', 'teacher', 'manager', 'admin', 'district_admin')),
+        school_id INTEGER REFERENCES schools(id), -- School association
+        grade_level VARCHAR(20),                  -- Student grade or teacher specialization
+        subject_specialization VARCHAR(100),      -- Teacher subject area
+        responsibility_score INTEGER DEFAULT 100, -- Student equipment responsibility score
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Account creation date
+      )
+    `);
+
     // ===== LESSON PLANS TABLE =====
     // Teacher lesson planning integration
     await pool.query(`
@@ -79,24 +97,6 @@ export const initDB = async () => {
         duration_minutes INTEGER,
         grade_level VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // ===== USERS TABLE =====
-    // Enhanced user accounts with school association
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,                    -- Auto-incrementing user ID
-        username VARCHAR(50) UNIQUE NOT NULL,     -- Unique username for login
-        email VARCHAR(100) UNIQUE NOT NULL,       -- Unique email address
-        password VARCHAR(255) NOT NULL,           -- Hashed password (bcrypt)
-        role VARCHAR(20) DEFAULT 'student'        -- User role for permissions
-          CHECK (role IN ('student', 'teacher', 'manager', 'admin', 'district_admin')),
-        school_id INTEGER REFERENCES schools(id), -- School association
-        grade_level VARCHAR(20),                  -- Student grade or teacher specialization
-        subject_specialization VARCHAR(100),      -- Teacher subject area
-        responsibility_score INTEGER DEFAULT 100, -- Student equipment responsibility score
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Account creation date
       )
     `);
 

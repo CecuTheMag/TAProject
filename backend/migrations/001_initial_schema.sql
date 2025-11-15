@@ -1,6 +1,6 @@
 -- Migration: 001_initial_schema
 -- Description: Create initial database schema for SIMS
--- Created: 2024-01-01
+-- Created: 2025-01-01
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

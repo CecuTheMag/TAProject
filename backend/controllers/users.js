@@ -9,17 +9,13 @@ export const getAllUsers = async (req, res) => {
         u.username,
         u.email,
         u.role,
-        u.subject_id,
         u.created_at,
-        s.name as subject_name,
-        s.code as subject_code,
         COUNT(r.id) as total_requests,
         COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_requests,
         COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_requests
       FROM users u
-      LEFT JOIN subjects s ON u.subject_id = s.id
       LEFT JOIN requests r ON u.id = r.user_id
-      GROUP BY u.id, u.username, u.email, u.role, u.subject_id, u.created_at, s.name, s.code
+      GROUP BY u.id, u.username, u.email, u.role, u.created_at
       ORDER BY u.created_at DESC
     `);
     

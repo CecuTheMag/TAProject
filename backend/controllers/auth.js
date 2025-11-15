@@ -83,3 +83,24 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.json({ message: 'Logout successful' });
 };
+
+export const testDB = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM users WHERE role = $1', ['admin']);
+    const adminCount = result.rows[0].count;
+    
+    const allUsers = await pool.query('SELECT id, username, email, role FROM users LIMIT 5');
+    
+    res.json({ 
+      message: 'Database connection working',
+      adminCount: parseInt(adminCount),
+      sampleUsers: allUsers.rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Database connection failed',
+      details: error.message 
+    });
+  }
+};

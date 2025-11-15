@@ -1,20 +1,30 @@
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useTranslation } from '../translations';
 import { useState, useEffect, useRef } from 'react';
+import logoImage from '../assets/logotp.png';
 
 const HomePage = ({ onGetStarted }) => {
   const { t } = useTranslation();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 300], [0, -50]);
   const y2 = useTransform(scrollY, [0, 300], [0, -100]);
 
   useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   return (
@@ -24,6 +34,8 @@ const HomePage = ({ onGetStarted }) => {
       position: 'relative',
       overflow: 'hidden'
     }}>
+      {/* Navbar */}
+      <Navbar onLogin={() => window.location.href = '/login'} onSignup={() => window.location.href = '/login'} isMobile={isMobile} />
       {/* Animated Background */}
       <motion.div
         style={{
@@ -72,7 +84,7 @@ const HomePage = ({ onGetStarted }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '0 20px',
+        padding: isMobile ? '80px 20px 40px 20px' : '0 20px',
         textAlign: 'center'
       }}>
         <motion.div
@@ -101,7 +113,7 @@ const HomePage = ({ onGetStarted }) => {
             }}
           >
             <img 
-              src="/src/assets/logotp.png" 
+              src={logoImage} 
               alt="AssetFlow Logo" 
               style={{
                 width: '70px',
@@ -166,7 +178,7 @@ const HomePage = ({ onGetStarted }) => {
               fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
             }}
           >
-            Professional equipment tracking and management solution built for educational institutions and organizations seeking excellence.
+            10,000+ concurrent users • 99.9% uptime • Sub-100ms response times
           </motion.p>
 
           {/* CTA Button */}
@@ -209,8 +221,7 @@ const HomePage = ({ onGetStarted }) => {
       {/* Stats Section */}
       <StatsSection />
       
-      {/* CTA Section */}
-      <CTASection onGetStarted={onGetStarted} />
+
 
       {/* Footer */}
       <Footer />
@@ -221,6 +232,14 @@ const HomePage = ({ onGetStarted }) => {
 const FeaturesSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   return (
     <motion.div
@@ -251,9 +270,10 @@ const FeaturesSection = () => {
       </motion.h2>
       
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '32px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: isMobile ? '24px' : '32px',
         maxWidth: '1200px',
         width: '100%'
       }}>
@@ -276,7 +296,9 @@ const FeaturesSection = () => {
               padding: '40px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               textAlign: 'center',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              width: isMobile ? '100%' : '280px',
+              flex: isMobile ? 'none' : '0 0 280px'
             }}
           >
             <div style={{ 
@@ -314,6 +336,14 @@ const FeaturesSection = () => {
 const DetailedSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   return (
     <motion.div
@@ -354,14 +384,14 @@ const DetailedSection = () => {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: index * 0.2 }}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '60px',
+              display: isMobile ? 'block' : 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: isMobile ? '40px' : '60px',
               alignItems: 'center',
-              marginBottom: '120px'
+              marginBottom: isMobile ? '80px' : '120px'
             }}
           >
-            <div style={{ order: section.reverse ? 2 : 1 }}>
+            <div style={{ order: section.reverse && !isMobile ? 2 : 1 }}>
               <h3 style={{
                 fontSize: 'clamp(28px, 4vw, 36px)',
                 fontWeight: '700',
@@ -382,7 +412,7 @@ const DetailedSection = () => {
               </p>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                 gap: '16px'
               }}>
                 {section.features.map((feature, i) => (
@@ -407,10 +437,10 @@ const DetailedSection = () => {
               </div>
             </div>
             <div style={{
-              order: section.reverse ? 1 : 2,
+              order: section.reverse && !isMobile ? 1 : 2,
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '24px',
-              padding: '60px',
+              padding: isMobile ? '40px' : '60px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(20px)',
               textAlign: 'center'
@@ -418,6 +448,7 @@ const DetailedSection = () => {
               <div style={{
                 fontSize: '72px',
                 marginBottom: '20px',
+                marginTop: isMobile ? '20px' : '0',
                 filter: 'drop-shadow(0 0 30px rgba(59, 130, 246, 0.5))'
               }}>
                 {['🎯', '🔄', '🎓'][index]}
@@ -446,8 +477,9 @@ const StatsSection = () => {
       }}
     >
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
         gap: '40px',
         maxWidth: '800px',
         width: '100%',
@@ -464,6 +496,10 @@ const StatsSection = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: index * 0.1 }}
+            style={{
+              flex: '0 0 180px',
+              minWidth: '180px'
+            }}
           >
             <div style={{
               fontSize: 'clamp(36px, 6vw, 48px)',
@@ -488,77 +524,18 @@ const StatsSection = () => {
   );
 };
 
-const CTASection = ({ onGetStarted }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
-  
-  return (
-    <motion.div
-      ref={ref}
-      style={{
-        position: 'relative',
-        zIndex: 10,
-        padding: '120px 20px',
-        display: 'flex',
-        justifyContent: 'center'
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.8 }}
-        style={{
-          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(30, 64, 175, 0.1))',
-          borderRadius: '32px',
-          padding: '80px 60px',
-          textAlign: 'center',
-          border: '1px solid rgba(59, 130, 246, 0.2)',
-          backdropFilter: 'blur(20px)',
-          maxWidth: '800px'
-        }}
-      >
-        <h2 style={{
-          fontSize: 'clamp(32px, 5vw, 48px)',
-          fontWeight: '700',
-          color: 'white',
-          marginBottom: '24px',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-        }}>
-          Ready to Transform Your Inventory Management?
-        </h2>
-        <p style={{
-          fontSize: '20px',
-          color: 'rgba(255, 255, 255, 0.7)',
-          marginBottom: '40px',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-        }}>
-          Join thousands of institutions already using AssetFlow
-        </p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onGetStarted}
-          style={{
-            padding: '20px 40px',
-            background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
-            border: 'none',
-            borderRadius: '50px',
-            color: 'white',
-            fontSize: '20px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 15px 35px rgba(59, 130, 246, 0.4)',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-          }}
-        >
-          Start Your Free Trial
-        </motion.button>
-      </motion.div>
-    </motion.div>
-  );
-};
+
 
 const Footer = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <motion.footer
       initial={{ opacity: 0 }}
@@ -570,102 +547,54 @@ const Footer = () => {
         background: 'rgba(15, 23, 42, 0.8)',
         backdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '60px 20px 40px 20px'
+        padding: '40px 20px 30px 20px'
       }}
     >
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '40px',
-        marginBottom: '40px'
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '30px',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '20px' : '0'
       }}>
-        <div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '20px'
-          }}>
-            <div style={{
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <img 
+            src={logoImage} 
+            alt="AssetFlow Logo" 
+            style={{
               width: '40px',
               height: '40px',
-              background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              fontWeight: '800',
-              color: 'white'
-            }}>
-              AF
-            </div>
-            <span style={{
-              fontSize: '24px',
-              fontWeight: '700',
-              color: 'white',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-            }}>
-              AssetFlow
-            </span>
-          </div>
-          <p style={{
-            color: 'rgba(255, 255, 255, 0.6)',
-            fontSize: '16px',
-            lineHeight: '1.6',
+              objectFit: 'contain'
+            }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.innerHTML = '<div style="color: white; font-size: 24px; font-weight: 800;">AF</div>';
+            }}
+          />
+          <span style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: 'white',
             fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
           }}>
-            Enterprise-grade inventory management solution for educational institutions and organizations.
-          </p>
+            AssetFlow
+          </span>
         </div>
         
-        <div>
-          <h4 style={{
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: '600',
-            marginBottom: '20px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-          }}>
-            Features
-          </h4>
-          {['Equipment Tracking', 'Request Management', 'Analytics Dashboard', 'Mobile Access'].map((item, i) => (
-            <div key={i} style={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '16px',
-              marginBottom: '12px',
-              cursor: 'pointer',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-            }}>
-              {item}
-            </div>
-          ))}
-        </div>
-        
-        <div>
-          <h4 style={{
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: '600',
-            marginBottom: '20px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-          }}>
-            Support
-          </h4>
-          {['Documentation', 'API Reference', 'Community', 'Contact Us'].map((item, i) => (
-            <div key={i} style={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '16px',
-              marginBottom: '12px',
-              cursor: 'pointer',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-            }}>
-              {item}
-            </div>
-          ))}
-        </div>
+        <p style={{
+          color: 'rgba(255, 255, 255, 0.6)',
+          fontSize: '16px',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+        }}>
+          Enterprise-grade inventory management solution
+        </p>
       </div>
       
       <div style={{
@@ -676,9 +605,182 @@ const Footer = () => {
         fontSize: '14px',
         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
       }}>
-        © 2024 AssetFlow. All rights reserved. Built with ❤️ for professional excellence.
+        © 2025 AssetFlow. All rights reserved. Built with ❤️ for professional excellence.
       </div>
     </motion.footer>
+  );
+};
+
+const Navbar = ({ onLogin, onSignup, isMobile }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  return (
+    <motion.nav
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        background: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        padding: isMobile ? '12px 20px' : '16px 20px'
+      }}
+    >
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        {/* Logo */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <img 
+            src={logoImage} 
+            alt="AssetFlow Logo" 
+            style={{
+              width: '32px',
+              height: '32px',
+              objectFit: 'contain'
+            }}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.innerHTML = '<div style="color: white; font-size: 20px; font-weight: 800;">AF</div>';
+            }}
+          />
+          <span style={{
+            fontSize: '20px',
+            fontWeight: '700',
+            color: 'white',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+          }}>
+            AssetFlow
+          </span>
+        </div>
+
+        {/* Desktop Menu */}
+        {!isMobile && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onLogin}
+              style={{
+                padding: '10px 20px',
+                background: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              }}
+            >
+              Login
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onSignup}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              }}
+            >
+              Sign Up
+            </motion.button>
+          </div>
+        )}
+
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              fontSize: '24px',
+              cursor: 'pointer'
+            }}
+          >
+            {isMenuOpen ? '✕' : '☰'}
+          </motion.button>
+        )}
+      </div>
+
+      {/* Mobile Menu */}
+      {isMobile && isMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          style={{
+            marginTop: '12px',
+            padding: '12px 0',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}
+        >
+          <button
+            onClick={() => { onLogin(); setIsMenuOpen(false); }}
+            style={{
+              padding: '10px 16px',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '6px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+            }}
+          >
+            Login
+          </button>
+          <button
+            onClick={() => { onSignup(); setIsMenuOpen(false); }}
+            style={{
+              padding: '10px 16px',
+              background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+              border: 'none',
+              borderRadius: '6px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+            }}
+          >
+            Sign Up
+          </button>
+        </motion.div>
+      )}
+    </motion.nav>
   );
 };
 

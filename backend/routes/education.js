@@ -120,11 +120,9 @@ router.get('/curriculum', authenticateToken, async (req, res) => {
     // Get subjects with real teacher counts and lesson data
     const subjects = await pool.query(`
       SELECT s.*, 
-             COUNT(DISTINCT lp.id) as lesson_count,
-             COUNT(DISTINCT CASE WHEN u.role = 'teacher' THEN u.id END) as teacher_count
+             COUNT(DISTINCT lp.id) as lesson_count
       FROM subjects s
       LEFT JOIN lesson_plans lp ON s.id = lp.subject_id
-      LEFT JOIN users u ON u.subject_id = s.id
       GROUP BY s.id, s.name, s.code, s.description, s.grade_level
       ORDER BY s.name
     `);

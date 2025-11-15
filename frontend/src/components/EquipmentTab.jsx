@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { equipment } from '../api';
 import { useAuth } from '../AuthContext';
 import SearchBar from './SearchBar';
@@ -8,6 +9,7 @@ import EquipmentDetailsModal from './EquipmentDetailsModal';
 import RequestEquipmentModal from './RequestEquipmentModal';
 import AddEquipmentModal from './AddEquipmentModal';
 import EarlyReturnModal from './EarlyReturnModal';
+import Pagination from './Pagination';
 import { useTranslation } from '../translations';
 
 const EquipmentTab = () => {
@@ -24,6 +26,8 @@ const EquipmentTab = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEarlyReturn, setShowEarlyReturn] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -102,6 +106,14 @@ const EquipmentTab = () => {
     const matchesFilters = activeFilters.length === 0 || activeFilters.includes(item.status);
     return matchesSearch && matchesFilters;
   }) : [];
+
+  const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEquipment = filteredEquipment.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters]);
 
   const filters = [
     { key: 'available', label: t('available'), color: '#10b981' },
@@ -281,11 +293,11 @@ const EquipmentTab = () => {
 
       {/* Content */}
       <div style={{ 
-        padding: isMobile ? '12px' : '40px',
+        padding: isMobile ? '12px' : '40px 60px',
         margin: '0',
         width: '100%',
         boxSizing: 'border-box',
-        overflowX: 'hidden'
+        overflow: 'visible'
       }}>
         {filteredEquipment.length === 0 ? (
           <div style={{
@@ -320,19 +332,41 @@ const EquipmentTab = () => {
             width: '100%',
             maxWidth: '100%',
             boxSizing: 'border-box',
-            overflowX: 'hidden'
+            overflow: 'visible'
           }}>
-            {filteredEquipment.map((item) => (
-              <EquipmentCard
-                key={item.id}
-                item={item}
-                onViewDetails={handleViewDetails}
-                onRequest={handleRequest}
-                user={user}
-                isMobile={isMobile}
-              />
-            ))}
+            <AnimatePresence>
+              {paginatedEquipment.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ delay: index * 0.03, duration: 0.3 }}
+                >
+                  <EquipmentCard
+                    item={item}
+                    onViewDetails={handleViewDetails}
+                    onRequest={handleRequest}
+                    user={user}
+                    isMobile={isMobile}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
+        )}
+        
+        {/* Pagination */}
+        {!isMobile && filteredEquipment.length > itemsPerPage && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredEquipment.length}
+          />
+        )}
         )}
         
         {/* Modals */}

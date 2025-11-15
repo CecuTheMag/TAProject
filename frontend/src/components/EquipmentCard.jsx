@@ -73,7 +73,8 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
         overflow: 'hidden',
         width: '100%',
         maxWidth: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        zIndex: 20
       }}>
       {/* Status Indicator */}
       <div style={{

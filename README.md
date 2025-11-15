@@ -247,7 +247,7 @@ GET    /api/dashboard/stats   # Real-time metrics
 ```
 Administrator Access:
 Email: admin@assetflow.bg
-Password: assetflow2024
+Password: assetflow2025
 
 Student Access:
 Email: student@test.com
