@@ -1,0 +1,19 @@
+# PRODUCTION - DuckDNS with real Let's Encrypt SSL
+assetflow.duckdns.org {
+    tls kironotificatora@gmail.com
+    
+    handle_path /api/* {
+        reverse_proxy backend-1:5000 backend-2:5000 backend-3:5000 {
+            lb_policy round_robin
+            health_uri /health
+        }
+    }
+    
+    handle {
+        reverse_proxy frontend:80
+    }
+}
+
+http://assetflow.duckdns.org {
+    redir https://assetflow.duckdns.org{uri} permanent
+}

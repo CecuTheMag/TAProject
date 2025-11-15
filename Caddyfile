@@ -1,0 +1,28 @@
+# LOCALHOST - HTTP + HTTPS with self-signed cert
+:443 {
+    tls internal
+
+    handle /api/* {
+        reverse_proxy backend-1:5000 backend-2:5000 backend-3:5000 {
+            lb_policy round_robin
+            health_uri /health
+        }
+    }
+
+    handle {
+        reverse_proxy frontend:80
+    }
+}
+
+:80 {
+    handle /api/* {
+        reverse_proxy backend-1:5000 backend-2:5000 backend-3:5000 {
+            lb_policy round_robin
+            health_uri /health
+        }
+    }
+
+    handle {
+        reverse_proxy frontend:80
+    }
+}
