@@ -138,48 +138,7 @@ const CurriculumSection = ({ subjects, isMobile, onDelete, onEdit, onAdd }) => {
                 </p>
               )}
               
-              {/* Subject Details */}
-              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
-                  <div>
-                    <span style={{ color: '#6b7280' }}>{t('room')}: </span>
-                    <span style={{ color: '#374151', fontWeight: '500' }}>{subject.room || t('noRoomAssigned')}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: '#6b7280' }}>{t('assignedTeacher')}: </span>
-                    <span style={{ color: '#374151', fontWeight: '500' }}>{subject.assigned_teacher || t('noTeacherAssigned')}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: '#6b7280' }}>{t('equipmentFleets')}: </span>
-                    <span style={{ color: '#374151', fontWeight: '500' }}>{subject.fleet_count || 0}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: '#6b7280' }}>{t('totalItems')}: </span>
-                    <span style={{ color: '#374151', fontWeight: '500' }}>{subject.total_equipment || 0}</span>
-                  </div>
-                </div>
-                
-                {/* Equipment Fleets List */}
-                {subject.fleets && subject.fleets.length > 0 && (
-                  <div style={{ marginTop: '8px' }}>
-                    <span style={{ color: '#6b7280', fontSize: '11px', fontWeight: '500' }}>Assigned Fleets:</span>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
-                      {subject.fleets.map((fleet, idx) => (
-                        <span key={idx} style={{
-                          padding: '2px 6px',
-                          backgroundColor: '#e0f2fe',
-                          color: '#0369a1',
-                          borderRadius: '4px',
-                          fontSize: '10px',
-                          fontWeight: '500'
-                        }}>
-                          {fleet.name} ({fleet.total_count})
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+
             </motion.div>
           ))}
         </div>

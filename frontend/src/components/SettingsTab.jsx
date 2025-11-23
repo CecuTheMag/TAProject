@@ -446,11 +446,11 @@ const SettingsTab = () => {
                 }}>
                   <span style={{ fontWeight: '600', color: '#374151' }}>{t('memberSince')}</span>
                   <span style={{ color: '#10b981', fontWeight: '600', fontSize: '14px' }}>
-                    {new Date(user?.created_at).toLocaleDateString('en-US', {
+                    {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
-                    })}
+                    }) : 'Unknown'}
                   </span>
                 </div>
               </div>

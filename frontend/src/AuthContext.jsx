@@ -60,11 +60,22 @@ export const AuthProvider = ({ children }) => {
     setUser(null);                     // Clear React state
   };
 
+  /**
+   * Update user function - updates user data while preserving authentication
+   * @param {Object} updatedUserData - Updated user profile information
+   */
+  const updateUser = (updatedUserData) => {
+    const newUserData = { ...user, ...updatedUserData };
+    localStorage.setItem('user', JSON.stringify(newUserData));
+    setUser(newUserData);
+  };
+
   // Context value object with authentication state and helper functions
   const value = {
     user,                                                    // Current user object
     login,                                                   // Login function
     logout,                                                  // Logout function
+    updateUser,                                              // Update user function
     loading,                                                 // Loading state
     
     // Role-based permission helpers for UI conditional rendering
