@@ -17,6 +17,8 @@ const LessonPlansSection = ({ lessonPlans, isMobile, onDelete, onRefresh }) => {
 
   const handleRequestSuccess = () => {
     if (onRefresh) onRefresh();
+    // Force refresh of equipment data globally
+    window.dispatchEvent(new CustomEvent('equipmentStatusChanged'));
   };
   return (
     <div style={{ padding: isMobile ? '12px' : '32px' }}>

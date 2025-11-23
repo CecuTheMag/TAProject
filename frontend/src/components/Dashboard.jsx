@@ -121,6 +121,14 @@ const Dashboard = () => {
     };
 
     fetchData();
+
+    // Listen for equipment status changes
+    const handleEquipmentStatusChange = () => {
+      fetchData();
+    };
+
+    window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
+    return () => window.removeEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
   }, []);
 
   /**

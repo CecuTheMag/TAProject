@@ -112,6 +112,8 @@ const AutoEquipmentRequestModal = ({ lessonPlan, onClose, onSuccess }) => {
       });
       
       toast.success(`Equipment ${nextAvailableItem.serial_number} requested successfully!`);
+      // Trigger global equipment refresh
+      window.dispatchEvent(new CustomEvent('equipmentStatusChanged'));
       onSuccess();
       onClose();
     } catch (error) {

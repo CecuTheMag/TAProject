@@ -23,6 +23,8 @@ const RequestEquipmentModal = ({ equipment, onClose, onSuccess }) => {
         notes: formData.notes
       });
       
+      // Trigger global equipment refresh
+      window.dispatchEvent(new CustomEvent('equipmentStatusChanged'));
       onSuccess?.();
       onClose();
     } catch (err) {
