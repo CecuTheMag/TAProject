@@ -165,10 +165,12 @@ const CreateLessonPlanModal = ({ onClose, onSuccess }) => {
       bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
       zIndex: 1000,
-      padding: '20px'
+      padding: '20px',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch'
     }}>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -179,8 +181,8 @@ const CreateLessonPlanModal = ({ onClose, onSuccess }) => {
           padding: '32px',
           maxWidth: '600px',
           width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
+          minHeight: 'auto',
+          margin: '20px 0',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
         }}
       >

@@ -50,15 +50,20 @@ const RequestEquipmentModal = ({ equipment, onClose, onSuccess }) => {
       bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
-      zIndex: 1000
+      zIndex: 1000,
+      padding: '20px',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch'
     }}>
       <div style={{
         background: 'white',
         borderRadius: '16px',
-        width: '90%',
+        width: '100%',
         maxWidth: '500px',
+        minHeight: 'auto',
+        margin: '20px 0',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
       }}>
         {/* Header */}

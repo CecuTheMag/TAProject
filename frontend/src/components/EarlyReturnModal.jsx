@@ -37,10 +37,12 @@ const EarlyReturnModal = ({ isOpen, onClose, equipment, requestId }) => {
       bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
       zIndex: 1000,
-      padding: '20px'
+      padding: '20px',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch'
     }}>
       <div style={{
         backgroundColor: 'white',
@@ -48,6 +50,8 @@ const EarlyReturnModal = ({ isOpen, onClose, equipment, requestId }) => {
         padding: '32px',
         maxWidth: '500px',
         width: '100%',
+        minHeight: 'auto',
+        margin: '20px 0',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{ marginBottom: '24px' }}>
