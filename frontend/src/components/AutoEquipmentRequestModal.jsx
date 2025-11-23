@@ -188,8 +188,8 @@ const AutoEquipmentRequestModal = ({ lessonPlan, onClose, onSuccess }) => {
                 {t('startDate')}
               </label>
               <input
-                type="date"
-                value={lessonPlan.start_date || ''}
+                type="text"
+                value={lessonPlan.start_date ? new Date(lessonPlan.start_date).toLocaleDateString() : ''}
                 readOnly
                 style={{
                   width: '100%',
@@ -209,8 +209,8 @@ const AutoEquipmentRequestModal = ({ lessonPlan, onClose, onSuccess }) => {
                 {t('endDate')}
               </label>
               <input
-                type="date"
-                value={lessonPlan.end_date || ''}
+                type="text"
+                value={lessonPlan.end_date ? new Date(lessonPlan.end_date).toLocaleDateString() : ''}
                 readOnly
                 style={{
                   width: '100%',

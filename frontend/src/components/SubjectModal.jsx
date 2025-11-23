@@ -22,7 +22,12 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
   const isEdit = !!subject;
 
   useEffect(() => {
-    if (subject) {
+    fetchEquipmentFleets();
+    fetchTeachers();
+  }, []);
+
+  useEffect(() => {
+    if (subject && teachers.length > 0) {
       // Find teacher assigned to this subject
       const assignedTeacher = teachers.find(t => t.subject_id === subject.id);
       
@@ -36,8 +41,6 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
         equipment_fleets: subject.equipment_fleets || []
       });
     }
-    fetchEquipmentFleets();
-    fetchTeachers();
   }, [subject, teachers]);
 
   const fetchEquipmentFleets = async () => {

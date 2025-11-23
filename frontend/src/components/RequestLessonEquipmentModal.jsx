@@ -173,8 +173,8 @@ const RequestLessonEquipmentModal = ({ lessonPlan, onClose, onSuccess }) => {
                 Start Date
               </label>
               <input
-                type="date"
-                value={formData.start_date}
+                type={user?.role === 'student' ? 'text' : 'date'}
+                value={user?.role === 'student' ? (formData.start_date ? new Date(formData.start_date).toLocaleDateString() : '') : formData.start_date}
                 readOnly={user?.role === 'student'}
                 onChange={user?.role !== 'student' ? (e) => setFormData(prev => ({ ...prev, start_date: e.target.value })) : undefined}
                 required
@@ -195,8 +195,8 @@ const RequestLessonEquipmentModal = ({ lessonPlan, onClose, onSuccess }) => {
                 End Date
               </label>
               <input
-                type="date"
-                value={formData.end_date}
+                type={user?.role === 'student' ? 'text' : 'date'}
+                value={user?.role === 'student' ? (formData.end_date ? new Date(formData.end_date).toLocaleDateString() : '') : formData.end_date}
                 readOnly={user?.role === 'student'}
                 onChange={user?.role !== 'student' ? (e) => setFormData(prev => ({ ...prev, end_date: e.target.value })) : undefined}
                 required
