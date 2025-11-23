@@ -59,6 +59,7 @@ export const equipment = {
   getGroups: () => api.get('/equipment/groups'),                  // Get equipment grouped by type
   getLowStock: () => api.get('/equipment/low-stock'),             // Get low stock alerts
   searchIndividual: (serial) => api.get(`/equipment/search/${encodeURIComponent(serial)}`), // QR code search
+  syncStatus: () => api.post('/equipment/sync-status'),           // Sync equipment statuses with active requests
 };
 
 /**

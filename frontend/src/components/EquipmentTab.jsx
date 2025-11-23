@@ -52,6 +52,14 @@ const EquipmentTab = () => {
     };
 
     fetchEquipment();
+
+    // Listen for equipment status changes
+    const handleEquipmentStatusChange = () => {
+      fetchEquipment();
+    };
+
+    window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
+    return () => window.removeEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
   }, []);
 
   const handleViewDetails = (item) => {

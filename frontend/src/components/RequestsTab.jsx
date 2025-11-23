@@ -38,6 +38,14 @@ const RequestsTab = () => {
     };
 
     fetchRequests();
+
+    // Listen for equipment status changes
+    const handleEquipmentStatusChange = () => {
+      fetchRequests();
+    };
+
+    window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
+    return () => window.removeEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
   }, [user]);
 
   // Filter requests based on selected status
@@ -54,6 +62,8 @@ const RequestsTab = () => {
       setRequestsList(prev => prev.map(req => 
         req.id === requestId ? { ...req, status: 'approved' } : req
       ));
+      // Trigger global equipment refresh
+      window.dispatchEvent(new CustomEvent('equipmentStatusChanged'));
     } catch (error) {
       console.error('Failed to approve request:', error);
     }
@@ -67,6 +77,8 @@ const RequestsTab = () => {
       setRequestsList(prev => prev.map(req => 
         req.id === requestId ? { ...req, status: 'rejected' } : req
       ));
+      // Trigger global equipment refresh
+      window.dispatchEvent(new CustomEvent('equipmentStatusChanged'));
     } catch (error) {
       console.error('Failed to reject request:', error);
     }
