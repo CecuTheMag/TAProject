@@ -357,12 +357,15 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
         continue;
       }
       
-      // Create the request with the available equipment
+      // Create the request with the available equipment and auto-approve it
       const result = await pool.query(`
-        INSERT INTO requests (user_id, equipment_id, start_date, end_date, notes)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO requests (user_id, equipment_id, start_date, end_date, notes, status, approved_by, approved_at, due_date)
+        VALUES ($1, $2, $3, $4, $5, 'approved', $1, CURRENT_TIMESTAMP, $4)
         RETURNING *
       `, [req.user.id, equipmentToRequest.id, start_date, end_date, notes || `Equipment for lesson: ${lesson.rows[0].title}`]);
+      
+      // Update equipment status to checked_out
+      await pool.query('UPDATE equipment SET status = $1 WHERE id = $2', ['checked_out', equipmentToRequest.id]);
       
       // Get equipment details for response
       const equipmentDetails = await pool.query(
