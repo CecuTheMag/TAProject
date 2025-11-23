@@ -112,8 +112,14 @@ const AutoEquipmentRequestModal = ({ lessonPlan, onClose, onSuccess }) => {
       });
       
       toast.success(`Equipment ${nextAvailableItem.serial_number} requested successfully!`);
-      // Trigger global equipment refresh
-      window.dispatchEvent(new CustomEvent('equipmentStatusChanged'));
+      // Immediately update equipment status in all components
+      window.dispatchEvent(new CustomEvent('equipmentStatusChanged', {
+        detail: {
+          equipmentId: nextAvailableItem.id,
+          newStatus: 'checked_out',
+          immediate: true
+        }
+      }));
       onSuccess();
       onClose();
     } catch (error) {

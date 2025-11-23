@@ -35,8 +35,14 @@ const ManagementTab = ({ userRole }) => {
     fetchData();
 
     // Listen for equipment status changes
-    const handleEquipmentStatusChange = () => {
-      fetchData();
+    const handleEquipmentStatusChange = (event) => {
+      if (event.detail && event.detail.immediate) {
+        // For immediate updates, just refresh data since management tab shows aggregated data
+        fetchData();
+      } else {
+        // Full refresh for other changes
+        fetchData();
+      }
     };
 
     window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);

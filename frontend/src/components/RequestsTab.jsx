@@ -40,8 +40,14 @@ const RequestsTab = () => {
     fetchRequests();
 
     // Listen for equipment status changes
-    const handleEquipmentStatusChange = () => {
-      fetchRequests();
+    const handleEquipmentStatusChange = (event) => {
+      if (event.detail && event.detail.immediate) {
+        // For immediate updates, refresh requests since equipment status affects request display
+        fetchRequests();
+      } else {
+        // Full refresh for other changes
+        fetchRequests();
+      }
     };
 
     window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);

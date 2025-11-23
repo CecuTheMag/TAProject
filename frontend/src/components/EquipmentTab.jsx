@@ -54,8 +54,20 @@ const EquipmentTab = () => {
     fetchEquipment();
 
     // Listen for equipment status changes
-    const handleEquipmentStatusChange = () => {
-      fetchEquipment();
+    const handleEquipmentStatusChange = (event) => {
+      if (event.detail && event.detail.immediate) {
+        // Immediate update for specific equipment
+        setEquipmentList(prevList => 
+          prevList.map(item => 
+            item.id === event.detail.equipmentId 
+              ? { ...item, status: event.detail.newStatus }
+              : item
+          )
+        );
+      } else {
+        // Full refresh for other changes
+        fetchEquipment();
+      }
     };
 
     window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);

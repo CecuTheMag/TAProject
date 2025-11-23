@@ -125,8 +125,30 @@ const Dashboard = () => {
     fetchData();
 
     // Listen for equipment status changes
-    const handleEquipmentStatusChange = () => {
-      fetchData();
+    const handleEquipmentStatusChange = (event) => {
+      if (event.detail && event.detail.immediate) {
+        // Immediate update for specific equipment
+        setEquipmentList(prevList => 
+          prevList.map(item => 
+            item.id === event.detail.equipmentId 
+              ? { ...item, status: event.detail.newStatus }
+              : item
+          )
+        );
+        // Also update dashboard stats
+        setDashboardStats(prevStats => {
+          if (!prevStats) return prevStats;
+          const newStats = { ...prevStats };
+          if (event.detail.newStatus === 'checked_out') {
+            newStats.equipment.available = Math.max(0, parseInt(newStats.equipment.available) - 1);
+            newStats.equipment.checked_out = parseInt(newStats.equipment.checked_out) + 1;
+          }
+          return newStats;
+        });
+      } else {
+        // Full refresh for other changes
+        fetchData();
+      }
     };
 
     window.addEventListener('equipmentStatusChanged', handleEquipmentStatusChange);
