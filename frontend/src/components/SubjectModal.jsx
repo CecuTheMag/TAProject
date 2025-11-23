@@ -27,21 +27,27 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
   }, []);
 
   useEffect(() => {
-    if (subject && teachers.length > 0) {
-      // Find teacher assigned to this subject
-      const assignedTeacher = teachers.find(t => t.subject_id === subject.id);
-      
+    if (subject) {
       setFormData({
         name: subject.name || '',
         code: subject.code || '',
         description: subject.description || '',
         grade_level: subject.grade_level || '',
         room: subject.room || '',
-        teacher_id: assignedTeacher?.id || '',
+        teacher_id: subject.teacher_id || '',
         equipment_fleets: subject.equipment_fleets || []
       });
     }
-  }, [subject, teachers]);
+  }, [subject]);
+
+  useEffect(() => {
+    if (subject && teachers.length > 0) {
+      const assignedTeacher = teachers.find(t => t.subject_id === subject.id);
+      if (assignedTeacher) {
+        setFormData(prev => ({ ...prev, teacher_id: assignedTeacher.id }));
+      }
+    }
+  }, [teachers, subject]);
 
   const fetchEquipmentFleets = async () => {
     try {
