@@ -300,51 +300,52 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
     
     // Create requests for each equipment item with automatic cycling
     for (const equipment_id of equipment_ids) {
-      // First, try to get the specific equipment if available
+      // Get the equipment to determine its fleet
+      const equipmentCheck = await pool.query('SELECT * FROM equipment WHERE id = $1', [equipment_id]);
+      
+      if (equipmentCheck.rows.length === 0) {
+        skipped.push({ equipment_id, reason: 'Equipment not found' });
+        continue;
+      }
+      
+      const equipment = equipmentCheck.rows[0];
+      const baseSerial = equipment.serial_number ? equipment.serial_number.replace(/\d{3}$/, '') : null;
+      
       let equipmentToRequest = null;
       
-      const equipmentCheck = await pool.query(`
-        SELECT e.*, 
-               CASE WHEN r.id IS NOT NULL THEN true ELSE false END as has_pending_request
-        FROM equipment e
-        LEFT JOIN requests r ON e.id = r.equipment_id 
-          AND r.status IN ('pending', 'approved') 
-          AND r.start_date <= $2 
-          AND r.end_date >= $1
-        WHERE e.id = $3
-      `, [start_date, end_date, equipment_id]);
-      
-      if (equipmentCheck.rows.length > 0) {
-        const equipment = equipmentCheck.rows[0];
-        
-        // Check if this specific item is available
-        if (equipment.status === 'available' && !equipment.has_pending_request) {
-          equipmentToRequest = equipment;
-        } else {
-          // If specific item not available, find next available in same fleet
-          const baseSerial = equipment.serial_number ? 
-            equipment.serial_number.replace(/\d{3}$/, '') : null;
-          
-          if (baseSerial) {
-            const fleetItems = await pool.query(`
-              SELECT e.*, 
-                     CASE WHEN r.id IS NOT NULL THEN true ELSE false END as has_pending_request
-              FROM equipment e
-              LEFT JOIN requests r ON e.id = r.equipment_id 
+      if (baseSerial) {
+        // Find next available item in the fleet that doesn't have conflicting requests
+        const fleetItems = await pool.query(`
+          SELECT e.* 
+          FROM equipment e
+          WHERE e.serial_number LIKE $1 
+            AND e.status = 'available'
+            AND NOT EXISTS (
+              SELECT 1 FROM requests r 
+              WHERE r.equipment_id = e.id 
                 AND r.status IN ('pending', 'approved') 
-                AND r.start_date <= $2 
-                AND r.end_date >= $1
-              WHERE e.serial_number LIKE $3 
-                AND e.status = 'available'
-                AND r.id IS NULL
-              ORDER BY e.serial_number
-              LIMIT 1
-            `, [start_date, end_date, baseSerial + '%']);
-            
-            if (fleetItems.rows.length > 0) {
-              equipmentToRequest = fleetItems.rows[0];
-            }
-          }
+                AND r.start_date <= $3 
+                AND r.end_date >= $2
+            )
+          ORDER BY e.serial_number
+          LIMIT 1
+        `, [baseSerial + '%', start_date, end_date]);
+        
+        if (fleetItems.rows.length > 0) {
+          equipmentToRequest = fleetItems.rows[0];
+        }
+      } else {
+        // For non-fleet items, check if the specific item is available
+        const hasConflict = await pool.query(`
+          SELECT 1 FROM requests r 
+          WHERE r.equipment_id = $1 
+            AND r.status IN ('pending', 'approved') 
+            AND r.start_date <= $3 
+            AND r.end_date >= $2
+        `, [equipment_id, start_date, end_date]);
+        
+        if (equipment.status === 'available' && hasConflict.rows.length === 0) {
+          equipmentToRequest = equipment;
         }
       }
       

@@ -43,19 +43,18 @@ const AutoEquipmentRequestModal = ({ lessonPlan, onClose, onSuccess }) => {
       subject.equipment_fleets.forEach(fleetSerial => {
         const items = allEquipment.filter(item => 
           item.serial_number && 
-          item.serial_number.startsWith(fleetSerial) &&
-          item.status === 'available'
+          item.serial_number.startsWith(fleetSerial)
         );
         
         if (items.length > 0) {
-          // Sort by serial number to ensure consistent ordering
-          const sortedItems = items.sort((a, b) => a.serial_number.localeCompare(b.serial_number));
+          const availableItems = items.filter(item => item.status === 'available');
           
           fleetItems.push({
             fleetSerial,
             name: items[0].name,
             type: items[0].type,
-            availableItems: sortedItems
+            availableItems: availableItems,
+            totalItems: items.length
           });
         }
       });
@@ -283,7 +282,7 @@ const AutoEquipmentRequestModal = ({ lessonPlan, onClose, onSuccess }) => {
                       fontSize: '12px',
                       fontWeight: '500'
                     }}>
-                      {fleet.availableItems.length > 0 ? `${fleet.availableItems.length} ${t('available')}` : t('noneAvailable')}
+                      {fleet.availableItems.length > 0 ? `${fleet.availableItems.length}/${fleet.totalItems} Available` : 'None Available'}
                     </div>
                   </div>
                 ))

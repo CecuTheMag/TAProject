@@ -47,15 +47,16 @@ const RequestLessonEquipmentModal = ({ lessonPlan, onClose, onSuccess }) => {
       subject.equipment_fleets.forEach(fleetSerial => {
         const items = allEquipment.filter(item => 
           item.serial_number && 
-          item.serial_number.startsWith(fleetSerial) &&
-          item.status === 'available'
+          item.serial_number.startsWith(fleetSerial)
         );
         if (items.length > 0) {
+          const availableItems = items.filter(item => item.status === 'available');
           fleetItems.push({
             fleetSerial,
             name: items[0].name,
             type: items[0].type,
-            availableItems: items.sort((a, b) => a.serial_number.localeCompare(b.serial_number))
+            availableItems: availableItems.sort((a, b) => a.serial_number.localeCompare(b.serial_number)),
+            totalItems: items.length
           });
         }
       });
@@ -289,7 +290,7 @@ const RequestLessonEquipmentModal = ({ lessonPlan, onClose, onSuccess }) => {
                       fontSize: '12px',
                       fontWeight: '500'
                     }}>
-                      {fleet.availableItems.length > 0 ? `${fleet.availableItems.length} Available` : 'None Available'}
+                      {fleet.availableItems.length > 0 ? `${fleet.availableItems.length}/${fleet.totalItems} Available` : 'None Available'}
                     </div>
                   </div>
                 ))

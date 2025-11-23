@@ -56,7 +56,7 @@ const CreateLessonPlanModal = ({ onClose, onSuccess }) => {
         item.status === 'available' && item.serial_number
       );
       
-      // If teacher, filter equipment by their subject's fleets
+      // If teacher, show fleet summary instead of individual items
       if (currentUser?.role === 'teacher' && currentUser?.subject_id) {
         try {
           // Get all subjects to find teacher's subject with fleets
@@ -64,10 +64,24 @@ const CreateLessonPlanModal = ({ onClose, onSuccess }) => {
           const teacherSubject = curriculumResponse.data.subjects.find(s => s.id === currentUser.subject_id);
           
           if (teacherSubject?.equipment_fleets?.length > 0) {
-            availableItems = availableItems.filter(item => {
-              const baseSerial = item.serial_number.replace(/\d{3}$/, '');
-              return teacherSubject.equipment_fleets.includes(baseSerial);
+            // Group by fleet and show one representative item per fleet
+            const fleetMap = new Map();
+            availableItems.forEach(item => {
+              if (item.serial_number) {
+                const baseSerial = item.serial_number.replace(/\d{3}$/, '');
+                if (teacherSubject.equipment_fleets.includes(baseSerial)) {
+                  if (!fleetMap.has(baseSerial)) {
+                    fleetMap.set(baseSerial, {
+                      ...item,
+                      serial_number: baseSerial,
+                      name: `${item.name} (Fleet)`,
+                      isFleet: true
+                    });
+                  }
+                }
+              }
             });
+            availableItems = Array.from(fleetMap.values());
           } else {
             // If no fleets assigned, show no equipment
             availableItems = [];
