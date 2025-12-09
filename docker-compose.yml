@@ -140,8 +140,6 @@ services:
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
-    environment:
-      - DUCKDNS_TOKEN=e8414af6-534c-458b-8dca-9ae9f45dc510
     volumes:
       - ./Caddyfile.production:/etc/caddy/Caddyfile
       - caddy_data:/data

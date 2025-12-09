@@ -1,5 +1,5 @@
-# PRODUCTION - DuckDNS with real Let's Encrypt SSL
-assetflow.duckdns.org {
+# PRODUCTION - Custom Domain with Let's Encrypt SSL
+school-sync.org, www.school-sync.org {
     tls kironotificatora@gmail.com
     
     handle_path /api/* {
@@ -14,6 +14,6 @@ assetflow.duckdns.org {
     }
 }
 
-http://assetflow.duckdns.org {
-    redir https://assetflow.duckdns.org{uri} permanent
+http://school-sync.org, http://www.school-sync.org {
+    redir https://school-sync.org{uri} permanent
 }
