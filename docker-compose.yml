@@ -138,8 +138,8 @@ services:
   caddy:
     image: caddy:alpine
     ports:
-      - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
+      - "0.0.0.0:81:80"
+      - "0.0.0.0:444:443"
     volumes:
       - ./Caddyfile.production:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -171,7 +171,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     ports:
-      - "0.0.0.0:3000:3000"
+      - "0.0.0.0:3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin123
