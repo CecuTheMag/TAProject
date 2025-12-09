@@ -1,5 +1,5 @@
 # PRODUCTION - Custom Domain with Let's Encrypt SSL
-school-sync.org:444, www.school-sync.org:444 {
+school-sync.org, www.school-sync.org {
     tls kironotificatora@gmail.com
     
     handle_path /api/* {
@@ -14,6 +14,6 @@ school-sync.org:444, www.school-sync.org:444 {
     }
 }
 
-school-sync.org:81, www.school-sync.org:81 {
-    redir https://school-sync.org:444{uri} permanent
+http://school-sync.org, http://www.school-sync.org {
+    redir https://school-sync.org{uri} permanent
 }
