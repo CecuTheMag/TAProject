@@ -1,42 +1,69 @@
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { useTranslation } from '../translations';
-import { useState, useEffect, useRef } from 'react';
-import logoImage from '../assets/logotp.png';
+
+const ThemeContext = createContext();
+
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
+
+const getTheme = (isDark) => ({
+  background: isDark 
+    ? 'linear-gradient(180deg, #0a0f1c 0%, #0f172a 25%, #1e293b 75%, #334155 100%)'
+    : 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 25%, #e2e8f0 75%, #cbd5e1 100%)',
+  text: isDark ? '#ffffff' : '#1f2937',
+  textSecondary: isDark ? '#94a3b8' : '#4b5563',
+  textMuted: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(31, 41, 55, 0.7)',
+  cardBg: isDark 
+    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)'
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+  cardBorder: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.2)',
+  sectionBg: isDark 
+    ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%)'
+    : 'linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.8) 100%)',
+  navBg: isDark
+    ? 'linear-gradient(135deg, rgba(10, 15, 28, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+  buttonSecondaryBg: isDark 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(31, 41, 55, 0.1)',
+  buttonSecondaryBorder: isDark 
+    ? 'rgba(59, 130, 246, 0.3)' 
+    : 'rgba(31, 41, 55, 0.3)'
+});
 
 const HomePage = ({ onGetStarted }) => {
-  const { t } = useTranslation();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 300], [0, -50]);
-  const y2 = useTransform(scrollY, [0, 300], [0, -100]);
+  const y1 = useTransform(scrollY, [0, 300], [0, -20]);
+  const theme = getTheme(isDark);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   return (
+    <ThemeContext.Provider value={{ isDark, setIsDark, theme }}>
     <div style={{
       minHeight: '100vh',
-      background: '#000000',
+      background: theme.background,
       position: 'relative',
       overflow: 'hidden'
     }}>
       {/* Navbar */}
       <Navbar onLogin={() => window.location.href = '/login'} onSignup={() => window.location.href = '/login'} isMobile={isMobile} />
-      {/* Animated Background */}
+      
+      {/* Subtle Background Elements */}
       <motion.div
         style={{
           position: 'absolute',
@@ -44,36 +71,20 @@ const HomePage = ({ onGetStarted }) => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.15) 0%, transparent 50%)`,
-          transition: 'background 0.3s ease'
+          background: 'radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.12) 0%, rgba(16, 185, 129, 0.06) 40%, transparent 70%)',
+          y: y1
         }}
       />
-      
-      {/* Floating Particles */}
-      {[...Array(20)].map((_, i) => (
-        <motion.div
-          key={i}
-          style={{
-            position: 'absolute',
-            width: Math.random() * 4 + 2,
-            height: Math.random() * 4 + 2,
-            background: '#3b82f6',
-            borderRadius: '50%',
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            y: y1
-          }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.3, 1, 0.3]
-          }}
-          transition={{
-            duration: 3 + Math.random() * 2,
-            repeat: Infinity,
-            delay: Math.random() * 2
-          }}
-        />
-      ))}
+      <div style={{
+        position: 'absolute',
+        top: '60%',
+        right: '10%',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%)',
+        borderRadius: '50%',
+        filter: 'blur(40px)'
+      }} />
 
       {/* Hero Section */}
       <div style={{
@@ -95,137 +106,221 @@ const HomePage = ({ onGetStarted }) => {
         >
           {/* Logo */}
           <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
+            initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
             style={{
-              width: '120px',
-              height: '120px',
+              width: '80px',
+              height: '80px',
               background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
-              borderRadius: '28px',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 40px auto',
-              boxShadow: '0 20px 40px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+              margin: '0 auto 32px auto',
+              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.2)',
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}
           >
-            <img 
-              src={logoImage} 
-              alt="AssetFlow Logo" 
-              style={{
-                width: '70px',
-                height: '70px',
-                objectFit: 'contain',
-                filter: 'brightness(1.2)'
-              }}
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = '<div style="font-size: 36px; font-weight: 800; color: white;">AF</div>';
-              }}
-            />
+            <div style={{
+              fontSize: '32px',
+              fontWeight: '800',
+              color: 'white',
+              fontFamily: 'Inter, -apple-system, sans-serif'
+            }}>
+              SS
+            </div>
           </motion.div>
 
           {/* Main Title */}
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
             style={{
-              fontSize: isMobile ? 'clamp(48px, 8vw, 96px)' : 'var(--font-5xl, 48px)',
+              fontSize: isMobile ? 'clamp(40px, 8vw, 64px)' : '64px',
               fontWeight: '700',
-              margin: '0 0 24px 0',
-              background: 'linear-gradient(135deg, #ffffff 0%, #3b82f6 50%, #60a5fa 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-              letterSpacing: '-0.02em'
+              margin: '0 0 20px 0',
+              color: '#ffffff',
+              fontFamily: 'Inter, -apple-system, sans-serif',
+              letterSpacing: '-0.025em',
+              lineHeight: '1.1'
             }}
           >
-            AssetFlow
+            {t('enterpriseAssetManagement')}
+            <br />
+            <span style={{ color: isDark ? '#64748b' : '#6b7280' }}>{t('forModernSchools')}</span>
           </motion.h1>
 
           {/* Subtitle */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             style={{
-              fontSize: isMobile ? 'clamp(20px, 3vw, 32px)' : 'var(--font-3xl, 32px)',
-              fontWeight: '500',
-              color: 'rgba(255, 255, 255, 0.8)',
-              marginBottom: '32px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              fontSize: isMobile ? '18px' : '20px',
+              fontWeight: '400',
+              color: '#94a3b8',
+              marginBottom: '40px',
+              fontFamily: 'Inter, -apple-system, sans-serif',
+              lineHeight: '1.6',
+              maxWidth: '560px',
+              margin: '0 auto 40px auto'
             }}
           >
-            Enterprise-Grade Inventory Management
+            {t('secureScalableInfrastructure')}
           </motion.div>
 
-          {/* Description */}
-          <motion.p
+          {/* CTA Buttons */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             style={{
-              fontSize: isMobile ? 'clamp(16px, 2vw, 22px)' : 'var(--font-xl, 22px)',
-              color: 'rgba(255, 255, 255, 0.6)',
-              lineHeight: '1.6',
-              margin: '0 auto 48px auto',
-              maxWidth: '600px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-            }}
-          >
-            10,000+ concurrent users • 99.9% uptime • Sub-100ms response times
-          </motion.p>
-
-          {/* CTA Button */}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            whileHover={{ 
-              scale: 1.02,
-              boxShadow: '0 20px 40px rgba(59, 130, 246, 0.4)'
-            }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onGetStarted}
-            style={{
-              padding: '18px 36px',
-              background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
-              border: 'none',
-              borderRadius: '50px',
-              color: 'white',
-              fontSize: '18px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-              transition: 'all 0.3s ease',
+              display: 'flex',
+              gap: '16px',
+              justifyContent: 'center',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: 'center',
               marginBottom: '80px'
             }}
           >
-            Get Started
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onGetStarted}
+              style={{
+                padding: '18px 36px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontFamily: 'Inter, -apple-system, sans-serif',
+                transition: 'all 0.3s ease',
+                minWidth: isMobile ? '100%' : '160px',
+                boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              {t('requestAccess')}
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                padding: '18px 36px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '12px',
+                color: '#e2e8f0',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                fontFamily: 'Inter, -apple-system, sans-serif',
+                transition: 'all 0.3s ease',
+                minWidth: isMobile ? '100%' : '160px',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              {t('viewPlatform')}
+            </motion.button>
+          </motion.div>
         </motion.div>
       </div>
 
+      {/* Trust Section */}
+      <TrustSection />
+      
       {/* Features Section */}
       <FeaturesSection />
       
-      {/* Detailed Sections */}
-      <DetailedSection />
+      {/* Security Section */}
+      <SecuritySection />
       
-      {/* Stats Section */}
-      <StatsSection />
+      {/* Scalability Section */}
+      <ScalabilitySection />
       
-
+      {/* Who It's For Section */}
+      <WhoItsForSection />
+      
+      {/* CTA Section */}
+      <CTASection onGetStarted={onGetStarted} />
 
       {/* Footer */}
       <Footer />
     </div>
+    </ThemeContext.Provider>
+  );
+};
+
+const TrustSection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  return (
+    <motion.div
+      ref={ref}
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        padding: '80px 20px',
+        background: theme.sectionBg,
+        borderTop: `1px solid ${theme.cardBorder}`,
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+      }}
+    >
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+        gap: '40px',
+        textAlign: 'center'
+      }}>
+        {[
+          { label: t('enterpriseGradeSecurity'), value: t('socCompliant') },
+          { label: t('containerIsolation'), value: t('perSchoolEnvironments') },
+          { label: t('roleBasedAccess'), value: t('strictBoundaries') },
+          { label: t('highAvailability'), value: t('uptimeGuarantee') }
+        ].map((item, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <div style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#3b82f6',
+              marginBottom: '8px',
+              fontFamily: 'Inter, -apple-system, sans-serif'
+            }}>
+              {item.value}
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: theme.textSecondary,
+              fontFamily: 'Inter, -apple-system, sans-serif'
+            }}>
+              {item.label}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
   );
 };
 
@@ -233,6 +328,8 @@ const FeaturesSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [isMobile, setIsMobile] = useState(false);
+  const { theme } = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -248,81 +345,70 @@ const FeaturesSection = () => {
         position: 'relative',
         zIndex: 10,
         padding: '120px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
+        maxWidth: '1200px',
+        margin: '0 auto'
       }}
     >
       <motion.h2
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         style={{
-          fontSize: 'clamp(32px, 5vw, 48px)',
+          fontSize: isMobile ? '32px' : '40px',
           fontWeight: '700',
-          color: 'white',
+          color: theme.text,
           textAlign: 'center',
-          marginBottom: '60px',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+          marginBottom: '80px',
+          fontFamily: 'Inter, -apple-system, sans-serif'
         }}
       >
-        Why Choose AssetFlow?
+        {t('coreFeatures')}
       </motion.h2>
       
       <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        gap: isMobile ? '24px' : '32px',
-        maxWidth: '1200px',
-        width: '100%'
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+        gap: '32px'
       }}>
         {[
-          { icon: '⚡', title: 'Lightning Fast', desc: 'Sub-100ms response times with optimized performance and real-time synchronization' },
-          { icon: '🔒', title: 'Enterprise Security', desc: 'Bank-level encryption, JWT authentication, and comprehensive audit trails' },
-          { icon: '📊', title: 'Advanced Analytics', desc: 'Real-time dashboards, usage metrics, and predictive maintenance insights' },
-          { icon: '📱', title: 'Cross-Platform', desc: 'Seamless experience across desktop, tablet, and mobile devices' }
+          { title: t('equipmentAssetTracking'), desc: t('completeLifecycleManagement') },
+          { title: t('roleBasedAccessControl'), desc: t('studentTeacherAdminRoles') },
+          { title: t('approvalWorkflows'), desc: t('automatedRoutingNotifications') },
+          { title: t('auditLogsHistory'), desc: t('comprehensiveTrackingCompliance') },
+          { title: t('analyticsReporting'), desc: t('realTimeDashboardsUsageInsights') },
+          { title: t('documentManagement'), desc: t('secureFileStorageVersionControl') }
         ].map((feature, index) => (
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: index * 0.1 }}
-            whileHover={{ y: -8, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
             style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              backdropFilter: 'blur(20px)',
-              borderRadius: '24px',
-              padding: '40px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              textAlign: 'center',
+              background: theme.cardBg,
+              border: `1px solid ${theme.cardBorder}`,
+              borderRadius: '16px',
+              padding: '32px',
               cursor: 'pointer',
-              width: isMobile ? '100%' : '280px',
-              flex: isMobile ? 'none' : '0 0 280px'
+              backdropFilter: 'blur(10px)',
+              boxShadow: theme.shadow
             }}
           >
-            <div style={{ 
-              fontSize: '56px', 
-              marginBottom: '24px',
-              filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))'
-            }}>
-              {feature.icon}
-            </div>
-            <h3 style={{ 
-              fontSize: '24px', 
-              fontWeight: '600', 
-              margin: '0 0 16px 0',
-              color: 'white',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: theme.text,
+              marginBottom: '12px',
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
               {feature.title}
             </h3>
-            <p style={{ 
-              fontSize: '16px', 
-              color: 'rgba(255, 255, 255, 0.7)', 
+            <p style={{
+              fontSize: '14px',
+              color: theme.textSecondary,
               margin: 0,
-              lineHeight: '1.6',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              lineHeight: '1.5',
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
               {feature.desc}
             </p>
@@ -333,7 +419,7 @@ const FeaturesSection = () => {
   );
 };
 
-const DetailedSection = () => {
+const SecuritySection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [isMobile, setIsMobile] = useState(false);
@@ -352,118 +438,142 @@ const DetailedSection = () => {
         position: 'relative',
         zIndex: 10,
         padding: '120px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(51, 65, 85, 0.4) 100%)',
+        borderTop: '1px solid rgba(16, 185, 129, 0.2)'
       }}
     >
-      <div style={{ maxWidth: '1200px', width: '100%' }}>
-        {[
-          {
-            title: 'Complete Equipment Lifecycle Management',
-            desc: 'Track every piece of equipment from acquisition to retirement with detailed maintenance logs, condition monitoring, and automated alerts.',
-            features: ['QR Code Integration', 'Maintenance Scheduling', 'Condition Tracking', 'Document Management'],
-            reverse: false
-          },
-          {
-            title: 'Intelligent Request & Approval System',
-            desc: 'Streamlined workflow with automated routing, due date management, email notifications, and comprehensive approval chains.',
-            features: ['Smart Routing', 'Email Notifications', 'Due Date Tracking', 'Return Processing'],
-            reverse: true
-          },
-          {
-            title: 'Educational Institution Focus',
-            desc: 'Purpose-built for schools and universities with curriculum mapping, lesson plan integration, and subject-based organization.',
-            features: ['Curriculum Integration', 'Lesson Planning', 'Subject Management', 'Teacher Workflows'],
-            reverse: false
-          }
-        ].map((section, index) => (
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'radial-gradient(ellipse at center top, rgba(59, 130, 246, 0.05) 0%, transparent 50%)',
+        pointerEvents: 'none'
+      }} />
+      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{
+            fontSize: isMobile ? '32px' : '40px',
+            fontWeight: '700',
+            color: 'white',
+            textAlign: 'center',
+            marginBottom: '80px',
+            fontFamily: 'Inter, -apple-system, sans-serif'
+          }}
+        >
+          Security & Architecture
+        </motion.h2>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+          gap: '40px',
+          alignItems: 'start'
+        }}>
           <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 60 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: index * 0.2 }}
-            style={{
-              display: isMobile ? 'block' : 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-              gap: isMobile ? '40px' : '60px',
-              alignItems: 'center',
-              marginBottom: isMobile ? '80px' : '120px'
-            }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <div style={{ order: section.reverse && !isMobile ? 2 : 1 }}>
-              <h3 style={{
-                fontSize: 'clamp(28px, 4vw, 36px)',
-                fontWeight: '700',
-                color: 'white',
-                marginBottom: '24px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-              }}>
-                {section.title}
-              </h3>
-              <p style={{
-                fontSize: '18px',
-                color: 'rgba(255, 255, 255, 0.7)',
-                lineHeight: '1.6',
-                marginBottom: '32px',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-              }}>
-                {section.desc}
-              </p>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                gap: '16px'
-              }}>
-                {section.features.map((feature, i) => (
-                  <div key={i} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '16px',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
-                  }}>
-                    <div style={{
-                      width: '8px',
-                      height: '8px',
-                      background: '#3b82f6',
-                      borderRadius: '50%',
-                      boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)'
-                    }} />
-                    {feature}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{
-              order: section.reverse && !isMobile ? 1 : 2,
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '24px',
-              padding: isMobile ? '40px' : '60px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(20px)',
-              textAlign: 'center'
+            <h3 style={{
+              fontSize: '24px',
+              fontWeight: '600',
+              color: 'white',
+              marginBottom: '24px',
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
-              <div style={{
-                fontSize: '72px',
-                marginBottom: '20px',
-                marginTop: isMobile ? '40px' : '0',
-                filter: 'drop-shadow(0 0 30px rgba(59, 130, 246, 0.5))'
-              }}>
-                {['🎯', '🔄', '🎓'][index]}
-              </div>
+              Institutional Isolation
+            </h3>
+            <div style={{ marginBottom: '32px' }}>
+              {[
+                'Per-school isolated environments',
+                'Separate databases per institution',
+                'Central system administration',
+                'Strict access boundaries',
+                'No cross-school data exposure'
+              ].map((item, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '12px',
+                  color: '#e2e8f0',
+                  fontSize: '16px',
+                  fontFamily: 'Inter, -apple-system, sans-serif'
+                }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    background: '#3b82f6',
+                    borderRadius: '50%'
+                  }} />
+                  {item}
+                </div>
+              ))}
             </div>
           </motion.div>
-        ))}
+          
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{
+              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '16px',
+              padding: '40px',
+              textAlign: 'center',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 20px 40px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            }}
+          >
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '16px',
+              color: '#3b82f6'
+            }}>
+              🛡️
+            </div>
+            <h4 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: 'white',
+              marginBottom: '12px',
+              fontFamily: 'Inter, -apple-system, sans-serif'
+            }}>
+              Enterprise Security
+            </h4>
+            <p style={{
+              fontSize: '14px',
+              color: '#94a3b8',
+              margin: 0,
+              lineHeight: '1.5',
+              fontFamily: 'Inter, -apple-system, sans-serif'
+            }}>
+              Bank-level encryption, secure authentication tied to official school records, and comprehensive audit trails.
+            </p>
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   );
 };
 
-const StatsSection = () => {
+const ScalabilitySection = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   return (
     <motion.div
@@ -472,50 +582,67 @@ const StatsSection = () => {
         position: 'relative',
         zIndex: 10,
         padding: '120px 20px',
-        display: 'flex',
-        justifyContent: 'center'
+        maxWidth: '1200px',
+        margin: '0 auto'
       }}
     >
+      <motion.h2
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{
+          fontSize: isMobile ? '32px' : '40px',
+          fontWeight: '700',
+          color: 'white',
+          textAlign: 'center',
+          marginBottom: '80px',
+          fontFamily: 'Inter, -apple-system, sans-serif'
+        }}
+      >
+        Scalability & Reliability
+      </motion.h2>
+      
       <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        gap: '40px',
-        maxWidth: '800px',
-        width: '100%',
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
+        gap: '32px',
         textAlign: 'center'
       }}>
         {[
-          { number: '10,000+', label: 'Concurrent Users' },
-          { number: '99.9%', label: 'Uptime Guarantee' },
-          { number: '<100ms', label: 'Response Time' },
-          { number: '24/7', label: 'Support Available' }
-        ].map((stat, index) => (
+          { metric: '10,000+', label: 'Concurrent Users' },
+          { metric: '99.9%', label: 'Uptime SLA' },
+          { metric: '<100ms', label: 'Response Time' },
+          { metric: '24/7', label: 'Monitoring' }
+        ].map((item, index) => (
           <motion.div
             key={index}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
             style={{
-              flex: '0 0 180px',
-              minWidth: '180px'
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(59, 130, 246, 0.03) 100%)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '16px',
+              padding: '40px',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
             }}
           >
             <div style={{
-              fontSize: 'clamp(36px, 6vw, 48px)',
-              fontWeight: '800',
+              fontSize: '32px',
+              fontWeight: '700',
               color: '#3b82f6',
               marginBottom: '8px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
-              {stat.number}
+              {item.metric}
             </div>
             <div style={{
-              fontSize: '16px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              fontSize: '14px',
+              color: '#94a3b8',
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
-              {stat.label}
+              {item.label}
             </div>
           </motion.div>
         ))}
@@ -524,10 +651,203 @@ const StatsSection = () => {
   );
 };
 
+const WhoItsForSection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  return (
+    <motion.div
+      ref={ref}
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        padding: '120px 20px',
+        background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%)',
+        borderTop: '1px solid rgba(139, 92, 246, 0.2)'
+      }}
+    >
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.06) 0%, transparent 60%)',
+        pointerEvents: 'none'
+      }} />
+    >
+      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{
+            fontSize: isMobile ? '32px' : '40px',
+            fontWeight: '700',
+            color: 'white',
+            textAlign: 'center',
+            marginBottom: '80px',
+            fontFamily: 'Inter, -apple-system, sans-serif'
+          }}
+        >
+          Built for Educational Institutions
+        </motion.h2>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+          gap: '40px'
+        }}>
+          {[
+            {
+              title: 'School Administrators',
+              desc: 'Complete oversight of equipment allocation, budget tracking, and institutional compliance reporting.'
+            },
+            {
+              title: 'Teachers',
+              desc: 'Streamlined equipment requests integrated with lesson planning and curriculum requirements.'
+            },
+            {
+              title: 'Students',
+              desc: 'Simple, secure access to request and return equipment with clear approval workflows.'
+            },
+            {
+              title: 'IT Departments',
+              desc: 'Centralized management with role-based access control and comprehensive audit trails.'
+            }
+          ].map((segment, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+              style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '16px',
+                padding: '36px',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+              }}
+            >
+              <h3 style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: 'white',
+                marginBottom: '16px',
+                fontFamily: 'Inter, -apple-system, sans-serif'
+              }}>
+                {segment.title}
+              </h3>
+              <p style={{
+                fontSize: '16px',
+                color: '#94a3b8',
+                margin: 0,
+                lineHeight: '1.5',
+                fontFamily: 'Inter, -apple-system, sans-serif'
+              }}>
+                {segment.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const CTASection = ({ onGetStarted }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  return (
+    <motion.div
+      ref={ref}
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        padding: '120px 20px',
+        textAlign: 'center'
+      }}
+    >
+      <motion.h2
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{
+          fontSize: isMobile ? '32px' : '40px',
+          fontWeight: '700',
+          color: 'white',
+          marginBottom: '24px',
+          fontFamily: 'Inter, -apple-system, sans-serif'
+        }}
+      >
+        Ready to Transform Your Institution?
+      </motion.h2>
+      
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{
+          fontSize: '18px',
+          color: '#94a3b8',
+          marginBottom: '40px',
+          maxWidth: '600px',
+          margin: '0 auto 40px auto',
+          fontFamily: 'Inter, -apple-system, sans-serif'
+        }}
+      >
+        Join leading educational institutions using SchoolSync for secure, scalable asset management.
+      </motion.p>
+      
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onGetStarted}
+        style={{
+          padding: '18px 36px',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+          border: 'none',
+          borderRadius: '12px',
+          color: 'white',
+          fontSize: '16px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          fontFamily: 'Inter, -apple-system, sans-serif',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+        }}
+      >
+        Schedule a Demo
+      </motion.button>
+    </motion.div>
+  );
+};
 
 const Footer = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const { theme } = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -544,9 +864,9 @@ const Footer = () => {
       style={{
         position: 'relative',
         zIndex: 10,
-        background: 'rgba(15, 23, 42, 0.8)',
+        background: theme.navBg,
+        borderTop: `1px solid ${theme.cardBorder}`,
         backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
         padding: '40px 20px 30px 20px'
       }}
     >
@@ -565,47 +885,48 @@ const Footer = () => {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <img 
-            src={logoImage} 
-            alt="AssetFlow Logo" 
-            style={{
-              width: '40px',
-              height: '40px',
-              objectFit: 'contain'
-            }}
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.parentElement.innerHTML = '<div style="color: white; font-size: 24px; font-weight: 800;">AF</div>';
-            }}
-          />
+          <div style={{
+            width: '32px',
+            height: '32px',
+            background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            fontWeight: '800',
+            color: 'white'
+          }}>
+            SS
+          </div>
           <span style={{
             fontSize: '24px',
             fontWeight: '700',
-            color: 'white',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+            color: theme.text,
+            fontFamily: 'Inter, -apple-system, sans-serif'
           }}>
-            AssetFlow
+            SchoolSync
           </span>
         </div>
         
         <p style={{
-          color: 'rgba(255, 255, 255, 0.6)',
+          color: theme.textMuted,
           fontSize: '16px',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+          fontFamily: 'Inter, -apple-system, sans-serif'
         }}>
-          Enterprise-grade inventory management solution
+          {t('enterpriseAssetManagementForEducationalInstitutions')}
         </p>
       </div>
       
       <div style={{
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        borderTop: `1px solid ${theme.cardBorder}`,
         paddingTop: '30px',
         textAlign: 'center',
-        color: 'rgba(255, 255, 255, 0.4)',
+        color: theme.textSecondary,
         fontSize: '14px',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+        fontFamily: 'Inter, -apple-system, sans-serif'
       }}>
-        © 2025 AssetFlow. All rights reserved. Built with ❤️ for professional excellence.
+        {t('allRightsReserved')}
       </div>
     </motion.footer>
   );
@@ -613,6 +934,14 @@ const Footer = () => {
 
 const Navbar = ({ onLogin, onSignup, isMobile }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isDark, setIsDark, theme } = useTheme();
+  const { language, t } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLanguage = language === 'en' ? 'bg' : 'en';
+    localStorage.setItem('language', newLanguage);
+    window.location.reload();
+  };
 
   return (
     <motion.nav
@@ -625,10 +954,11 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
         left: 0,
         right: 0,
         zIndex: 50,
-        background: 'rgba(0, 0, 0, 0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: isMobile ? '12px 20px' : '16px 20px'
+        background: theme.navBg,
+        backdropFilter: 'blur(24px)',
+        borderBottom: `1px solid ${theme.cardBorder}`,
+        padding: isMobile ? '12px 20px' : '16px 20px',
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.1)'
       }}
     >
       <div style={{
@@ -644,26 +974,28 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <img 
-            src={logoImage} 
-            alt="AssetFlow Logo" 
-            style={{
-              width: '32px',
-              height: '32px',
-              objectFit: 'contain'
-            }}
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.parentElement.innerHTML = '<div style="color: white; font-size: 20px; font-weight: 800;">AF</div>';
-            }}
-          />
+          <div style={{
+            width: '28px',
+            height: '28px',
+            background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px',
+            fontWeight: '800',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+          }}>
+            SS
+          </div>
           <span style={{
             fontSize: '20px',
             fontWeight: '700',
-            color: 'white',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+            color: theme.text,
+            fontFamily: 'Inter, -apple-system, sans-serif'
           }}>
-            AssetFlow
+            SchoolSync
           </span>
         </div>
 
@@ -677,57 +1009,127 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={toggleLanguage}
+              style={{
+                padding: '8px 12px',
+                background: theme.buttonSecondaryBg,
+                border: `1px solid ${theme.buttonSecondaryBorder}`,
+                borderRadius: '8px',
+                color: theme.text,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {language === 'en' ? 'BG' : 'EN'}
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsDark(!isDark)}
+              style={{
+                padding: '8px',
+                background: theme.buttonSecondaryBg,
+                border: `1px solid ${theme.buttonSecondaryBorder}`,
+                borderRadius: '8px',
+                color: theme.text,
+                fontSize: '16px',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {isDark ? '☀️' : '🌙'}
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onLogin}
               style={{
-                padding: '10px 20px',
-                background: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                color: 'white',
+                padding: '12px 24px',
+                background: theme.buttonSecondaryBg,
+                border: `1px solid ${theme.buttonSecondaryBorder}`,
+                borderRadius: '10px',
+                color: theme.text,
                 fontSize: '14px',
                 fontWeight: '500',
                 cursor: 'pointer',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+                fontFamily: 'Inter, -apple-system, sans-serif',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s ease'
               }}
             >
-              Login
+              {t('login')}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onSignup}
               style={{
-                padding: '10px 20px',
+                padding: '12px 24px',
                 background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 color: 'white',
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+                fontFamily: 'Inter, -apple-system, sans-serif',
+                boxShadow: '0 4px 16px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                transition: 'all 0.3s ease'
               }}
             >
-              Sign Up
+              {t('signup')}
             </motion.button>
           </div>
         )}
 
         {/* Mobile Menu Button */}
         {isMobile && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              fontSize: '24px',
-              cursor: 'pointer'
-            }}
-          >
-            {isMenuOpen ? '✕' : '☰'}
-          </motion.button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleLanguage}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: theme.text,
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              {language === 'en' ? 'BG' : 'EN'}
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsDark(!isDark)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: theme.text,
+                fontSize: '20px',
+                cursor: 'pointer'
+              }}
+            >
+              {isDark ? '☀️' : '🌙'}
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: theme.text,
+                fontSize: '24px',
+                cursor: 'pointer'
+              }}
+            >
+              {isMenuOpen ? '✕' : '☰'}
+            </motion.button>
+          </div>
         )}
       </div>
 
@@ -740,7 +1142,7 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
           style={{
             marginTop: '12px',
             padding: '12px 0',
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            borderTop: `1px solid ${theme.cardBorder}`,
             display: 'flex',
             flexDirection: 'column',
             gap: '8px'
@@ -750,17 +1152,17 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
             onClick={() => { onLogin(); setIsMenuOpen(false); }}
             style={{
               padding: '10px 16px',
-              background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: theme.buttonSecondaryBg,
+              border: `1px solid ${theme.buttonSecondaryBorder}`,
               borderRadius: '6px',
-              color: 'white',
+              color: theme.text,
               fontSize: '14px',
               fontWeight: '500',
               cursor: 'pointer',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}
           >
-            Login
+            {t('login')}
           </button>
           <button
             onClick={() => { onSignup(); setIsMenuOpen(false); }}
@@ -773,10 +1175,10 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif'
+              fontFamily: 'Inter, -apple-system, sans-serif'
             }}
           >
-            Sign Up
+            {t('signup')}
           </button>
         </motion.div>
       )}
