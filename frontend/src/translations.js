@@ -472,7 +472,40 @@ export const translations = {
     scheduleDemo: 'Schedule a Demo',
     enterpriseAssetManagementForEducationalInstitutions: 'Enterprise asset management for educational institutions',
     allRightsReserved: '© 2025 SchoolSync. All rights reserved.',
-    schoolSync: 'SchoolSync'
+    schoolSync: 'SchoolSync',
+    
+    // Security Section
+    securityArchitecture: 'Security & Architecture',
+    institutionalIsolation: 'Institutional Isolation',
+    perSchoolIsolatedEnvironments: 'Per-school isolated environments',
+    separateDatabasesPerInstitution: 'Separate databases per institution',
+    centralSystemAdministration: 'Central system administration',
+    strictAccessBoundaries: 'Strict access boundaries',
+    noCrossSchoolDataExposure: 'No cross-school data exposure',
+    enterpriseSecurityFeatures: 'Enterprise Security',
+    bankLevelEncryption: 'Bank-level encryption, secure authentication tied to official school records, and comprehensive audit trails.',
+    
+    // Scalability Section
+    scalabilityReliability: 'Scalability & Reliability',
+    concurrentUsers: 'Concurrent Users',
+    uptimeSLA: 'Uptime SLA',
+    responseTime: 'Response Time',
+    monitoring: 'Monitoring',
+    
+    // Who It's For Section
+    builtForEducationalInstitutions: 'Built for Educational Institutions',
+    schoolAdministrators: 'School Administrators',
+    completeOversightEquipmentAllocation: 'Complete oversight of equipment allocation, budget tracking, and institutional compliance reporting.',
+    teachers: 'Teachers',
+    streamlinedEquipmentRequests: 'Streamlined equipment requests integrated with lesson planning and curriculum requirements.',
+    students: 'Students',
+    simpleSecureAccess: 'Simple, secure access to request and return equipment with clear approval workflows.',
+    itDepartments: 'IT Departments',
+    centralizedManagementRoleBasedAccess: 'Centralized management with role-based access control and comprehensive audit trails.',
+    
+    // CTA Section
+    readyToTransformInstitution: 'Ready to Transform Your Institution?',
+    joinLeadingEducationalInstitutions: 'Join leading educational institutions using SchoolSync for secure, scalable asset management.'
   },
   bg: {
     // Sidebar
@@ -947,7 +980,40 @@ export const translations = {
     scheduleDemo: 'Планирай демо',
     enterpriseAssetManagementForEducationalInstitutions: 'Корпоративно управление на активи за образователни институции',
     allRightsReserved: '© 2025 SchoolSync. Всички права запазени.',
-    schoolSync: 'SchoolSync'
+    schoolSync: 'SchoolSync',
+    
+    // Security Section
+    securityArchitecture: 'Сигурност и архитектура',
+    institutionalIsolation: 'Институционална изолация',
+    perSchoolIsolatedEnvironments: 'Изолирани среди за всяко училище',
+    separateDatabasesPerInstitution: 'Отделни бази данни за всяка институция',
+    centralSystemAdministration: 'Централно системно администриране',
+    strictAccessBoundaries: 'Строги граници на достъпа',
+    noCrossSchoolDataExposure: 'Няма излагане на данни между училища',
+    enterpriseSecurityFeatures: 'Корпоративна сигурност',
+    bankLevelEncryption: 'Криптиране на банково ниво, сигурна автентификация свързана с официални училищни записи и цялостни одитни следи.',
+    
+    // Scalability Section
+    scalabilityReliability: 'Мащабируемост и надеждност',
+    concurrentUsers: 'Едновременни потребители',
+    uptimeSLA: 'SLA за време на работа',
+    responseTime: 'Време за отговор',
+    monitoring: 'Наблюдение',
+    
+    // Who It's For Section
+    builtForEducationalInstitutions: 'Създаден за образователни институции',
+    schoolAdministrators: 'Училищни администратори',
+    completeOversightEquipmentAllocation: 'Пълен надзор върху разпределението на оборудването, проследяване на бюджета и институционални отчети за съответствие.',
+    teachers: 'Учители',
+    streamlinedEquipmentRequests: 'Оптимизирани заявки за оборудване, интегрирани с планирането на уроци и изискванията на учебната програма.',
+    students: 'Ученици',
+    simpleSecureAccess: 'Прост, сигурен достъп за заявяване и връщане на оборудване с ясни работни процеси за одобрение.',
+    itDepartments: 'ИТ отдели',
+    centralizedManagementRoleBasedAccess: 'Централизирано управление с ролев базиран контрол на достъпа и цялостни одитни следи.',
+    
+    // CTA Section
+    readyToTransformInstitution: 'Готови ли сте да трансформирате вашата институция?',
+    joinLeadingEducationalInstitutions: 'Присъединете се към водещите образователни институции, които използват SchoolSync за сигурно, мащабируемо управление на активи.'
   }
 };
 

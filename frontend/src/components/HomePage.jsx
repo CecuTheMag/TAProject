@@ -21,11 +21,11 @@ const getTheme = (isDark) => ({
   textMuted: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(31, 41, 55, 0.7)',
   cardBg: isDark 
     ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)'
-    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-  cardBorder: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.2)',
+    : 'rgba(255, 255, 255, 0.95)',
+  cardBorder: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(226, 232, 240, 0.8)',
   sectionBg: isDark 
     ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%)'
-    : 'linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.8) 100%)',
+    : 'rgba(255, 255, 255, 0.95)',
   navBg: isDark
     ? 'linear-gradient(135deg, rgba(10, 15, 28, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
     : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
@@ -141,7 +141,7 @@ const HomePage = ({ onGetStarted }) => {
               fontSize: isMobile ? 'clamp(40px, 8vw, 64px)' : '64px',
               fontWeight: '700',
               margin: '0 0 20px 0',
-              color: '#ffffff',
+              color: theme.text,
               fontFamily: 'Inter, -apple-system, sans-serif',
               letterSpacing: '-0.025em',
               lineHeight: '1.1'
@@ -160,7 +160,7 @@ const HomePage = ({ onGetStarted }) => {
             style={{
               fontSize: isMobile ? '18px' : '20px',
               fontWeight: '400',
-              color: '#94a3b8',
+              color: theme.textSecondary,
               marginBottom: '40px',
               fontFamily: 'Inter, -apple-system, sans-serif',
               lineHeight: '1.6',
@@ -211,10 +211,10 @@ const HomePage = ({ onGetStarted }) => {
               whileTap={{ scale: 0.98 }}
               style={{
                 padding: '18px 36px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
+                background: theme.buttonSecondaryBg,
+                border: `1px solid ${theme.buttonSecondaryBorder}`,
                 borderRadius: '12px',
-                color: '#e2e8f0',
+                color: theme.text,
                 fontSize: '16px',
                 fontWeight: '500',
                 cursor: 'pointer',
@@ -278,6 +278,7 @@ const TrustSection = () => {
         padding: '80px 20px',
         background: theme.sectionBg,
         borderTop: `1px solid ${theme.cardBorder}`,
+        borderBottom: `1px solid ${theme.cardBorder}`,
         boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)'
       }}
     >
@@ -423,6 +424,8 @@ const SecuritySection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [isMobile, setIsMobile] = useState(false);
+  const { theme, isDark } = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -438,8 +441,9 @@ const SecuritySection = () => {
         position: 'relative',
         zIndex: 10,
         padding: '120px 20px',
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(51, 65, 85, 0.4) 100%)',
-        borderTop: '1px solid rgba(16, 185, 129, 0.2)'
+        background: isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(51, 65, 85, 0.4) 100%)' : 'rgba(255, 255, 255, 0.95)',
+        borderTop: isDark ? '1px solid rgba(16, 185, 129, 0.2)' : `1px solid ${theme.cardBorder}`,
+        borderBottom: isDark ? 'none' : `1px solid ${theme.cardBorder}`
       }}
     >
       <div style={{
@@ -459,13 +463,13 @@ const SecuritySection = () => {
           style={{
             fontSize: isMobile ? '32px' : '40px',
             fontWeight: '700',
-            color: 'white',
+            color: theme.text,
             textAlign: 'center',
             marginBottom: '80px',
             fontFamily: 'Inter, -apple-system, sans-serif'
           }}
         >
-          Security & Architecture
+          {t('securityArchitecture')}
         </motion.h2>
         
         <div style={{
@@ -482,26 +486,26 @@ const SecuritySection = () => {
             <h3 style={{
               fontSize: '24px',
               fontWeight: '600',
-              color: 'white',
+              color: theme.text,
               marginBottom: '24px',
               fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
-              Institutional Isolation
+              {t('institutionalIsolation')}
             </h3>
             <div style={{ marginBottom: '32px' }}>
               {[
-                'Per-school isolated environments',
-                'Separate databases per institution',
-                'Central system administration',
-                'Strict access boundaries',
-                'No cross-school data exposure'
+                t('perSchoolIsolatedEnvironments'),
+                t('separateDatabasesPerInstitution'),
+                t('centralSystemAdministration'),
+                t('strictAccessBoundaries'),
+                t('noCrossSchoolDataExposure')
               ].map((item, i) => (
                 <div key={i} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
                   marginBottom: '12px',
-                  color: '#e2e8f0',
+                  color: theme.text,
                   fontSize: '16px',
                   fontFamily: 'Inter, -apple-system, sans-serif'
                 }}>
@@ -541,20 +545,20 @@ const SecuritySection = () => {
             <h4 style={{
               fontSize: '18px',
               fontWeight: '600',
-              color: 'white',
+              color: theme.text,
               marginBottom: '12px',
               fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
-              Enterprise Security
+              {t('enterpriseSecurityFeatures')}
             </h4>
             <p style={{
               fontSize: '14px',
-              color: '#94a3b8',
+              color: theme.textSecondary,
               margin: 0,
               lineHeight: '1.5',
               fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
-              Bank-level encryption, secure authentication tied to official school records, and comprehensive audit trails.
+              {t('bankLevelEncryption')}
             </p>
           </motion.div>
         </div>
@@ -567,6 +571,8 @@ const ScalabilitySection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [isMobile, setIsMobile] = useState(false);
+  const { theme } = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -593,13 +599,13 @@ const ScalabilitySection = () => {
         style={{
           fontSize: isMobile ? '32px' : '40px',
           fontWeight: '700',
-          color: 'white',
+          color: theme.text,
           textAlign: 'center',
           marginBottom: '80px',
           fontFamily: 'Inter, -apple-system, sans-serif'
         }}
       >
-        Scalability & Reliability
+        {t('scalabilityReliability')}
       </motion.h2>
       
       <div style={{
@@ -609,10 +615,10 @@ const ScalabilitySection = () => {
         textAlign: 'center'
       }}>
         {[
-          { metric: '10,000+', label: 'Concurrent Users' },
-          { metric: '99.9%', label: 'Uptime SLA' },
-          { metric: '<100ms', label: 'Response Time' },
-          { metric: '24/7', label: 'Monitoring' }
+          { metric: '10,000+', label: t('concurrentUsers') },
+          { metric: '99.9%', label: t('uptimeSLA') },
+          { metric: '<100ms', label: t('responseTime') },
+          { metric: '24/7', label: t('monitoring') }
         ].map((item, index) => (
           <motion.div
             key={index}
@@ -639,7 +645,7 @@ const ScalabilitySection = () => {
             </div>
             <div style={{
               fontSize: '14px',
-              color: '#94a3b8',
+              color: theme.textSecondary,
               fontFamily: 'Inter, -apple-system, sans-serif'
             }}>
               {item.label}
@@ -655,6 +661,8 @@ const WhoItsForSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [isMobile, setIsMobile] = useState(false);
+  const { theme, isDark } = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -670,8 +678,9 @@ const WhoItsForSection = () => {
         position: 'relative',
         zIndex: 10,
         padding: '120px 20px',
-        background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%)',
-        borderTop: '1px solid rgba(139, 92, 246, 0.2)'
+        background: isDark ? 'linear-gradient(135deg, rgba(51, 65, 85, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%)' : 'rgba(255, 255, 255, 0.95)',
+        borderTop: isDark ? '1px solid rgba(139, 92, 246, 0.2)' : `1px solid ${theme.cardBorder}`,
+        borderBottom: isDark ? 'none' : `1px solid ${theme.cardBorder}`
       }}
     >
       <div style={{
@@ -683,7 +692,6 @@ const WhoItsForSection = () => {
         background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.06) 0%, transparent 60%)',
         pointerEvents: 'none'
       }} />
-    >
       <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -692,13 +700,13 @@ const WhoItsForSection = () => {
           style={{
             fontSize: isMobile ? '32px' : '40px',
             fontWeight: '700',
-            color: 'white',
+            color: theme.text,
             textAlign: 'center',
             marginBottom: '80px',
             fontFamily: 'Inter, -apple-system, sans-serif'
           }}
         >
-          Built for Educational Institutions
+          {t('builtForEducationalInstitutions')}
         </motion.h2>
         
         <div style={{
@@ -708,20 +716,20 @@ const WhoItsForSection = () => {
         }}>
           {[
             {
-              title: 'School Administrators',
-              desc: 'Complete oversight of equipment allocation, budget tracking, and institutional compliance reporting.'
+              title: t('schoolAdministrators'),
+              desc: t('completeOversightEquipmentAllocation')
             },
             {
-              title: 'Teachers',
-              desc: 'Streamlined equipment requests integrated with lesson planning and curriculum requirements.'
+              title: t('teachers'),
+              desc: t('streamlinedEquipmentRequests')
             },
             {
-              title: 'Students',
-              desc: 'Simple, secure access to request and return equipment with clear approval workflows.'
+              title: t('students'),
+              desc: t('simpleSecureAccess')
             },
             {
-              title: 'IT Departments',
-              desc: 'Centralized management with role-based access control and comprehensive audit trails.'
+              title: t('itDepartments'),
+              desc: t('centralizedManagementRoleBasedAccess')
             }
           ].map((segment, index) => (
             <motion.div
@@ -741,7 +749,7 @@ const WhoItsForSection = () => {
               <h3 style={{
                 fontSize: '20px',
                 fontWeight: '600',
-                color: 'white',
+                color: theme.text,
                 marginBottom: '16px',
                 fontFamily: 'Inter, -apple-system, sans-serif'
               }}>
@@ -749,7 +757,7 @@ const WhoItsForSection = () => {
               </h3>
               <p style={{
                 fontSize: '16px',
-                color: '#94a3b8',
+                color: theme.textSecondary,
                 margin: 0,
                 lineHeight: '1.5',
                 fontFamily: 'Inter, -apple-system, sans-serif'
@@ -768,6 +776,8 @@ const CTASection = ({ onGetStarted }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [isMobile, setIsMobile] = useState(false);
+  const { theme } = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -793,12 +803,12 @@ const CTASection = ({ onGetStarted }) => {
         style={{
           fontSize: isMobile ? '32px' : '40px',
           fontWeight: '700',
-          color: 'white',
+          color: theme.text,
           marginBottom: '24px',
           fontFamily: 'Inter, -apple-system, sans-serif'
         }}
       >
-        Ready to Transform Your Institution?
+        {t('readyToTransformInstitution')}
       </motion.h2>
       
       <motion.p
@@ -807,14 +817,14 @@ const CTASection = ({ onGetStarted }) => {
         transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
         style={{
           fontSize: '18px',
-          color: '#94a3b8',
+          color: theme.textSecondary,
           marginBottom: '40px',
           maxWidth: '600px',
           margin: '0 auto 40px auto',
           fontFamily: 'Inter, -apple-system, sans-serif'
         }}
       >
-        Join leading educational institutions using SchoolSync for secure, scalable asset management.
+        {t('joinLeadingEducationalInstitutions')}
       </motion.p>
       
       <motion.button
@@ -838,7 +848,7 @@ const CTASection = ({ onGetStarted }) => {
           boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
         }}
       >
-        Schedule a Demo
+        {t('scheduleDemo')}
       </motion.button>
     </motion.div>
   );
