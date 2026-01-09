@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import HomePage from './components/HomePage';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
+import SystemAdminDashboard from './components/SystemAdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/Toast';
 
@@ -31,6 +32,10 @@ const ProtectedRoute = ({ children }) => {
 const AppContent = () => {
   const { user } = useAuth();
 
+  // Debug log
+  // console.log('Current user:', user);
+  // console.log('Is system admin:', user?.is_system_admin);
+
   return (
     <Routes>
       {/* Landing page - shows HomePage if not authenticated, redirects to dashboard if authenticated */}
@@ -42,7 +47,14 @@ const AppContent = () => {
       {/* Main dashboard route - protected, requires authentication */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <Dashboard />
+          {user?.is_system_admin ? <SystemAdminDashboard /> : <Dashboard />}
+        </ProtectedRoute>
+      } />
+      
+      {/* System admin route - for direct access */}
+      <Route path="/system-admin" element={
+        <ProtectedRoute>
+          {user?.is_system_admin ? <SystemAdminDashboard /> : <Navigate to="/dashboard" />}
         </ProtectedRoute>
       } />
     </Routes>

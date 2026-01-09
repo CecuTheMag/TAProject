@@ -42,12 +42,15 @@ export const initDB = async () => {
       CREATE TABLE IF NOT EXISTS schools (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
+        code VARCHAR(50) UNIQUE,
         district_id INTEGER,
         address TEXT,
         principal_name VARCHAR(100),
         contact_email VARCHAR(100),
         phone VARCHAR(20),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -84,8 +87,9 @@ export const initDB = async () => {
         email VARCHAR(100) UNIQUE NOT NULL,       -- Unique email address
         password VARCHAR(255) NOT NULL,           -- Hashed password (bcrypt)
         role VARCHAR(20) DEFAULT 'student'        -- User role for permissions
-          CHECK (role IN ('student', 'teacher', 'manager', 'admin', 'district_admin')),
+          CHECK (role IN ('student', 'teacher', 'manager', 'admin', 'system_admin')),
         school_id INTEGER REFERENCES schools(id), -- School association
+        is_system_admin BOOLEAN DEFAULT false,    -- System admin flag
         grade_level VARCHAR(20),                  -- Student grade or teacher specialization
         subject_specialization VARCHAR(100),      -- Teacher subject area
         responsibility_score INTEGER DEFAULT 100, -- Student equipment responsibility score
@@ -204,6 +208,24 @@ export const initDB = async () => {
       ADD COLUMN IF NOT EXISTS shareable_district BOOLEAN DEFAULT false
     `);
 
+    // Add missing columns to schools table
+    await pool.query(`
+      ALTER TABLE schools 
+      ADD COLUMN IF NOT EXISTS code VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active',
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    // Add missing columns to users table
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS school_id INTEGER,
+      ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS grade_level VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS subject_specialization VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS responsibility_score INTEGER DEFAULT 100
+    `);
+
     // Add subject_id column to users table if it doesn't exist
     await pool.query(`
       DO $$ 
@@ -213,14 +235,6 @@ export const initDB = async () => {
               ALTER TABLE users ADD COLUMN subject_id INTEGER REFERENCES subjects(id);
           END IF;
       END $$;
-    `);
-    
-    await pool.query(`
-      ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS school_id INTEGER REFERENCES schools(id),
-      ADD COLUMN IF NOT EXISTS grade_level VARCHAR(20),
-      ADD COLUMN IF NOT EXISTS subject_specialization VARCHAR(100),
-      ADD COLUMN IF NOT EXISTS responsibility_score INTEGER DEFAULT 100
     `);
 
     // Update qr_code column to TEXT
@@ -285,15 +299,25 @@ export const initDB = async () => {
         ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check1
       `);
       
-      // Add the new constraint
+      // Add the new constraint with system_admin
       await pool.query(`
         ALTER TABLE users ADD CONSTRAINT users_role_check 
-        CHECK (role IN ('student', 'teacher', 'manager', 'admin'))
+        CHECK (role IN ('student', 'teacher', 'manager', 'admin', 'system_admin'))
       `);
       
       console.log('Role constraint updated successfully');
     } catch (constraintError) {
       console.log('Role constraint update:', constraintError.message);
+    }
+
+    // Add unique constraint to schools code if it doesn't exist
+    try {
+      await pool.query(`
+        ALTER TABLE schools ADD CONSTRAINT schools_code_unique UNIQUE (code)
+      `);
+    } catch (constraintError) {
+      // Constraint might already exist, ignore error
+      console.log('Schools code constraint:', constraintError.message);
     }
 
     // ===== CONDITION LOGS TABLE =====
@@ -324,6 +348,9 @@ export const initDB = async () => {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');                  // Login authentication
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_plans_teacher ON lesson_plans(teacher_id)'); // Teacher's lesson plans
     await pool.query('CREATE INDEX IF NOT EXISTS idx_lesson_plans_dates ON lesson_plans(start_date, end_date)'); // Date range queries
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_schools_code ON schools(code)');                // School code lookup
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_school_id ON users(school_id)');          // School-based user queries
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_users_system_admin ON users(is_system_admin)'); // System admin queries
 
     
     console.log('Database tables and indexes initialized successfully');

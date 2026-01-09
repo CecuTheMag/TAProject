@@ -40,7 +40,7 @@ import Footer from './Footer';
  * - QR code scanning integration
  * - Role-based feature access
  */
-const Dashboard = () => {
+const Dashboard = ({ schoolUser }) => {
   const { t } = useTranslation();
   // Core data state
   const [equipmentList, setEquipmentList] = useState([]);     // All equipment items
@@ -70,7 +70,8 @@ const Dashboard = () => {
   const [individualItem, setIndividualItem] = useState(null);
   const [showingIndividual, setShowingIndividual] = useState(false);
   
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const user = schoolUser || authUser;
   
   // Role-based access control
   const hasLimitedAccess = user?.role === 'student';

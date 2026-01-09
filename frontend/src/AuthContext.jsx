@@ -79,10 +79,11 @@ export const AuthProvider = ({ children }) => {
     loading,                                                 // Loading state
     
     // Role-based permission helpers for UI conditional rendering
-    isAdmin: user?.role === 'admin',                         // Full system access
+    isSystemAdmin: user?.is_system_admin === true,          // System-wide admin access
+    isAdmin: user?.role === 'admin',                         // School admin access
     isManager: user?.role === 'manager',                     // Equipment management access
     isTeacher: user?.role === 'teacher',                     // Enhanced user access
-    canManage: ['teacher', 'manager', 'admin'].includes(user?.role), // Can approve requests
+    canManage: ['teacher', 'manager', 'admin'].includes(user?.role) || user?.is_system_admin, // Can approve requests
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

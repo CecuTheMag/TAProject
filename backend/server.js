@@ -84,10 +84,8 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/alerts', alertRoutes);
 app.use('/documents', documentRoutes);
 app.use('/users', userRoutes);
-// Test education routes registration
-console.log('Registering education routes...');
 app.use('/education', educationRoutes);
-console.log('Education routes registered successfully');
+app.use('/system-admin', (await import('./routes/systemAdmin.js')).default);
 
 // Direct curriculum test route
 app.get('/education/curriculum-direct', (req, res) => {
