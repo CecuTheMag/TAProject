@@ -85,9 +85,13 @@ const SystemAdminDashboard = () => {
       if (response.ok) {
         setNewSchool({ name: '', code: '', address: '', phone: '', email: '', domain: '' });
         fetchData();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to create school');
       }
     } catch (error) {
       console.error('Failed to create school:', error);
+      alert('Failed to create school');
     }
   };
 
@@ -291,7 +295,7 @@ const SystemAdminDashboard = () => {
             {/* Create School Form */}
             <div style={{ background: 'white', padding: '30px', borderRadius: '12px', marginBottom: '30px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
               <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Create New School</h3>
-              <form onSubmit={createSchool} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+              <form onSubmit={createSchool} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
                 <input
                   type="text"
                   placeholder="School Name"
@@ -302,10 +306,24 @@ const SystemAdminDashboard = () => {
                 />
                 <input
                   type="text"
-                  placeholder="School Code"
+                  placeholder="School Code (e.g. TECH01)"
                   value={newSchool.code}
-                  onChange={(e) => setNewSchool({...newSchool, code: e.target.value})}
+                  onChange={(e) => setNewSchool({...newSchool, code: e.target.value.toUpperCase()})}
                   required
+                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Address"
+                  value={newSchool.address}
+                  onChange={(e) => setNewSchool({...newSchool, address: e.target.value})}
+                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone"
+                  value={newSchool.phone}
+                  onChange={(e) => setNewSchool({...newSchool, phone: e.target.value})}
                   style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                 />
                 <input
@@ -315,7 +333,14 @@ const SystemAdminDashboard = () => {
                   onChange={(e) => setNewSchool({...newSchool, email: e.target.value})}
                   style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                 />
-                <button type="submit" style={{ padding: '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>
+                <input
+                  type="text"
+                  placeholder="Domain"
+                  value={newSchool.domain}
+                  onChange={(e) => setNewSchool({...newSchool, domain: e.target.value})}
+                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+                />
+                <button type="submit" style={{ padding: '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', gridColumn: 'span 2' }}>
                   Create School
                 </button>
               </form>

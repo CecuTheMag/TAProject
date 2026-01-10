@@ -363,10 +363,6 @@ export const initDB = async () => {
     
     // create sample data
     await createSampleData();
-    
-    // create educational data
-    const { createEducationalData } = await import('./utils/createEducationalData.js');
-    await createEducationalData();
   } catch (error) {
     console.error('Database initialization error:', error);
   }

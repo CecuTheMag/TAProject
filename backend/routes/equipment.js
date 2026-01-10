@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../database.js';
 import { authenticateToken, requireAdmin, requireManagerTeacherOrAdmin } from '../middleware.js';
+import { setSchoolContext, queryInSchema } from '../middleware/schemaContext.js';
 import {
   getAllEquipment,
   getEquipmentById,
@@ -17,18 +18,17 @@ import {
 
 const router = express.Router();
 
-// Test route without auth
-router.get('/test', (req, res) => {
-  res.json({ message: 'Equipment endpoint working', timestamp: new Date().toISOString() });
-});
+// Apply schema context to all routes
+router.use(authenticateToken, setSchoolContext);
 
-router.get('/', authenticateToken, getAllEquipment);
-router.get('/groups', authenticateToken, getEquipmentGroups);
-router.get('/low-stock', authenticateToken, getLowStockAlerts);
-router.get('/search/:serial', authenticateToken, async (req, res) => {
+router.get('/', getAllEquipment);
+router.get('/groups', getEquipmentGroups);
+router.get('/low-stock', getLowStockAlerts);
+router.get('/search/:serial', async (req, res) => {
   try {
     const { serial } = req.params;
-    const result = await pool.query(
+    const result = await queryInSchema(
+      req.schoolSchema,
       'SELECT * FROM equipment WHERE serial_number ILIKE $1 LIMIT 1',
       [`%${serial}%`]
     );
@@ -42,13 +42,12 @@ router.get('/search/:serial', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to search equipment' });
   }
 });
-router.put('/retire-fleet', authenticateToken, requireAdmin, retireFleet);
-router.put('/repair', authenticateToken, requireManagerTeacherOrAdmin, updateRepairStatus);
-router.put('/repair-complete', authenticateToken, requireManagerTeacherOrAdmin, completeRepair);
-router.post('/sync-status', authenticateToken, async (req, res) => {
+router.put('/retire-fleet', requireAdmin, retireFleet);
+router.put('/repair', requireManagerTeacherOrAdmin, updateRepairStatus);
+router.put('/repair-complete', requireManagerTeacherOrAdmin, completeRepair);
+router.post('/sync-status', async (req, res) => {
   try {
-    // Update equipment status based on active requests
-    await pool.query(`
+    await queryInSchema(req.schoolSchema, `
       UPDATE equipment 
       SET status = CASE 
         WHEN EXISTS (
@@ -76,11 +75,11 @@ router.post('/sync-status', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to sync equipment statuses' });
   }
 });
-router.get('/:id', authenticateToken, getEquipmentById);
-router.post('/', authenticateToken, requireAdmin, createEquipment);
-router.put('/:id', authenticateToken, requireAdmin, updateEquipment);
-router.put('/:id/status', authenticateToken, requireAdmin, updateEquipmentStatus);
-router.delete('/:id', authenticateToken, requireAdmin, deleteEquipment);
+router.get('/:id', getEquipmentById);
+router.post('/', requireAdmin, createEquipment);
+router.put('/:id', requireAdmin, updateEquipment);
+router.put('/:id/status', requireAdmin, updateEquipmentStatus);
+router.delete('/:id', requireAdmin, deleteEquipment);
 
 
 

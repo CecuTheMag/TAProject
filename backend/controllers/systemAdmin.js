@@ -1,14 +1,15 @@
 import pool from '../database.js';
 import bcrypt from 'bcryptjs';
 import Joi from 'joi';
+import { createSchoolSchema } from '../utils/schemaManager.js';
 
 const schoolSchema = Joi.object({
   name: Joi.string().min(3).max(200).required(),
   code: Joi.string().alphanum().min(2).max(50).required(),
-  address: Joi.string().max(500),
-  phone: Joi.string().max(20),
-  email: Joi.string().email(),
-  domain: Joi.string().max(100)
+  address: Joi.string().max(500).allow(''),
+  phone: Joi.string().max(20).allow(''),
+  email: Joi.string().email().allow(''),
+  domain: Joi.string().max(100).allow('')
 });
 
 const schoolAdminSchema = Joi.object({
@@ -27,19 +28,24 @@ export const createSchool = async (req, res) => {
 
     const { name, code, address, phone, email, domain } = value;
     
+    // Create school record
     const result = await pool.query(
       'INSERT INTO schools (name, code, address, phone, email, domain) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, code, address, phone, email, domain]
+      [name, code, address || null, phone || null, email || null, domain || null]
     );
 
+    // Create dedicated schema for this school
+    await createSchoolSchema(code);
+
     res.status(201).json({
-      message: 'School created successfully',
+      message: 'School created successfully with dedicated schema',
       school: result.rows[0]
     });
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: 'School code already exists' });
     }
+    console.error('Create school error:', error);
     res.status(500).json({ error: 'Failed to create school' });
   }
 };
@@ -71,27 +77,44 @@ export const createSchoolAdmin = async (req, res) => {
 
     const { username, email, password, school_id } = value;
     
-    // Verify school exists
-    const schoolCheck = await pool.query('SELECT id FROM schools WHERE id = $1', [school_id]);
+    // Verify school exists and get code
+    const schoolCheck = await pool.query('SELECT id, code FROM schools WHERE id = $1', [school_id]);
     if (schoolCheck.rows.length === 0) {
       return res.status(400).json({ error: 'School not found' });
     }
 
+    const schoolCode = schoolCheck.rows[0].code;
+    const schemaName = `school_${schoolCode.toLowerCase()}`;
     const hashedPassword = await bcrypt.hash(password, 12);
     
-    const result = await pool.query(
-      'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, school_id, created_at',
-      [username, email, hashedPassword, 'admin', school_id]
-    );
+    // Create admin in school's schema
+    const client = await pool.connect();
+    try {
+      await client.query(`SET search_path TO ${schemaName}, public`);
+      const result = await client.query(
+        'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
+        [username, email, hashedPassword, 'admin']
+      );
+      
+      // Also create in public schema for authentication
+      await client.query(`SET search_path TO public`);
+      await client.query(
+        'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5)',
+        [username, email, hashedPassword, 'admin', school_id]
+      );
 
-    res.status(201).json({
-      message: 'School admin created successfully',
-      admin: result.rows[0]
-    });
+      res.status(201).json({
+        message: 'School admin created successfully',
+        admin: result.rows[0]
+      });
+    } finally {
+      client.release();
+    }
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: 'Username or email already exists' });
     }
+    console.error('Create admin error:', error);
     res.status(500).json({ error: 'Failed to create school admin' });
   }
 };
