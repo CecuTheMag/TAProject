@@ -26,6 +26,7 @@ const equipmentSchema = Joi.object({
 export const getAllEquipment = async (req, res) => {
   try {
     const { search, type, status, condition } = req.query;
+    const queryFn = req.dbQuery || pool.query.bind(pool);
     const cacheKey = `equipment:${JSON.stringify(req.query)}`;
     
     // Check Redis cache first for performance optimization
@@ -60,7 +61,7 @@ export const getAllEquipment = async (req, res) => {
     }
 
     query += ' ORDER BY name, serial_number';
-    const result = await pool.query(query, params);
+    const result = await queryFn(query, params);
     
     // Cache result for 5 minutes
     await redisService.set(cacheKey, result.rows, 300);
@@ -74,7 +75,8 @@ export const getAllEquipment = async (req, res) => {
 export const getEquipmentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('SELECT * FROM equipment WHERE id = $1', [id]);
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn('SELECT * FROM equipment WHERE id = $1', [id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
@@ -119,8 +121,9 @@ export const createEquipment = async (req, res) => {
       
       console.log(`Creating item ${i}/${quantity} with serial: ${itemSerial}`);
       
+      const queryFn = req.dbQuery || pool.query.bind(pool);
       // Ensure serial number uniqueness across database
-      const existingSerial = await pool.query('SELECT id FROM equipment WHERE serial_number = $1', [itemSerial]);
+      const existingSerial = await queryFn('SELECT id FROM equipment WHERE serial_number = $1', [itemSerial]);
       if (existingSerial.rows.length > 0) {
         throw new Error(`Serial number ${itemSerial} already exists`);
       }
@@ -133,7 +136,7 @@ export const createEquipment = async (req, res) => {
         console.error('QR generation error:', qrError);
       }
       
-      const result = await pool.query(
+      const result = await queryFn(
         `INSERT INTO equipment (name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, qr_code) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
         [name, type, itemSerial, condition, status, location, requires_approval, 1, stock_threshold, qrCode]
@@ -163,8 +166,9 @@ export const updateEquipment = async (req, res) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const { name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold } = value;
+    const queryFn = req.dbQuery || pool.query.bind(pool);
     
-    const result = await pool.query(
+    const result = await queryFn(
       `UPDATE equipment SET name = $1, type = $2, serial_number = $3, condition = $4, 
        status = $5, location = $6, requires_approval = $7, quantity = $8, stock_threshold = $9 WHERE id = $10 RETURNING *`,
       [name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, id]
@@ -193,7 +197,8 @@ export const updateEquipmentStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const result = await pool.query(
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn(
       'UPDATE equipment SET status = $1 WHERE id = $2 RETURNING *',
       [status, id]
     );
@@ -216,7 +221,8 @@ export const updateRepairStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
-    const result = await pool.query(
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn(
       'UPDATE equipment SET status = $1 WHERE id = ANY($2) AND status = $3 RETURNING *',
       ['under_repair', ids, 'available']
     );
@@ -243,7 +249,8 @@ export const completeRepair = async (req, res) => {
       return res.status(400).json({ error: 'Valid condition required' });
     }
 
-    const result = await pool.query(
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn(
       'UPDATE equipment SET status = $1, condition = $2 WHERE id = ANY($3) AND status = $4 RETURNING *',
       ['available', condition, ids, 'under_repair']
     );
@@ -268,7 +275,8 @@ export const retireFleet = async (req, res) => {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
-    const result = await pool.query(
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn(
       'UPDATE equipment SET status = $1 WHERE id = ANY($2::int[]) RETURNING *',
       ['retired', ids]
     );
@@ -293,7 +301,8 @@ export const retireFleet = async (req, res) => {
 
 export const getEquipmentGroups = async (req, res) => {
   try {
-    const result = await pool.query(`
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn(`
       SELECT
         CASE
           WHEN RIGHT(serial_number, 3) ~ '^[0-9]{3}$'
@@ -324,7 +333,8 @@ export const getEquipmentGroups = async (req, res) => {
 export const deleteEquipment = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM equipment WHERE id = $1 RETURNING *', [id]);
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn('DELETE FROM equipment WHERE id = $1 RETURNING *', [id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
@@ -342,7 +352,8 @@ export const deleteEquipment = async (req, res) => {
 
 export const getLowStockAlerts = async (req, res) => {
   try {
-    const result = await pool.query(`
+    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const result = await queryFn(`
       WITH groups AS (
         SELECT
           CASE

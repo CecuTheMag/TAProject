@@ -72,17 +72,22 @@ export const login = async (req, res) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const { email, password } = value;
+    console.log('🔐 Login attempt:', email);
     
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM public.users WHERE email = $1', [email]);
+    console.log('🔍 User lookup result:', result.rows.length);
     
     if (result.rows.length === 0) {
+      console.log('❌ User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const user = result.rows[0];
     const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('🔑 Password valid:', isValidPassword);
     
     if (!isValidPassword) {
+      console.log('❌ Invalid password for:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -92,14 +97,12 @@ export const login = async (req, res) => {
       email: user.email, 
       role: user.role, 
       school_id: user.school_id,
-      is_system_admin: Boolean(user.is_system_admin),
       subject_id: user.subject_id, 
       created_at: user.created_at 
     };
 
-    // console.log('Login response user object:', userResponse);
-
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    console.log('✅ Login successful:', email);
     
     res.json({
       message: 'Login successful',
@@ -107,6 +110,7 @@ export const login = async (req, res) => {
       token
     });
   } catch (error) {
+    console.log('❌ Login error:', error.message);
     res.status(500).json({ error: 'Login failed' });
   }
 };

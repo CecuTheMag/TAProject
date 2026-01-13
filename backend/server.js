@@ -85,7 +85,6 @@ app.use('/alerts', alertRoutes);
 app.use('/documents', documentRoutes);
 app.use('/users', userRoutes);
 app.use('/education', educationRoutes);
-app.use('/system-admin', (await import('./routes/systemAdmin.js')).default);
 
 // Direct curriculum test route
 app.get('/education/curriculum-direct', (req, res) => {
