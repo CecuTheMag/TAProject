@@ -1,38 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
 import pool from './database.js';
-import authRoutes from './routes/auth.js';
-import systemAdminRoutes from './routes/systemAdmin.js';
 
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 5001;
-
-app.use(cors());
-app.use(express.json());
-
-app.use('/api/auth', authRoutes);
-app.use('/api/system-admin', systemAdminRoutes);
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'admin-backend' });
-});
-
-const initDB = async () => {
+const initAdminDB = async () => {
   const client = await pool.connect();
   try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS admin_users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) UNIQUE NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
     await client.query(`
       CREATE TABLE IF NOT EXISTS schools (
         id SERIAL PRIMARY KEY,
@@ -66,8 +36,4 @@ const initDB = async () => {
   }
 };
 
-initDB();
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Admin Backend running on port ${PORT}`);
-});
+initAdminDB();

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../AuthContext';
-import { systemAdmin, auth } from '../api';
-import Sidebar from './Sidebar';
+import { systemAdmin } from '../api';
+import AdminSidebar from './AdminSidebar';
 import Footer from './Footer';
 import AuthPage from './AuthPage';
 
 const SystemAdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user: authUser, logout } = useAuth();
+  const user = authUser ? { ...authUser, role: 'system_admin' } : null;
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({});
   const [schools, setSchools] = useState([]);
@@ -55,9 +56,9 @@ const SystemAdminDashboard = () => {
         systemAdmin.getAdmins()
       ]);
 
-      setStats(statsRes.data);
-      setSchools(schoolsRes.data);
-      setAdmins(adminsRes.data);
+      setStats(statsRes.data.stats || {});
+      setSchools(schoolsRes.data.schools || []);
+      setAdmins(adminsRes.data.admins || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
       if (error.response?.status === 401) {
@@ -126,10 +127,11 @@ const SystemAdminDashboard = () => {
       boxSizing: 'border-box',
       overflowX: 'hidden'
     }}>
-      <Sidebar 
+      <AdminSidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
         user={user}
+        onLogout={logout}
       />
       
       <div style={{

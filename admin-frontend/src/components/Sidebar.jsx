@@ -45,6 +45,27 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
       </svg>
     )};
 
+    // System Admin gets system management tabs
+    if (user?.role === 'system_admin') {
+      return [
+        { id: 'dashboard', label: 'Overview', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+          </svg>
+        )},
+        { id: 'schools', label: 'Schools', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+          </svg>
+        )},
+        { id: 'admins', label: 'Admins', icon: (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/>
+          </svg>
+        )}
+      ];
+    }
+
     // System Admin removed - now in separate admin panel
     
     // Students get basic tabs + education + settings

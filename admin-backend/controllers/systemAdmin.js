@@ -1,18 +1,6 @@
-import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import Joi from 'joi';
-
-const { Pool } = pg;
-
-// Connect to main database for school management
-const mainPool = new Pool({
-  host: process.env.MAIN_DB_HOST || 'postgres',
-  port: 5432,
-  database: 'SIMS',
-  user: 'postgres',
-  password: '1337',
-  max: 20
-});
+import pool from '../database.js';
 
 const schoolSchema = Joi.object({
   name: Joi.string().min(3).max(200).required(),
@@ -30,59 +18,6 @@ const schoolAdminSchema = Joi.object({
   school_id: Joi.number().integer().required()
 });
 
-const createSchoolSchema = async (schoolCode) => {
-  const schemaName = `school_${schoolCode.toLowerCase()}`;
-  const client = await mainPool.connect();
-  try {
-    await client.query(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`);
-    await client.query(`SET search_path TO ${schemaName}, public`);
-    
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) UNIQUE NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role VARCHAR(50) NOT NULL,
-        subject_id INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS equipment (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        type VARCHAR(100) NOT NULL,
-        serial_number VARCHAR(100) UNIQUE,
-        condition VARCHAR(50) DEFAULT 'good',
-        status VARCHAR(50) DEFAULT 'available',
-        location VARCHAR(255),
-        requires_approval BOOLEAN DEFAULT false,
-        quantity INTEGER DEFAULT 1,
-        stock_threshold INTEGER DEFAULT 2,
-        qr_code TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS requests (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL,
-        equipment_id INTEGER NOT NULL,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
-        status VARCHAR(50) DEFAULT 'pending',
-        purpose TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-  } finally {
-    client.release();
-  }
-};
-
 export const createSchool = async (req, res) => {
   try {
     const { error, value } = schoolSchema.validate(req.body);
@@ -92,12 +27,10 @@ export const createSchool = async (req, res) => {
 
     const { name, code, address, phone, email, domain } = value;
     
-    const result = await mainPool.query(
+    const result = await pool.query(
       'INSERT INTO schools (name, code, address, phone, email, domain) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [name, code, address || null, phone || null, email || null, domain || null]
     );
-
-    await createSchoolSchema(code);
 
     res.status(201).json({
       message: 'School created successfully',
@@ -113,7 +46,7 @@ export const createSchool = async (req, res) => {
 
 export const getSchools = async (req, res) => {
   try {
-    const result = await mainPool.query(`
+    const result = await pool.query(`
       SELECT s.*, 
              COUNT(u.id) as user_count,
              COUNT(CASE WHEN u.role = 'admin' THEN 1 END) as admin_count
@@ -125,6 +58,7 @@ export const getSchools = async (req, res) => {
 
     res.json({ schools: result.rows });
   } catch (error) {
+    console.error('getSchools error:', error);
     res.status(500).json({ error: 'Failed to fetch schools' });
   }
 };
@@ -138,36 +72,22 @@ export const createSchoolAdmin = async (req, res) => {
 
     const { username, email, password, school_id } = value;
     
-    const schoolCheck = await mainPool.query('SELECT id, code FROM schools WHERE id = $1', [school_id]);
+    const schoolCheck = await pool.query('SELECT id, code FROM schools WHERE id = $1', [school_id]);
     if (schoolCheck.rows.length === 0) {
       return res.status(400).json({ error: 'School not found' });
     }
 
-    const schoolCode = schoolCheck.rows[0].code;
-    const schemaName = `school_${schoolCode.toLowerCase()}`;
     const hashedPassword = await bcrypt.hash(password, 12);
     
-    const client = await mainPool.connect();
-    try {
-      await client.query(`SET search_path TO ${schemaName}, public`);
-      const result = await client.query(
-        'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
-        [username, email, hashedPassword, 'admin']
-      );
-      
-      await client.query(`SET search_path TO public`);
-      await client.query(
-        'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5)',
-        [username, email, hashedPassword, 'admin', school_id]
-      );
+    const result = await pool.query(
+      'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, created_at',
+      [username, email, hashedPassword, 'admin', school_id]
+    );
 
-      res.status(201).json({
-        message: 'School admin created successfully',
-        admin: result.rows[0]
-      });
-    } finally {
-      client.release();
-    }
+    res.status(201).json({
+      message: 'School admin created successfully',
+      admin: result.rows[0]
+    });
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: 'Username or email already exists' });
@@ -178,23 +98,24 @@ export const createSchoolAdmin = async (req, res) => {
 
 export const getSchoolAdmins = async (req, res) => {
   try {
-    const result = await mainPool.query(`
+    const result = await pool.query(`
       SELECT u.id, u.username, u.email, u.created_at, s.name as school_name, s.code as school_code
       FROM users u
-      JOIN schools s ON u.school_id = s.id
+      LEFT JOIN schools s ON u.school_id = s.id
       WHERE u.role = 'admin'
       ORDER BY u.created_at DESC
     `);
 
     res.json({ admins: result.rows });
   } catch (error) {
+    console.error('getSchoolAdmins error:', error);
     res.status(500).json({ error: 'Failed to fetch school admins' });
   }
 };
 
 export const getSystemStats = async (req, res) => {
   try {
-    const stats = await mainPool.query(`
+    const stats = await pool.query(`
       SELECT 
         (SELECT COUNT(*) FROM schools) as active_schools,
         (SELECT COUNT(*) FROM users WHERE role = 'admin') as school_admins,
@@ -203,6 +124,7 @@ export const getSystemStats = async (req, res) => {
 
     res.json({ stats: stats.rows[0] });
   } catch (error) {
+    console.error('getSystemStats error:', error);
     res.status(500).json({ error: 'Failed to fetch system stats' });
   }
 };
