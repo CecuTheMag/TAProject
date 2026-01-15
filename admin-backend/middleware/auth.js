@@ -14,7 +14,7 @@ export const authenticateToken = async (req, res, next) => {
     const result = await pool.query('SELECT * FROM admin_users WHERE id = $1', [decoded.userId]);
     
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(403).json({ error: 'System admin access required' });
     }
 
     req.user = result.rows[0];

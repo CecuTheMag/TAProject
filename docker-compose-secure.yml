@@ -151,4 +151,3 @@ networks:
     driver: bridge
   internal_api:
     driver: bridge
-    internal: true  # Private communication only

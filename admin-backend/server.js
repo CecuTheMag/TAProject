@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import pool from './database.js';
 import authRoutes from './routes/auth.js';
 import systemAdminRoutes from './routes/systemAdmin.js';
@@ -29,6 +30,7 @@ const initDB = async () => {
         username VARCHAR(255) UNIQUE NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
+        is_system_admin BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -57,6 +59,16 @@ const initDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    const adminCheck = await client.query('SELECT * FROM admin_users WHERE email = $1', ['admin@assetflow.bg']);
+    if (adminCheck.rows.length === 0) {
+      const hashedPassword = await bcrypt.hash('assetflow2025', 12);
+      await client.query(
+        'INSERT INTO admin_users (username, email, password, is_system_admin) VALUES ($1, $2, $3, $4)',
+        ['admin', 'admin@assetflow.bg', hashedPassword, true]
+      );
+      console.log('✅ System admin created: admin@assetflow.bg');
+    }
 
     console.log('✅ Admin database initialized');
   } catch (error) {

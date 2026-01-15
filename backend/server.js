@@ -26,6 +26,7 @@ import alertRoutes from './routes/alerts.js';       // System alerts
 import documentRoutes from './routes/documents.js'; // File management
 import userRoutes from './routes/users.js';         // User management
 import educationRoutes from './routes/education.js'; // Educational features
+import internalRoutes from './routes/internal.js';   // Internal API for admin
 
 // Background services
 import alertService from './services/alertService.js';   // Alert monitoring
@@ -85,6 +86,7 @@ app.use('/alerts', alertRoutes);
 app.use('/documents', documentRoutes);
 app.use('/users', userRoutes);
 app.use('/education', educationRoutes);
+app.use('/api/internal', internalRoutes);
 
 // Direct curriculum test route
 app.get('/education/curriculum-direct', (req, res) => {

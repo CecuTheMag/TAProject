@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { auth } from '../api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +16,7 @@ const Login = () => {
 
     try {
       const response = await auth.login({ email, password });
-      login(response.data.token, response.data.user);
+      login(response.data.user, response.data.token);
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     } finally {

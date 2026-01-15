@@ -38,11 +38,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  /**
-   * Login function - stores user data and token for persistent authentication
-   * @param {Object} userData - User profile information from server
-   * @param {string} token - JWT token for API authentication
-   */
   const login = (userData, token) => {
     localStorage.setItem('admin_token', token);
     localStorage.setItem('admin_user', JSON.stringify(userData));

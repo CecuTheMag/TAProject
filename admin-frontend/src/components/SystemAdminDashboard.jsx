@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import { systemAdmin } from '../api';
-import AdminSidebar from './AdminSidebar';
+import Sidebar from './Sidebar';
 import Footer from './Footer';
-import AuthPage from './AuthPage';
 
 const SystemAdminDashboard = () => {
   const { user: authUser, logout } = useAuth();
@@ -91,11 +90,6 @@ const SystemAdminDashboard = () => {
     }
   };
 
-  // If not logged in, show login page
-  if (!user) {
-    return <AuthPage />;
-  }
-
   if (loading) {
     return (
       <motion.div
@@ -127,11 +121,10 @@ const SystemAdminDashboard = () => {
       boxSizing: 'border-box',
       overflowX: 'hidden'
     }}>
-      <AdminSidebar 
+      <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
-        user={user}
-        onLogout={logout}
+        user={{ ...user, role: 'system_admin' }}
       />
       
       <div style={{
