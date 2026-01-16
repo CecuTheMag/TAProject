@@ -1,13 +1,56 @@
 // AssetFlow Frontend Application - Main Entry Point
 // Handles routing, authentication, and global state management
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import HomePage from './components/HomePage';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/Toast';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? `${window.location.origin}/api`
+  : `http://${window.location.hostname}:5000`;
+
+/**
+ * AdminViewRoute Component
+ * Auto-logs in with school admin credentials when accessed with school_id
+ */
+const AdminViewRoute = () => {
+  const [searchParams] = useSearchParams();
+  const { login } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const schoolId = searchParams.get('school_id');
+
+  useEffect(() => {
+    const autoLogin = async () => {
+      if (!schoolId) {
+        setError('No school ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/auth/school-admin/${schoolId}`);
+        login(response.data.user, response.data.token);
+        setLoading(false);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to load school admin');
+        setLoading(false);
+      }
+    };
+
+    autoLogin();
+  }, [schoolId, login]);
+
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading school admin...</div>;
+  if (error) return <div style={{ padding: '40px', textAlign: 'center', color: '#dc2626' }}>{error}</div>;
+  return <Dashboard />;
+};
 
 /**
  * ProtectedRoute Component
@@ -40,6 +83,7 @@ const AppContent = () => {
           <Dashboard />
         </ProtectedRoute>
       } />
+      <Route path="/admin-view" element={<AdminViewRoute />} />
     </Routes>
   );
 };

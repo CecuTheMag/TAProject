@@ -18,6 +18,11 @@ class RateLimiter {
 
   limit(maxRequests = 100, windowMs = 60000) {
     return (req, res, next) => {
+      // Skip rate limiting for internal service calls
+      if (req.path.startsWith('/api/internal')) {
+        return next();
+      }
+      
       const key = req.ip || req.connection.remoteAddress;
       const now = Date.now();
       

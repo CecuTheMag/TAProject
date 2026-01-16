@@ -3,7 +3,17 @@ import Joi from 'joi';
 import pool from '../database.js';
 import axios from 'axios';
 
+const queryCache = new Map();
+const CACHE_TTL = 5000; // 5 seconds
+
 const getMainDBData = async (query, params = []) => {
+  const cacheKey = JSON.stringify({ query, params });
+  const cached = queryCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  
   try {
     const response = await axios.post(
       `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/query`,
@@ -12,9 +22,18 @@ const getMainDBData = async (query, params = []) => {
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
-        }
+        },
+        timeout: 10000
       }
     );
+    
+    queryCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    
+    if (queryCache.size > 100) {
+      const firstKey = queryCache.keys().next().value;
+      queryCache.delete(firstKey);
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Main DB query error:', error.message);
