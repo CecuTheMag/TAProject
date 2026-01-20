@@ -29,7 +29,10 @@ export const systemAdmin = {
   deleteSchool: (id) => api.delete(`/api/system-admin/schools/${id}`),
   getAdmins: () => api.get('/api/system-admin/admins'),
   createAdmin: (data) => api.post('/api/system-admin/admins', data),
-  deleteAdmin: (id) => api.delete(`/api/system-admin/admins/${id}`)
+  deleteAdmin: (id) => api.delete(`/api/system-admin/admins/${id}`),
+  importUsers: (formData) => api.post('/api/system-admin/import-users', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
 };
 
 export default api;
