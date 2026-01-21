@@ -4,6 +4,7 @@ import { useAuth } from '../AuthContext';
 import { systemAdmin } from '../api';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
+import DatabaseImportModal from './DatabaseImportModal';
 
 const SystemAdminDashboard = () => {
   const { user: authUser, logout } = useAuth();
@@ -31,6 +32,8 @@ const SystemAdminDashboard = () => {
     password: '',
     school_id: ''
   });
+
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -419,6 +422,12 @@ const SystemAdminDashboard = () => {
               <div style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
                 <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Database Operations</h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button 
+                    onClick={() => setShowImportModal(true)}
+                    style={{ padding: '12px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                  >
+                    Import .accdb File
+                  </button>
                   <button style={{ padding: '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Export Database</button>
                   <button style={{ padding: '12px 24px', background: '#64748b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Optimize Tables</button>
                   <button style={{ padding: '12px 24px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Reset Database</button>
@@ -509,6 +518,16 @@ const SystemAdminDashboard = () => {
 
         <Footer isMobile={isMobile} />
       </div>
+      
+      {showImportModal && (
+        <DatabaseImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={(result) => {
+            alert(`Successfully imported ${result.imported} records`);
+            fetchData();
+          }}
+        />
+      )}
     </div>
   );
 };
