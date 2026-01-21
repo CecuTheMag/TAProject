@@ -24,6 +24,7 @@ export const auth = {
 };
 
 export const systemAdmin = {
+<<<<<<< HEAD
   getStats: () => api.get('/system-admin/stats'),
   getSchools: () => api.get('/system-admin/schools'),
   createSchool: (data) => api.post('/system-admin/schools', data),
@@ -32,6 +33,19 @@ export const systemAdmin = {
   getAdmins: () => api.get('/system-admin/admins'),
   createAdmin: (data) => api.post('/system-admin/admins', data),
   deleteAdmin: (id) => api.delete(`/system-admin/admins/${id}`)
+=======
+  getStats: () => api.get('/api/system-admin/stats'),
+  getSchools: () => api.get('/api/system-admin/schools'),
+  createSchool: (data) => api.post('/api/system-admin/schools', data),
+  updateSchool: (id, data) => api.put(`/api/system-admin/schools/${id}`, data),
+  deleteSchool: (id) => api.delete(`/api/system-admin/schools/${id}`),
+  getAdmins: () => api.get('/api/system-admin/admins'),
+  createAdmin: (data) => api.post('/api/system-admin/admins', data),
+  deleteAdmin: (id) => api.delete(`/api/system-admin/admins/${id}`),
+  importUsers: (formData) => api.post('/api/system-admin/import-users', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+>>>>>>> b084ca10de801427722555489904542e88aad1f7
 };
 
 export default api;

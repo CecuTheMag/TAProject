@@ -378,6 +378,12 @@ const SystemAdminDashboard = () => {
           <div style={{ padding: '40px' }}>
             <h1 style={{ marginBottom: '30px', color: '#1e40af', fontSize: '32px', fontWeight: '800' }}>Database Management</h1>
             
+            {/* Import Users Section */}
+            <div style={{ background: 'white', padding: '30px', borderRadius: '12px', marginBottom: '30px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
+              <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Import Users from File</h3>
+              <ImportUsersForm schools={schools} onSuccess={fetchData} />
+            </div>
+
             <div style={{ display: 'grid', gap: '20px' }}>
               <div style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
                 <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Database Statistics</h3>
