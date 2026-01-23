@@ -8,7 +8,7 @@ import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import ToastContainer from './components/Toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
@@ -25,15 +25,19 @@ const AdminViewRoute = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const schoolId = searchParams.get('school_id');
+  const hasRequested = useRef(false);
 
   useEffect(() => {
     const autoLogin = async () => {
-      if (!schoolId) {
-        setError('No school ID provided');
-        setLoading(false);
+      if (!schoolId || hasRequested.current) {
+        if (!schoolId) {
+          setError('No school ID provided');
+          setLoading(false);
+        }
         return;
       }
 
+      hasRequested.current = true;
       try {
         const response = await axios.get(`${API_BASE_URL}/auth/school-admin/${schoolId}`);
         login(response.data.user, response.data.token);
@@ -41,14 +45,23 @@ const AdminViewRoute = () => {
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to load school admin');
         setLoading(false);
+        hasRequested.current = false; // Reset on error to allow retry
       }
     };
 
     autoLogin();
-  }, [schoolId, login]);
+  }, [schoolId]); // Remove login dependency
 
   if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading school admin...</div>;
-  if (error) return <div style={{ padding: '40px', textAlign: 'center', color: '#dc2626' }}>{error}</div>;
+  if (error) return (
+    <div style={{ padding: '40px', textAlign: 'center', color: '#dc2626' }}>
+      {error}
+      <br />
+      <button onClick={() => { hasRequested.current = false; setError(null); setLoading(true); }} style={{ marginTop: '10px' }}>
+        Retry
+      </button>
+    </div>
+  );
   return <Dashboard />;
 };
 

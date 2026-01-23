@@ -51,7 +51,7 @@ export const register = async (req, res) => {
       [username, email, hashedPassword, role, 1] // Default school_id = 1 for now
     );
 
-    const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({
       message: 'Account created successfully',
@@ -101,7 +101,7 @@ export const login = async (req, res) => {
       created_at: user.created_at 
     };
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     console.log('✅ Login successful:', email);
     
     res.json({

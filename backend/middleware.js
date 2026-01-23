@@ -11,6 +11,19 @@ export const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Handle system admin access (fake user ID 999999)
+    if (decoded.userId === 999999) {
+      req.user = {
+        id: 999999,
+        username: 'system_admin',
+        email: 'system@admin.local',
+        role: 'admin',
+        is_system_admin: true
+      };
+      return next();
+    }
+    
     const result = await pool.query('SELECT * FROM public.users WHERE id = $1', [decoded.userId]);
     
     if (result.rows.length === 0) {
