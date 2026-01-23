@@ -15,8 +15,35 @@ const validateAPIKey = (req, res, next) => {
 router.post('/query', validateAPIKey, async (req, res) => {
   try {
     const { query, params } = req.body;
+    
+    // Log the query for debugging
+    console.log('Internal query:', { query, params });
+    
     const result = await pool.query(query, params);
     console.log('Internal query result:', result.rows.length, 'rows');
+    
+    // If it's an INSERT with ON CONFLICT DO NOTHING and returns 0 rows, check why
+    if (query.includes('INSERT') && query.includes('ON CONFLICT') && result.rows.length === 0) {
+      console.log('INSERT returned 0 rows - possible conflict or constraint violation');
+      
+      // If inserting users, check if school exists
+      if (query.includes('users') && params.length >= 5) {
+        const schoolId = params[4]; // school_id is 5th parameter
+        try {
+          const schoolCheck = await pool.query('SELECT id FROM schools WHERE id = $1', [schoolId]);
+          if (schoolCheck.rows.length === 0) {
+            console.log(`School with id ${schoolId} does not exist`);
+            return res.status(400).json({ 
+              error: `School with id ${schoolId} does not exist`,
+              code: 'SCHOOL_NOT_FOUND'
+            });
+          }
+        } catch (schoolError) {
+          console.log('Error checking school:', schoolError.message);
+        }
+      }
+    }
+    
     res.json({ rows: result.rows });
   } catch (error) {
     console.error('Internal query error:', error);

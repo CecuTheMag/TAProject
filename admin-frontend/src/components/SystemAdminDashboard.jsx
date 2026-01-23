@@ -5,6 +5,7 @@ import { systemAdmin } from '../api';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import DatabaseImportModal from './DatabaseImportModal';
+import ImportUsersForm from './ImportUsersForm';
 
 const SystemAdminDashboard = () => {
   const { user: authUser, logout } = useAuth();

@@ -159,25 +159,32 @@ export const getSchoolAdmins = async (req, res) => {
 };
 
 export const parseAccdbFile = async (req, res) => {
+  let tempFilePath = null;
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const filePath = req.file.path;
+    // Save buffer to temporary file
+    const tempDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    tempFilePath = path.join(tempDir, `temp_${Date.now()}_${req.file.originalname}`);
+    fs.writeFileSync(tempFilePath, req.file.buffer);
 
     // Use mdb-tools to extract table structure
-    const { stdout } = await execAsync(`mdb-tables -1 "${filePath}"`);
+    const { stdout } = await execAsync(`mdb-tables -1 "${tempFilePath}"`);
     const tables = stdout.trim().split('\n').filter(t => t.trim());
     
     if (tables.length === 0) {
-      fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'No tables found in database file' });
     }
 
     // Get columns from first table
     const tableName = tables[0];
-    const { stdout: schemaOutput } = await execAsync(`mdb-schema "${filePath}" -T "${tableName}"`);
+    const { stdout: schemaOutput } = await execAsync(`mdb-schema "${tempFilePath}" -T "${tableName}"`);
     
     // Extract column names from schema
     const columns = [];
@@ -190,26 +197,25 @@ export const parseAccdbFile = async (req, res) => {
     }
 
     if (columns.length === 0) {
-      fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'No columns found in database table' });
     }
-
-    // Clean up
-    fs.unlinkSync(filePath);
 
     res.json({ columns, tableName });
   } catch (error) {
     console.error('Parse ACCDB error:', error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ 
       error: 'Failed to parse .accdb file. Ensure mdb-tools is installed and file is valid.' 
     });
+  } finally {
+    // Clean up temp file
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
+    }
   }
 };
 
 export const importAccdbData = async (req, res) => {
+  let tempFilePath = null;
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -217,23 +223,30 @@ export const importAccdbData = async (req, res) => {
 
     const mapping = JSON.parse(req.body.mapping);
     const schoolId = req.body.school_id;
-    const filePath = req.file.path;
     
     if (!schoolId) {
-      fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'School selection is required' });
     }
+    
+    // Save buffer to temporary file
+    const tempDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    tempFilePath = path.join(tempDir, `import_${Date.now()}_${req.file.originalname}`);
+    fs.writeFileSync(tempFilePath, req.file.buffer);
     
     // Send immediate response to prevent timeout
     res.json({ message: 'Import started, processing in background...' });
     
     // Process import asynchronously
-    processImportAsync(filePath, mapping, schoolId);
+    processImportAsync(tempFilePath, mapping, schoolId);
     
   } catch (error) {
     console.error('Import ACCDB error:', error);
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+    if (tempFilePath && fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
     }
     if (!res.headersSent) {
       res.status(500).json({ 
@@ -245,6 +258,14 @@ export const importAccdbData = async (req, res) => {
 
 const processImportAsync = async (filePath, mapping, schoolId) => {
   try {
+    // First check if school exists
+    const schoolCheck = await getMainDBData('SELECT id FROM schools WHERE id = $1', [schoolId]);
+    if (!schoolCheck.rows || schoolCheck.rows.length === 0) {
+      console.error(`School with ID ${schoolId} does not exist`);
+      fs.unlinkSync(filePath);
+      return;
+    }
+
     // Convert ACCDB to CSV
     const { stdout } = await execAsync(`mdb-tables -1 "${filePath}"`);
     const tables = stdout.trim().split('\n').filter(t => t.trim());
@@ -283,53 +304,66 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
       return;
     }
 
+    // Teacher subjects list
+    const teacherSubjects = [
+      'MATHEMATICS', 'BULGARIAN', 'ENGLISH', 'HISTORY', 'GEOGRAPHY', 
+      'BIOLOGY', 'CHEMISTRY', 'PHYSICS', 'PHYSICAL_EDUCATION', 'ART', 
+      'MUSIC', 'TECHNOLOGY', 'COMPUTER_SCIENCE', 'GERMAN', 'FRENCH', 'PHILOSOPHY'
+    ];
+
     let imported = 0;
-    let updated = 0;
-    const errors = [];
+    let errors = [];
 
     // Process each row
     for (let i = 1; i < lines.length; i++) {
       const row = lines[i].split(',').map(cell => cell.replace(/"/g, '').trim());
       
-      const name = row[nameIndex];
+      const rawName = row[nameIndex];
       const email = row[emailIndex];
       const phone = phoneIndex >= 0 ? row[phoneIndex] : null;
       const role = roleIndex >= 0 ? row[roleIndex] : '';
 
-      if (!name || !email) continue;
+      if (!rawName || !email) continue;
 
       try {
-        // Determine user role
+        // Format name properly
+        const formattedName = rawName
+          .toLowerCase()
+          .split(/[\s.]+/)
+          .filter(part => part.length > 0)
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+
+        // Determine user role - check if role contains any teacher subject
         let userRole = 'student';
-        if (role && (role.toLowerCase().includes('teacher') || role.toLowerCase().includes('admin') || role.toLowerCase().includes('mathematics') || role.toLowerCase().includes('biology'))) {
+        const roleUpper = role.toUpperCase();
+        
+        if (teacherSubjects.some(subject => roleUpper.includes(subject))) {
           userRole = 'teacher';
-        }
-        if (role && role.toLowerCase().includes('admin')) {
+        } else if (role && role.toLowerCase().includes('admin')) {
           userRole = 'admin';
         }
 
-        // Generate username and password
-        const username = email.split('@')[0];
+        // Generate clean username from email
+        const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
         const defaultPassword = 'password123';
         const hashedPassword = await bcrypt.hash(defaultPassword, 12);
 
-        // Insert into main users table
-        const userResult = await getMainDBData(
-          `INSERT INTO users (username, email, password, role, school_id, phone) 
-           VALUES ($1, $2, $3, $4, $5, $6) 
+        // Insert user with formatted name and phone
+        const result = await getMainDBData(
+          `INSERT INTO users (username, email, password, role, school_id, grade_level, subject_specialization) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7) 
            ON CONFLICT (email) DO UPDATE SET 
-             username = EXCLUDED.username,
-             role = EXCLUDED.role,
-             school_id = EXCLUDED.school_id,
-             phone = EXCLUDED.phone
-           RETURNING (xmax = 0) AS inserted`,
-          [username, email, hashedPassword, userRole, schoolId, phone]
+           username = EXCLUDED.username,
+           role = EXCLUDED.role,
+           grade_level = EXCLUDED.grade_level,
+           subject_specialization = EXCLUDED.subject_specialization
+           RETURNING id`,
+          [username, email, hashedPassword, userRole, schoolId, formattedName, userRole === 'teacher' ? role : null]
         );
         
-        if (userResult.rows[0].inserted) {
+        if (result.rows && result.rows.length > 0) {
           imported++;
-        } else {
-          updated++;
         }
       } catch (error) {
         errors.push(`Row ${i}: ${error.message}`);
@@ -340,7 +374,7 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
     fs.unlinkSync(filePath);
     fs.unlinkSync(csvPath);
 
-    console.log(`Import completed: ${imported} imported, ${updated} updated, ${errors.length} errors`);
+    console.log(`Import completed: ${imported} imported, ${errors.length} errors`);
   } catch (error) {
     console.error('Async import error:', error);
     if (fs.existsSync(filePath)) {

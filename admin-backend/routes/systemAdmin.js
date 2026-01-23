@@ -1,10 +1,31 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
-import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats } from '../controllers/systemAdmin.js';
 import multer from 'multer';
-import XLSX from 'xlsx';
+import { authenticateToken } from '../middleware/auth.js';
+import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, parseAccdbFile, importAccdbData } from '../controllers/systemAdmin.js';
 import pool from '../database.js';
 import bcrypt from 'bcryptjs';
+import XLSX from 'xlsx';
+import axios from 'axios';
+
+const getMainDBData = async (query, params = []) => {
+  try {
+    const response = await axios.post(
+      `${process.env.MAIN_API_URL || 'http://localhost:5000'}/api/internal/query`,
+      { query, params },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
+        },
+        timeout: 10000
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Main DB query error:', error.message);
+    throw error;
+  }
+};
 
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
@@ -18,6 +39,32 @@ router.get('/admins', getSchoolAdmins);
 router.get('/school-admins', getSchoolAdmins);
 router.post('/admins', createSchoolAdmin);
 router.post('/school-admins', createSchoolAdmin);
+router.get('/users', async (req, res) => {
+  try {
+    const { schoolId } = req.query;
+    let query = `
+      SELECT u.id, u.username, u.email, u.role, u.grade_level, u.subject_specialization, u.created_at, s.name as school_name
+      FROM users u
+      LEFT JOIN schools s ON u.school_id = s.id
+    `;
+    const params = [];
+    
+    if (schoolId) {
+      query += ' WHERE u.school_id = $1';
+      params.push(schoolId);
+    }
+    
+    query += ' ORDER BY u.created_at DESC';
+    
+    const result = await getMainDBData(query, params);
+    res.json({ users: result.rows || [] });
+  } catch (error) {
+    console.error('getUsers error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+router.post('/parse-accdb', upload.single('file'), parseAccdbFile);
+router.post('/import-accdb', upload.single('file'), importAccdbData);
 router.delete('/admins/:id', async (req, res) => res.status(501).json({ error: 'Not implemented' }));
 router.put('/schools/:id', async (req, res) => res.status(501).json({ error: 'Not implemented' }));
 router.delete('/schools/:id', async (req, res) => res.status(501).json({ error: 'Not implemented' }));

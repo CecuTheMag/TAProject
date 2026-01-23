@@ -15,6 +15,7 @@ import { metricsMiddleware, metricsHandler } from './middleware/metrics.js';
 // Database and caching services
 import { initDB } from './database.js';
 import redisService from './utils/redis.js';
+import migrationRunner from './utils/migrationRunner.js';
 
 // Route handlers for different API endpoints
 import authRoutes from './routes/auth.js';         // User authentication
@@ -74,6 +75,7 @@ app.use(apiLimiter);
 
 // Initialize database and Redis
 initDB();
+migrationRunner.runMigrations().catch(console.error);
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
 // Routes with rate limiting
