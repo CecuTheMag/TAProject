@@ -3,7 +3,7 @@ import cache from '../utils/cache.js';
 
 export const getDashboardStats = async (req, res) => {
   try {
-    const cacheKey = 'dashboard_stats';
+    const cacheKey = `dashboard_stats:${req.user.school_id}`;
     let stats = cache.get(cacheKey);
     
     if (!stats) {
@@ -15,23 +15,26 @@ export const getDashboardStats = async (req, res) => {
           COUNT(CASE WHEN status = 'under_repair' THEN 1 END) as under_repair,
           COUNT(CASE WHEN status = 'retired' THEN 1 END) as retired
         FROM equipment
+        WHERE school_id = $1
       `;
       
       const requestsQuery = `
         SELECT 
           COUNT(*) as total_requests,
-          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_requests,
-          COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_requests,
-          COUNT(CASE WHEN status = 'rejected' THEN 1 END) as rejected_requests,
-          COUNT(CASE WHEN status = 'returned' THEN 1 END) as returned_requests,
-          COUNT(CASE WHEN status = 'early_returned' THEN 1 END) as early_returned_requests,
-          COUNT(CASE WHEN status IN ('returned', 'early_returned') THEN 1 END) as total_returned_requests
-        FROM requests
+          COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_requests,
+          COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_requests,
+          COUNT(CASE WHEN r.status = 'rejected' THEN 1 END) as rejected_requests,
+          COUNT(CASE WHEN r.status = 'returned' THEN 1 END) as returned_requests,
+          COUNT(CASE WHEN r.status = 'early_returned' THEN 1 END) as early_returned_requests,
+          COUNT(CASE WHEN r.status IN ('returned', 'early_returned') THEN 1 END) as total_returned_requests
+        FROM requests r
+        JOIN users u ON r.user_id = u.id
+        WHERE u.school_id = $1
       `;
       
       const [equipmentStats, requestStats] = await Promise.all([
-        pool.query(statsQuery),
-        pool.query(requestsQuery)
+        pool.query(statsQuery, [req.user.school_id]),
+        pool.query(requestsQuery, [req.user.school_id])
       ]);
 
       stats = {

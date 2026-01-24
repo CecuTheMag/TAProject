@@ -3,26 +3,66 @@ import bcrypt from 'bcryptjs';
 
 export const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        u.id,
-        u.username,
-        u.email,
-        u.role,
-        u.subject_id,
-        s.name as subject_name,
-        s.code as subject_code,
-        u.created_at,
-        COUNT(r.id) as total_requests,
-        COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_requests,
-        COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_requests
-      FROM users u
-      LEFT JOIN requests r ON u.id = r.user_id
-      LEFT JOIN subjects s ON u.subject_id = s.id
-      GROUP BY u.id, u.username, u.email, u.role, u.subject_id, s.name, s.code, u.created_at
-      ORDER BY u.created_at DESC
-    `);
+    console.log('getAllUsers - req.user:', req.user); // Debug log
     
+    let query;
+    let params;
+    
+    if (!req.user.school_id) {
+      // System admin or admin without school_id - show all users
+      query = `
+        SELECT 
+          u.id,
+          u.username,
+          u.email,
+          u.role,
+          u.subject_id,
+          u.grade_level,
+          u.subject_specialization,
+          u.school_id,
+          s.name as subject_name,
+          s.code as subject_code,
+          u.created_at,
+          COUNT(r.id) as total_requests,
+          COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_requests,
+          COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_requests
+        FROM users u
+        LEFT JOIN requests r ON u.id = r.user_id
+        LEFT JOIN subjects s ON u.subject_id = s.id
+        GROUP BY u.id, u.username, u.email, u.role, u.subject_id, u.grade_level, u.subject_specialization, u.school_id, s.name, s.code, u.created_at
+        ORDER BY u.created_at DESC
+      `;
+      params = [];
+    } else {
+      // School admin - show only users from their school
+      query = `
+        SELECT 
+          u.id,
+          u.username,
+          u.email,
+          u.role,
+          u.subject_id,
+          u.grade_level,
+          u.subject_specialization,
+          s.name as subject_name,
+          s.code as subject_code,
+          u.created_at,
+          COUNT(r.id) as total_requests,
+          COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_requests,
+          COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_requests
+        FROM users u
+        LEFT JOIN requests r ON u.id = r.user_id
+        LEFT JOIN subjects s ON u.subject_id = s.id
+        WHERE u.school_id = $1
+        GROUP BY u.id, u.username, u.email, u.role, u.subject_id, u.grade_level, u.subject_specialization, s.name, s.code, u.created_at
+        ORDER BY u.created_at DESC
+      `;
+      params = [req.user.school_id];
+    }
+    
+    const result = await pool.query(query, params);
+    
+    console.log('getAllUsers - found users:', result.rows.length); // Debug log
     res.json(result.rows);
   } catch (error) {
     console.error('Get users error:', error);

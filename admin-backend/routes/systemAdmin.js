@@ -10,20 +10,25 @@ import axios from 'axios';
 const getMainDBData = async (query, params = []) => {
   try {
     const response = await axios.post(
-      `${process.env.MAIN_API_URL || 'http://localhost:5000'}/api/internal/query`,
+      `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/query`,
       { query, params },
       {
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
         },
-        timeout: 10000
+        timeout: 15000
       }
     );
     return response.data;
   } catch (error) {
-    console.error('Main DB query error:', error.message);
-    throw error;
+    console.error('Main DB query error:', {
+      message: error.message,
+      code: error.code,
+      url: error.config?.url,
+      status: error.response?.status
+    });
+    throw new Error(`Main DB communication failed: ${error.message}`);
   }
 };
 
@@ -41,6 +46,7 @@ router.post('/admins', createSchoolAdmin);
 router.post('/school-admins', createSchoolAdmin);
 router.get('/users', async (req, res) => {
   try {
+    console.log('getUsers called with query:', req.query);
     const { schoolId } = req.query;
     let query = `
       SELECT u.id, u.username, u.email, u.role, u.grade_level, u.subject_specialization, u.created_at, s.name as school_name
@@ -52,15 +58,21 @@ router.get('/users', async (req, res) => {
     if (schoolId) {
       query += ' WHERE u.school_id = $1';
       params.push(schoolId);
+      console.log(`Filtering by school ID: ${schoolId}`);
     }
     
     query += ' ORDER BY u.created_at DESC';
     
+    console.log('Executing query:', query);
+    console.log('With params:', params);
+    
     const result = await getMainDBData(query, params);
+    console.log(`Found ${result.rows?.length || 0} users`);
+    
     res.json({ users: result.rows || [] });
   } catch (error) {
     console.error('getUsers error:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: 'Failed to fetch users', users: [] });
   }
 });
 router.post('/parse-accdb', upload.single('file'), parseAccdbFile);

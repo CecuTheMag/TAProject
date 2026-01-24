@@ -78,7 +78,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-      - PORT=5001
+      - PORT=5005
       - DB_HOST=postgres_admin
       - DB_PORT=5432
       - DB_NAME=SIMS_ADMIN
@@ -93,10 +93,11 @@ services:
       - ./admin-backend:/app
       - /app/node_modules
     ports:
-      - "5005:5001"
+      - "5005:5005"
     depends_on:
       - postgres_admin
       - redis
+      - backend
     networks:
       - admin_network
       - internal_api
@@ -127,7 +128,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-      - VITE_ADMIN_API_URL=http://localhost:5001
+      - VITE_ADMIN_API_URL=http://localhost:5005
     volumes:
       - ./admin-frontend:/app
       - /app/node_modules

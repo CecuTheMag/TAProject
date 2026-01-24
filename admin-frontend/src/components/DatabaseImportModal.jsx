@@ -25,6 +25,7 @@ const DatabaseImportModal = ({ onClose, onImport }) => {
         });
         if (response.ok) {
           const data = await response.json();
+          console.log('Loaded schools:', data.schools);
           setSchools(data.schools);
         }
       } catch (error) {
@@ -199,7 +200,10 @@ const DatabaseImportModal = ({ onClose, onImport }) => {
                 </label>
                 <select
                   value={selectedSchool}
-                  onChange={(e) => setSelectedSchool(e.target.value)}
+                  onChange={(e) => {
+                    console.log('School selected:', e.target.value);
+                    setSelectedSchool(e.target.value);
+                  }}
                   style={{
                     width: '100%',
                     padding: '10px',

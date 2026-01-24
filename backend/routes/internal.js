@@ -13,13 +13,17 @@ const validateAPIKey = (req, res, next) => {
 };
 
 router.post('/query', validateAPIKey, async (req, res) => {
+  const client = await pool.connect();
   try {
     const { query, params } = req.body;
     
     // Log the query for debugging
     console.log('Internal query:', { query, params });
     
-    const result = await pool.query(query, params);
+    await client.query('BEGIN');
+    const result = await client.query(query, params);
+    await client.query('COMMIT');
+    
     console.log('Internal query result:', result.rows.length, 'rows');
     
     // If it's an INSERT with ON CONFLICT DO NOTHING and returns 0 rows, check why
@@ -30,7 +34,7 @@ router.post('/query', validateAPIKey, async (req, res) => {
       if (query.includes('users') && params.length >= 5) {
         const schoolId = params[4]; // school_id is 5th parameter
         try {
-          const schoolCheck = await pool.query('SELECT id FROM schools WHERE id = $1', [schoolId]);
+          const schoolCheck = await client.query('SELECT id FROM schools WHERE id = $1', [schoolId]);
           if (schoolCheck.rows.length === 0) {
             console.log(`School with id ${schoolId} does not exist`);
             return res.status(400).json({ 
@@ -46,8 +50,11 @@ router.post('/query', validateAPIKey, async (req, res) => {
     
     res.json({ rows: result.rows });
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Internal query error:', error);
     res.status(500).json({ error: error.message, code: error.code });
+  } finally {
+    client.release();
   }
 });
 

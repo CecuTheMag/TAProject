@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  # Admin Database - Separate from main system
+  postgres_admin:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: SIMS_ADMIN
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: "admin_secure_pass_2025"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_admin_data:/var/lib/postgresql/data
+    ports:
+      - "0.0.0.0:5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d SIMS_ADMIN"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   # Database Cluster
   postgres-primary:
     image: postgres:15-alpine
@@ -33,6 +52,42 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  # Admin Backend Service
+  admin-backend:
+    build: ./admin-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=5005
+      - DB_HOST=postgres_admin
+      - DB_PORT=5432
+      - DB_USER=admin_user
+      - DB_PASSWORD=admin_secure_pass_2025
+      - DB_NAME=SIMS_ADMIN
+      - JWT_SECRET=admin_jwt_secret_key_2025_secure
+      - MAIN_API_URL=http://backend-1:5000
+      - MAIN_API_KEY=internal_api_key_secure_2025
+    depends_on:
+      postgres_admin:
+        condition: service_healthy
+      backend-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Admin Frontend Service
+  admin-frontend:
+    build: ./admin-frontend
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:5005/api
+    depends_on:
+      - admin-backend
     restart: unless-stopped
 
   # Backend Cluster (3 instances)
@@ -181,6 +236,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres_admin_data:
   postgres_primary_data:
   redis_data:
   grafana_data:

@@ -64,7 +64,9 @@ export const getAllRequests = async (req, res) => {
        FROM requests r 
        JOIN users u ON r.user_id = u.id 
        JOIN equipment e ON r.equipment_id = e.id 
-       ORDER BY r.request_date DESC`
+       WHERE u.school_id = $1
+       ORDER BY r.request_date DESC`,
+      [req.user.school_id]
     );
     
     res.json(result.rows);

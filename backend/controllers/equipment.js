@@ -27,7 +27,7 @@ export const getAllEquipment = async (req, res) => {
   try {
     const { search, type, status, condition } = req.query;
     const queryFn = req.dbQuery || pool.query.bind(pool);
-    const cacheKey = `equipment:${JSON.stringify(req.query)}`;
+    const cacheKey = `equipment:${req.user.school_id}:${JSON.stringify(req.query)}`;
     
     // Check Redis cache first for performance optimization
     const cached = await redisService.get(cacheKey);
@@ -35,9 +35,9 @@ export const getAllEquipment = async (req, res) => {
       return res.json(cached);
     }
     
-    let query = 'SELECT * FROM equipment WHERE 1=1';
-    const params = [];
-    let paramCount = 0;
+    let query = 'SELECT * FROM equipment WHERE school_id = $1';
+    const params = [req.user.school_id];
+    let paramCount = 1;
 
     if (search) {
       paramCount++;
@@ -137,9 +137,9 @@ export const createEquipment = async (req, res) => {
       }
       
       const result = await queryFn(
-        `INSERT INTO equipment (name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, qr_code) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-        [name, type, itemSerial, condition, status, location, requires_approval, 1, stock_threshold, qrCode]
+        `INSERT INTO equipment (name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, qr_code, school_id) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+        [name, type, itemSerial, condition, status, location, requires_approval, 1, stock_threshold, qrCode, req.user.school_id]
       );
       
       createdEquipment.push(result.rows[0]);

@@ -19,6 +19,7 @@ const UsersTab = () => {
   const [userActivity, setUserActivity] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
+  const [selectedView, setSelectedView] = useState('classes'); // 'classes' or 'teachers'
   const { user } = useAuth();
 
   useEffect(() => {
@@ -42,6 +43,46 @@ const UsersTab = () => {
       setLoading(false);
     }
   };
+
+  // Group users by class (grade_level) and teachers separately
+  const groupedData = () => {
+    const classes = {};
+    const teachers = [];
+    
+    console.log('All users:', usersList); // Debug log
+    
+    usersList.forEach(user => {
+      console.log('Processing user:', user.username, 'role:', user.role, 'subject_specialization:', user.subject_specialization); // Debug log
+      
+      if (user.role === 'teacher') {
+        teachers.push(user);
+      } else if (user.role === 'student') {
+        // Extract class from subject_specialization field
+        let className = 'Unknown';
+        if (user.subject_specialization) {
+          // Look for patterns like "7A", "6B", "10A" etc.
+          const match = user.subject_specialization.match(/(\d+)\s*([A-Z])/i);
+          if (match) {
+            className = match[1] + match[2].toUpperCase();
+          }
+        }
+        
+        console.log('Student class extracted:', className); // Debug log
+        
+        if (!classes[className]) {
+          classes[className] = [];
+        }
+        classes[className].push(user);
+      }
+    });
+    
+    console.log('Final classes:', classes); // Debug log
+    console.log('Final teachers:', teachers); // Debug log
+    
+    return { classes, teachers };
+  };
+
+  const { classes, teachers } = groupedData();
 
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -151,190 +192,84 @@ const UsersTab = () => {
         }}>
           {t('userManagement')}
         </h2>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          style={{
-            padding: '12px 20px',
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{
+            display: 'flex',
+            backgroundColor: '#f1f5f9',
             borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            width: isMobile ? '100%' : 'auto'
-          }}
-        >
-          + {t('createNewUser')}
-        </button>
+            padding: '4px'
+          }}>
+            <button
+              onClick={() => setSelectedView('classes')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: selectedView === 'classes' ? '#3b82f6' : 'transparent',
+                color: selectedView === 'classes' ? 'white' : '#64748b',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Classes
+            </button>
+            <button
+              onClick={() => setSelectedView('teachers')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: selectedView === 'teachers' ? '#3b82f6' : 'transparent',
+                color: selectedView === 'teachers' ? 'white' : '#64748b',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Teachers
+            </button>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            style={{
+              padding: '12px 20px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              width: isMobile ? '100%' : 'auto'
+            }}
+          >
+            + {t('createNewUser')}
+          </button>
+        </div>
       </div>
 
       <div>
-        {isMobile ? (
-          // Mobile Card Layout
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {usersList.map((userItem) => (
-              <UserCard 
-                key={userItem.id} 
-                userItem={userItem} 
-                currentUser={user}
-                onRoleChange={handleRoleChange}
-                onEditUser={handleEditUser}
-                onViewActivity={handleViewActivity}
-                onDeleteUser={handleDeleteUser}
-                getRoleBadgeColor={getRoleBadgeColor}
-              />
-            ))}
-          </div>
+        {selectedView === 'classes' ? (
+          <ClassesView 
+            classes={classes}
+            onEditUser={handleEditUser}
+            onViewActivity={handleViewActivity}
+            onDeleteUser={handleDeleteUser}
+            onRoleChange={handleRoleChange}
+            currentUser={user}
+            isMobile={isMobile}
+          />
         ) : (
-          // Desktop Table Layout
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse'
-            }}>
-              <thead>
-                <tr style={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.05)',
-                  borderBottom: '1px solid rgba(226, 232, 240, 0.5)'
-                }}>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>User</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>{t('role')}</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Subject</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Requests</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Joined</th>
-                  <th style={{ padding: '20px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersList.map((userItem) => (
-                  <tr key={userItem.id} style={{
-                    borderBottom: '1px solid rgba(226, 232, 240, 0.3)'
-                  }}>
-                    <td style={{ padding: '20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontWeight: '600'
-                        }}>
-                          {userItem.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: '600', color: '#0f172a' }}>
-                            {userItem.username}
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#64748b' }}>
-                            {userItem.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '20px' }}>
-                      <select
-                        value={userItem.role}
-                        onChange={(e) => handleRoleChange(userItem.id, e.target.value)}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
-                          backgroundColor: getRoleBadgeColor(userItem.role),
-                          color: 'white',
-                          fontWeight: '600',
-                          fontSize: '12px'
-                        }}
-                      >
-                        <option value="student">{t('student')}</option>
-                        <option value="teacher">{t('teacher')}</option>
-                        <option value="manager">{t('manager')}</option>
-                        <option value="admin">{t('admin')}</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: '20px' }}>
-                      {userItem.role === 'teacher' && userItem.subject_name ? (
-                        <div style={{ fontSize: '14px' }}>
-                          <div style={{ fontWeight: '600', color: '#0f172a' }}>{userItem.subject_name}</div>
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>({userItem.subject_code})</div>
-                        </div>
-                      ) : (
-                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>—</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '20px' }}>
-                      <div style={{ fontSize: '14px', color: '#64748b' }}>
-                        <div>{t('totalRequests')}: {userItem.total_requests}</div>
-                        <div>Pending: {userItem.pending_requests}</div>
-                        <div>Approved: {userItem.approved_requests}</div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '20px', fontSize: '14px', color: '#64748b' }}>
-                      {new Date(userItem.created_at).toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: '20px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleEditUser(userItem)}
-                          style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t('edit')}
-                        </button>
-                        <button
-                          onClick={() => handleViewActivity(userItem.id)}
-                          style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t('activity')}
-                        </button>
-                        {userItem.id !== user.id && (
-                          <button
-                            onClick={() => handleDeleteUser(userItem.id, userItem.username)}
-                            style={{
-                              padding: '8px 12px',
-                              backgroundColor: '#ef4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {t('delete')}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TeachersView 
+            teachers={teachers}
+            onEditUser={handleEditUser}
+            onViewActivity={handleViewActivity}
+            onDeleteUser={handleDeleteUser}
+            onRoleChange={handleRoleChange}
+            currentUser={user}
+            isMobile={isMobile}
+          />
         )}
       </div>
 
@@ -376,6 +311,289 @@ const UsersTab = () => {
       
       {/* Confirm Dialog */}
       <ConfirmDialog {...confirmDialog} />
+    </div>
+  );
+};
+
+const ClassesView = ({ classes, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser, isMobile }) => {
+  const [expandedClass, setExpandedClass] = useState(null);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {Object.keys(classes).sort().map(className => (
+        <div key={className} style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(226, 232, 240, 0.3)'
+        }}>
+          <div 
+            onClick={() => setExpandedClass(expandedClass === className ? null : className)}
+            style={{
+              padding: '20px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>Class {className}</h3>
+              <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: '14px' }}>
+                {classes[className].length} students
+              </p>
+            </div>
+            <div style={{ fontSize: '20px', transform: expandedClass === className ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              ▼
+            </div>
+          </div>
+          
+          <AnimatePresence>
+            {expandedClass === className && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ padding: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                    {classes[className].map(student => (
+                      <StudentCard 
+                        key={student.id}
+                        student={student}
+                        onEditUser={onEditUser}
+                        onViewActivity={onViewActivity}
+                        onDeleteUser={onDeleteUser}
+                        currentUser={currentUser}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const TeachersView = ({ teachers, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser, isMobile }) => {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+      {teachers.map(teacher => (
+        <TeacherCard 
+          key={teacher.id}
+          teacher={teacher}
+          onEditUser={onEditUser}
+          onViewActivity={onViewActivity}
+          onDeleteUser={onDeleteUser}
+          onRoleChange={onRoleChange}
+          currentUser={currentUser}
+        />
+      ))}
+    </div>
+  );
+};
+
+const StudentCard = ({ student, onEditUser, onViewActivity, onDeleteUser, currentUser }) => {
+  return (
+    <div style={{
+      background: 'white',
+      borderRadius: '12px',
+      padding: '16px',
+      border: '1px solid #e5e7eb',
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: '600'
+        }}>
+          {student.grade_level?.charAt(0) || student.username.charAt(0).toUpperCase()}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: '600', color: '#111827' }}>{student.grade_level || student.username}</div>
+          <div style={{ fontSize: '14px', color: '#6b7280' }}>{student.email}</div>
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        <button
+          onClick={() => onEditUser(student)}
+          style={{
+            padding: '6px 12px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onViewActivity(student.id)}
+          style={{
+            padding: '6px 12px',
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          Activity
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser }) => {
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+      border: '1px solid rgba(226, 232, 240, 0.3)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: '700',
+          fontSize: '20px'
+        }}>
+          {teacher.grade_level?.charAt(0) || teacher.username.charAt(0).toUpperCase()}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
+            {teacher.grade_level || teacher.username}
+          </div>
+          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{teacher.email}</div>
+          {teacher.subject_specialization && (
+            <div style={{
+              display: 'inline-block',
+              padding: '4px 8px',
+              backgroundColor: '#dbeafe',
+              color: '#1d4ed8',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              {teacher.subject_specialization}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px',
+        marginBottom: '20px'
+      }}>
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '12px',
+          padding: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', color: '#3b82f6' }}>
+            {teacher.total_requests || 0}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Total Requests
+          </div>
+        </div>
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.1)',
+          borderRadius: '12px',
+          padding: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', color: '#f59e0b' }}>
+            {teacher.pending_requests || 0}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Pending
+          </div>
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <button
+          onClick={() => onEditUser(teacher)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onViewActivity(teacher.id)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Activity
+        </button>
+        {teacher.id !== currentUser.id && (
+          <button
+            onClick={() => onDeleteUser(teacher.id, teacher.username)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            Delete
+          </button>
+        )}
+      </div>
     </div>
   );
 };

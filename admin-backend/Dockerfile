@@ -1,8 +1,25 @@
-FROM node:18
-RUN apt-get update && apt-get install -y mdbtools && rm -rf /var/lib/apt/lists/*
+FROM node:18-alpine
+
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
-RUN npm install
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
 COPY . .
-EXPOSE 5001
-CMD ["npm", "run", "dev"]
+
+# Create uploads directory
+RUN mkdir -p uploads
+
+# Expose port
+EXPOSE 5005
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5005/health || exit 1
+
+# Start the application
+CMD ["node", "server.js"]
