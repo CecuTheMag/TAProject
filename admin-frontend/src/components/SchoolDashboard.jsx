@@ -89,7 +89,7 @@ const SchoolDashboard = ({ school, onBack }) => {
 
         {/* Dashboard Content */}
         <div style={{ flex: 1 }}>
-          <Dashboard />
+          <Dashboard schoolUser={schoolUser} />
         </div>
       </div>
     </div>
