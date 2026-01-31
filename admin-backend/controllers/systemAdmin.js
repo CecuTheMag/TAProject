@@ -83,12 +83,11 @@ export const createSchool = async (req, res) => {
     // Create dedicated schema in main database
     try {
       await getMainDBData(
-        'INSERT INTO schools (id, name, code, address, phone, email, domain) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [school.id, name, code, address || null, phone || null, email || null, domain || null]
+        'INSERT INTO schools (id, name, code, address, phone) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, code = EXCLUDED.code, address = EXCLUDED.address, phone = EXCLUDED.phone',
+        [school.id, name, code, address || null, phone || null]
       );
       
-      // Create dedicated schema for this school
-      await getMainDBData(`CREATE SCHEMA IF NOT EXISTS school_${school.id}`);
+      console.log(`School synced to main database: ${name} (${code})`);
     } catch (mainDbError) {
       console.warn('Main DB school creation failed:', mainDbError.message);
     }
@@ -125,12 +124,12 @@ export const getSchools = async (req, res) => {
     let mainSchools = [];
     try {
       const mainSchoolsResult = await getMainDBData(`
-        SELECT s.*, 
+        SELECT s.id, s.name, s.code, s.address, s.phone, s.created_at,
                COUNT(DISTINCT u.id) as user_count,
                COUNT(DISTINCT CASE WHEN u.role = 'admin' THEN u.id END) as admin_count
         FROM schools s
         LEFT JOIN users u ON s.id = u.school_id
-        GROUP BY s.id, s.name, s.code, s.address, s.phone, s.email, s.domain, s.created_at
+        GROUP BY s.id, s.name, s.code, s.address, s.phone, s.created_at
         ORDER BY s.created_at DESC
       `);
       if (mainSchoolsResult.rows) {
@@ -138,6 +137,7 @@ export const getSchools = async (req, res) => {
       }
       console.log('Main DB schools:', mainSchools.length);
     } catch (apiError) {
+      console.error('Main DB query error:', apiError.message);
       console.warn('Could not fetch schools from main DB:', apiError.message);
     }
 
@@ -166,20 +166,48 @@ export const getSchools = async (req, res) => {
 
 export const createSchoolAdmin = async (req, res) => {
   try {
+    console.log('createSchoolAdmin called with body:', req.body);
+    
     const { error, value } = schoolAdminSchema.validate(req.body);
     if (error) {
+      console.log('Validation error:', error.details[0].message);
       return res.status(400).json({ error: error.details[0].message });
     }
 
     const { username, email, password, school_id } = value;
     
+    console.log('Creating admin for school_id:', school_id);
+    
     // Check if school exists in admin database
-    const schoolCheck = await pool.query('SELECT id, code FROM schools WHERE id = $1', [school_id]);
+    const schoolCheck = await pool.query('SELECT id, name, code FROM schools WHERE id = $1', [school_id]);
     if (!schoolCheck.rows || schoolCheck.rows.length === 0) {
+      console.log('School not found in admin database');
       return res.status(400).json({ error: 'School not found' });
     }
 
+    // Ensure school exists in main database too
+    try {
+      const mainSchoolCheck = await getMainDBData('SELECT id FROM schools WHERE id = $1', [school_id]);
+      if (!mainSchoolCheck.rows || mainSchoolCheck.rows.length === 0) {
+        console.log('School not found in main database, creating it...');
+        // Create school in main database
+        const school = schoolCheck.rows[0];
+        const schoolName = school.name || `School ${school.id}`;
+        const schoolCode = school.code || `SCH${school.id}`;
+        await getMainDBData(
+          'INSERT INTO schools (id, name, code, address, phone) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING',
+          [school.id, schoolName, schoolCode, school.address || null, school.phone || null]
+        );
+        console.log('School created in main database');
+      }
+    } catch (schoolSyncError) {
+      console.error('Error syncing school to main database:', schoolSyncError.message);
+      return res.status(500).json({ error: 'Failed to sync school data' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
+    
+    console.log('Creating admin in main database...');
     
     // Create admin in main database with school schema context
     const result = await getMainDBData(
@@ -187,15 +215,18 @@ export const createSchoolAdmin = async (req, res) => {
       [username, email, hashedPassword, 'admin', school_id]
     );
 
+    console.log('Admin created successfully:', result.rows[0]);
+    
     res.status(201).json({
       message: 'School admin created successfully',
       admin: result.rows[0]
     });
   } catch (error) {
+    console.error('createSchoolAdmin error:', error);
     if (error.code === '23505') {
       return res.status(400).json({ error: 'Username or email already exists' });
     }
-    res.status(500).json({ error: 'Failed to create school admin' });
+    res.status(500).json({ error: 'Failed to create school admin: ' + error.message });
   }
 };
 
@@ -233,9 +264,40 @@ export const parseAccdbFile = async (req, res) => {
     tempFilePath = path.join(tempDir, `temp_${Date.now()}_${req.file.originalname}`);
     fs.writeFileSync(tempFilePath, req.file.buffer);
 
-    // Use mdb-tools to extract table structure
-    const { stdout } = await execAsync(`mdb-tables -1 "${tempFilePath}"`);
-    const tables = stdout.trim().split('\n').filter(t => t.trim());
+    // Debug: Check what mdb commands are available
+    try {
+      const { stdout: debugOutput } = await execAsync('find /usr -name "mdb-*" -type f 2>/dev/null | head -10');
+      console.log('Available mdb commands:', debugOutput);
+      
+      // Test if mdb-tables works
+      const { stdout: testOutput } = await execAsync('/usr/bin/mdb-tables --help 2>&1 || echo "mdb-tables not executable"');
+      console.log('mdb-tables test:', testOutput.substring(0, 100));
+    } catch (debugError) {
+      console.log('Debug error:', debugError.message);
+    }
+
+    // Try different command variations
+    let tablesOutput;
+    const mdbCommands = ['/usr/bin/mdb-tables', 'mdb-tables', '/usr/local/bin/mdb-tables'];
+    
+    let commandWorked = false;
+    for (const cmd of mdbCommands) {
+      try {
+        const { stdout } = await execAsync(`${cmd} -1 "${tempFilePath}"`);
+        tablesOutput = stdout;
+        commandWorked = true;
+        console.log(`Successfully used command: ${cmd}`);
+        break;
+      } catch (error) {
+        console.log(`Command ${cmd} failed:`, error.message);
+      }
+    }
+    
+    if (!commandWorked) {
+      throw new Error('No working mdb-tables command found');
+    }
+
+    const tables = tablesOutput.trim().split('\n').filter(t => t.trim());
     
     if (tables.length === 0) {
       return res.status(400).json({ error: 'No tables found in database file' });
@@ -243,7 +305,22 @@ export const parseAccdbFile = async (req, res) => {
 
     // Get columns from first table
     const tableName = tables[0];
-    const { stdout: schemaOutput } = await execAsync(`mdb-schema "${tempFilePath}" -T "${tableName}"`);
+    
+    // Try different mdb-schema commands
+    let schemaOutput;
+    for (const cmd of ['/usr/bin/mdb-schema', 'mdb-schema', '/usr/local/bin/mdb-schema']) {
+      try {
+        const { stdout } = await execAsync(`${cmd} "${tempFilePath}" -T "${tableName}"`);
+        schemaOutput = stdout;
+        break;
+      } catch (error) {
+        console.log(`Schema command ${cmd} failed:`, error.message);
+      }
+    }
+    
+    if (!schemaOutput) {
+      throw new Error('No working mdb-schema command found');
+    }
     
     // Extract column names from schema
     const columns = [];
@@ -263,7 +340,7 @@ export const parseAccdbFile = async (req, res) => {
   } catch (error) {
     console.error('Parse ACCDB error:', error);
     res.status(500).json({ 
-      error: 'Failed to parse .accdb file. Ensure mdb-tools is installed and file is valid.' 
+      error: 'Failed to parse .accdb file: ' + error.message
     });
   } finally {
     // Clean up temp file
@@ -352,7 +429,25 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
 
     // Convert ACCDB to CSV
     console.log('Converting ACCDB to CSV...');
-    const { stdout } = await execAsync(`mdb-tables -1 "${filePath}"`);
+    
+    // Try different mdb-tables commands
+    let stdout;
+    for (const cmd of ['/usr/bin/mdb-tables', 'mdb-tables', '/usr/local/bin/mdb-tables']) {
+      try {
+        const result = await execAsync(`${cmd} -1 "${filePath}"`);
+        stdout = result.stdout;
+        break;
+      } catch (error) {
+        console.log(`Tables command ${cmd} failed:`, error.message);
+      }
+    }
+    
+    if (!stdout) {
+      fs.unlinkSync(filePath);
+      console.error('No working mdb-tables command found');
+      return;
+    }
+    
     const tables = stdout.trim().split('\n').filter(t => t.trim());
     
     if (tables.length === 0) {
@@ -365,7 +460,24 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
     console.log(`Found table: ${tableName}`);
     
     const csvPath = filePath + '.csv';
-    await execAsync(`mdb-export "${filePath}" "${tableName}" > "${csvPath}"`);
+    
+    // Try different mdb-export commands
+    let exportWorked = false;
+    for (const cmd of ['/usr/bin/mdb-export', 'mdb-export', '/usr/local/bin/mdb-export']) {
+      try {
+        await execAsync(`${cmd} "${filePath}" "${tableName}" > "${csvPath}"`);
+        exportWorked = true;
+        break;
+      } catch (error) {
+        console.log(`Export command ${cmd} failed:`, error.message);
+      }
+    }
+    
+    if (!exportWorked) {
+      fs.unlinkSync(filePath);
+      console.error('No working mdb-export command found');
+      return;
+    }
     
     // Read CSV data
     const csvData = fs.readFileSync(csvPath, 'utf8');

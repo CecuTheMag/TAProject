@@ -1,3 +1,6 @@
+-- Create default school if it doesn't exist
+INSERT INTO schools (id, name, code) VALUES (1, 'Hristo Botev High School', 'HBHS') ON CONFLICT (id) DO NOTHING;
+
 -- Add school_id column to school_data table
 ALTER TABLE school_data ADD COLUMN IF NOT EXISTS school_id INTEGER REFERENCES schools(id);
 
