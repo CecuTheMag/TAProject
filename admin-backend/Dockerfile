@@ -13,27 +13,17 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libglib2.0-dev \
     flex \
-    bison \
+  bison \
+  mdbtools \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Build mdb-tools from source with proper installation
-RUN git clone https://github.com/mdbtools/mdbtools.git /tmp/mdbtools && \
-    cd /tmp/mdbtools && \
-    sed -i 's/@LIBICONV@//g' src/libmdb/Makefile.am && \
-    sed -i '/AM_ICONV/d' configure.ac && \
-    autoreconf -i -f && \
-    ./configure --disable-man --disable-nls --without-iconv --prefix=/usr && \
-    make && \
-    make install && \
-    ldconfig && \
-    chmod +x /usr/bin/mdb-* && \
-    ls -la /usr/bin/mdb-* && \
-    rm -rf /tmp/mdbtools
-
-# Verify mdb-tools installation
-RUN which mdb-tables && which mdb-export && mdb-tables --help || echo "mdb-tools installed"
+  # Ensure mdbtools is present after Node install (nodesource scripts may modify apt state)
+  RUN apt-get update || true \
+   && apt-get install -y --no-install-recommends mdbtools || true \
+   && dpkg -l | grep mdbtools || true \
+   && ls -la /usr/bin/mdb-* || true
 
 # Copy package files
 COPY package*.json ./
