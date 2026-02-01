@@ -41,6 +41,8 @@ export const auth = {
   login: (credentials) => api.post('/auth/login', credentials),    // User authentication
   register: (userData) => api.post('/auth/register', userData),    // New user registration
   logout: () => api.get('/auth/logout'),                          // Session termination
+  sendVerificationCodes: (data) => api.post('/auth/send-verification', data), // Send verification codes for first-time users
+  setupPassword: (data) => api.post('/auth/setup-password', data), // Setup password for first-time users
 };
 
 /**

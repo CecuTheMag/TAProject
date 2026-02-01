@@ -4,10 +4,13 @@ import { auth } from '../api';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from '../translations';
 import logoImage from '../assets/logotp.png';
+import VerificationPage from './VerificationPage';
 
 const AuthPage = () => {
   const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -42,6 +45,13 @@ const AuthPage = () => {
         ? await auth.login({ email: formData.email, password: formData.password })
         : await auth.register({ username: formData.username, email: formData.email, password: formData.password });
       
+      // Check if this is a first-time user requiring setup
+      if (response.data.requiresSetup) {
+        setVerificationEmail(formData.email);
+        setShowVerification(true);
+        return;
+      }
+      
       login(response.data.user, response.data.token);
     } catch (err) {
       setError(err.response?.data?.error || (isLogin ? t('loginFailed') : t('signupFailed')));
@@ -53,6 +63,19 @@ const AuthPage = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  // Show verification page if needed
+  if (showVerification) {
+    return (
+      <VerificationPage 
+        email={verificationEmail} 
+        onBack={() => {
+          setShowVerification(false);
+          setVerificationEmail('');
+        }} 
+      />
+    );
+  }
 
   return (
     <div style={{

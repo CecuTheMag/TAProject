@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, logout, testDB } from '../controllers/auth.js';
+import { register, login, logout, testDB, sendVerificationCodes, setupPassword } from '../controllers/auth.js';
 import pool from '../database.js';
 import jwt from 'jsonwebtoken';
 
@@ -8,6 +8,8 @@ const router = express.Router();
 router.get('/test-db', testDB);
 router.post('/register', register);
 router.post('/login', login);
+router.post('/send-verification', sendVerificationCodes);
+router.post('/setup-password', setupPassword);
 router.get('/logout', logout);
 router.get('/school-admin/:schoolId', async (req, res) => {
   try {

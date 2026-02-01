@@ -223,7 +223,13 @@ export const initDB = async () => {
       ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN DEFAULT false,
       ADD COLUMN IF NOT EXISTS grade_level VARCHAR(20),
       ADD COLUMN IF NOT EXISTS subject_specialization VARCHAR(100),
-      ADD COLUMN IF NOT EXISTS responsibility_score INTEGER DEFAULT 100
+      ADD COLUMN IF NOT EXISTS responsibility_score INTEGER DEFAULT 100,
+      ADD COLUMN IF NOT EXISTS phone VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS password_set BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS email_verification_code VARCHAR(6),
+      ADD COLUMN IF NOT EXISTS sms_verification_code VARCHAR(6),
+      ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS verification_attempts INTEGER DEFAULT 0
     `);
 
     // Add subject_id column to users table if it doesn't exist

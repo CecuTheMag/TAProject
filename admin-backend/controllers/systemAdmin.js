@@ -580,16 +580,18 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
 
         // Insert user with formatted name and original role data
         const result = await getMainDBData(
-          `INSERT INTO users (username, email, password, role, school_id, grade_level, subject_specialization) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7) 
+          `INSERT INTO users (username, email, password, role, school_id, grade_level, subject_specialization, phone, password_set) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
            ON CONFLICT (email) DO UPDATE SET 
            username = EXCLUDED.username,
            role = EXCLUDED.role,
            school_id = EXCLUDED.school_id,
            grade_level = EXCLUDED.grade_level,
-           subject_specialization = EXCLUDED.subject_specialization
+           subject_specialization = EXCLUDED.subject_specialization,
+           phone = EXCLUDED.phone,
+           password_set = EXCLUDED.password_set
            RETURNING id`,
-          [username, email, hashedPassword, userRole, parsedSchoolId, formattedName, role]
+          [username, email, hashedPassword, userRole, parsedSchoolId, formattedName, role, phone, false]
         );
         
         if (result.rows && result.rows.length > 0) {
