@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5005;
 
 // Enhanced CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3002', 'http://localhost:3000', 'http://127.0.0.1:3002'],
+  origin: ['http://localhost:3002', 'http://localhost:3000', 'http://127.0.0.1:3002', 'http://192.168.88.210:3002'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']

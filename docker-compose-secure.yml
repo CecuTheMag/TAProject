@@ -128,7 +128,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
-      - VITE_ADMIN_API_URL=http://localhost:5005
+      - VITE_API_URL=http://localhost:5005/api
     volumes:
       - ./admin-frontend:/app
       - /app/node_modules
