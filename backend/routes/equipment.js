@@ -1,7 +1,7 @@
 import express from 'express';
 import pool from '../database.js';
 import { authenticateToken, requireAdmin, requireManagerTeacherOrAdmin } from '../middleware.js';
-import { setSchoolContext, queryInSchema } from '../middleware/schemaContext.js';
+import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
 import {
   getAllEquipment,
   getEquipmentById,
@@ -19,10 +19,32 @@ import {
 const router = express.Router();
 
 // Apply schema context to all routes
-router.use(authenticateToken, setSchoolContext);
+router.use(setSchoolContext);
 
-router.get('/', getAllEquipment);
-router.get('/groups', getEquipmentGroups);
+router.get('/', async (req, res) => {
+  try {
+    const result = await queryInSchema(req.schoolSchema, 'SELECT * FROM equipment ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get equipment error:', error);
+    res.status(500).json({ error: 'Failed to fetch equipment' });
+  }
+});
+router.get('/groups', async (req, res) => {
+  try {
+    const result = await queryInSchema(req.schoolSchema, `
+      SELECT category, COUNT(*) as count 
+      FROM equipment 
+      WHERE status != 'retired' 
+      GROUP BY category 
+      ORDER BY category
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get groups error:', error);
+    res.status(500).json({ error: 'Failed to fetch groups' });
+  }
+});
 router.get('/low-stock', getLowStockAlerts);
 router.get('/search/:serial', async (req, res) => {
   try {

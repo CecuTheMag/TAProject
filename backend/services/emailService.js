@@ -9,42 +9,60 @@ class EmailService {
       secure: false,
       auth: {
         user: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
-        pass: process.env.EMAIL_PASS || 'your-app-password'
+        pass: process.env.EMAIL_PASS || 'eieo fqhh rfcc tgsa'
       }
     });
   }
 
   async checkAndSendOverdueReminders() {
     try {
-      const overdueQuery = `
-        SELECT r.id, r.due_date, u.email, u.username, e.name as equipment_name
-        FROM requests r
-        JOIN users u ON r.user_id = u.id
-        JOIN equipment e ON r.equipment_id = e.id
-        WHERE r.status = 'approved' 
-        AND r.due_date < NOW()
-        AND (r.reminder_sent IS NULL OR r.reminder_sent < NOW() - INTERVAL '1 day')
-      `;
+      // Skip if no schools exist yet
+      const schoolsResult = await pool.query('SELECT code FROM schools LIMIT 1');
+      if (!schoolsResult.rows.length) {
+        console.log('No schools found, skipping reminder check');
+        return 0;
+      }
+
+      let totalReminders = 0;
       
-      const result = await pool.query(overdueQuery);
-      
-      for (const request of result.rows) {
-        await this.sendOverdueReminder(
-          request.email,
-          request.equipment_name,
-          request.due_date
-        );
+      // Check each school schema
+      for (const school of schoolsResult.rows) {
+        const schema = `school_${school.code}`;
         
-        await pool.query(
-          'UPDATE requests SET reminder_sent = NOW() WHERE id = $1',
-          [request.id]
-        );
+        const overdueQuery = `
+          SELECT r.id, r.due_date, u.email, u.username, e.name as equipment_name
+          FROM "${schema}".requests r
+          JOIN "${schema}".users u ON r.user_id = u.id
+          JOIN "${schema}".equipment e ON r.equipment_id = e.id
+          WHERE r.status = 'approved' 
+          AND r.due_date < NOW()
+          AND (r.reminder_sent IS NULL OR r.reminder_sent < NOW() - INTERVAL '1 day')
+        `;
+        
+        const result = await pool.query(overdueQuery);
+        
+        for (const request of result.rows) {
+          await this.sendOverdueReminder(
+            request.email,
+            request.equipment_name,
+            request.due_date
+          );
+          
+          await pool.query(
+            `UPDATE "${schema}".requests SET reminder_sent = NOW() WHERE id = $1`,
+            [request.id]
+          );
+        }
+        
+        totalReminders += result.rows.length;
       }
       
-      console.log(`✅ Sent ${result.rows.length} overdue reminders`);
-      return result.rows.length;
+      if (totalReminders > 0) {
+        console.log(`✅ Sent ${totalReminders} overdue reminders`);
+      }
+      return totalReminders;
     } catch (error) {
-      console.error('❌ Error checking overdue reminders:', error);
+      console.error('❌ Error checking overdue reminders:', error.message);
       return 0;
     }
   }

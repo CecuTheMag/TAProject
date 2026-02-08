@@ -44,32 +44,58 @@ router.get('/admins', getSchoolAdmins);
 router.get('/school-admins', getSchoolAdmins);
 router.post('/admins', createSchoolAdmin);
 router.post('/school-admins', createSchoolAdmin);
+
+// Get school admin by ID
+router.get('/school-admin/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT id, username, email, is_system_admin, created_at FROM admin_users WHERE id = $1',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'School admin not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Get school admin error:', error);
+    res.status(500).json({ error: 'Failed to fetch school admin' });
+  }
+});
 router.get('/users', async (req, res) => {
   try {
     console.log('getUsers called with query:', req.query);
     const { schoolId } = req.query;
-    let query = `
-      SELECT u.id, u.username, u.email, u.role, u.grade_level, u.subject_specialization, u.created_at, s.name as school_name
-      FROM users u
-      LEFT JOIN schools s ON u.school_id = s.id
-    `;
-    const params = [];
     
-    if (schoolId) {
-      query += ' WHERE u.school_id = $1';
-      params.push(schoolId);
-      console.log(`Filtering by school ID: ${schoolId}`);
+    if (!schoolId) {
+      return res.status(400).json({ error: 'School ID required', users: [] });
     }
     
-    query += ' ORDER BY u.created_at DESC';
+    // Get school code for schema
+    const schoolResult = await pool.query('SELECT code, name FROM schools WHERE id = $1', [schoolId]);
+    if (schoolResult.rows.length === 0) {
+      return res.status(404).json({ error: 'School not found', users: [] });
+    }
     
-    console.log('Executing query:', query);
-    console.log('With params:', params);
+    const school = schoolResult.rows[0];
+    const schoolSchema = `school_${school.code}`;
     
-    const result = await getMainDBData(query, params);
-    console.log(`Found ${result.rows?.length || 0} users`);
+    // Query users from school-specific schema
+    const query = `
+      SELECT u.id, u.username, u.email, u.role, u.grade_level, u.subject_specialization, u.created_at, $1 as school_name
+      FROM "${schoolSchema}".users u
+      ORDER BY u.created_at DESC
+    `;
     
-    res.json({ users: result.rows || [] });
+    console.log('Executing schema query:', query);
+    console.log('School schema:', schoolSchema);
+    
+    const result = await getMainDBData(query, [school.name]);
+    console.log(`Found ${result.rows?.length || 0} users in ${schoolSchema}`);
+    
+    res.json({ users: result.rows || [], school_schema: schoolSchema });
   } catch (error) {
     console.error('getUsers error:', error);
     res.status(500).json({ error: 'Failed to fetch users', users: [] });
@@ -84,6 +110,16 @@ router.delete('/schools/:id', async (req, res) => res.status(501).json({ error: 
 router.post('/import-users', upload.single('file'), async (req, res) => {
   try {
     const { nameCol, emailCol, phoneCol, roleCol, schoolId } = req.body;
+    
+    // Get school code for schema
+    const schoolResult = await pool.query('SELECT code FROM schools WHERE id = $1', [schoolId]);
+    if (schoolResult.rows.length === 0) {
+      return res.status(404).json({ error: 'School not found' });
+    }
+    
+    const schoolCode = schoolResult.rows[0].code;
+    const schoolSchema = `school_${schoolCode}`;
+    
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -105,18 +141,46 @@ router.post('/import-users', upload.single('file'), async (req, res) => {
       
       try {
         const hashedPassword = await bcrypt.hash('password123', 12);
-        const result = await pool.query(
-          'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [name.toLowerCase().replace(/\s+/g, ''), email, hashedPassword, role, schoolId]
-        );
-        imported.push({ name, email, role });
+        
+        // Insert into school-specific schema
+        const insertQuery = `
+          INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set) 
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+          ON CONFLICT (email) DO UPDATE SET 
+          username = EXCLUDED.username,
+          role = EXCLUDED.role,
+          grade_level = EXCLUDED.grade_level,
+          subject_specialization = EXCLUDED.subject_specialization,
+          phone = EXCLUDED.phone,
+          password_set = EXCLUDED.password_set
+          RETURNING id
+        `;
+        
+        const result = await getMainDBData(insertQuery, [
+          name.toLowerCase().replace(/\s+/g, ''), 
+          email, 
+          hashedPassword, 
+          role, 
+          name, // grade_level field used for full name
+          roleSubject, 
+          phone, 
+          false
+        ]);
+        
+        imported.push({ name, email, role, schema: schoolSchema });
       } catch (err) {
         errors.push({ row: i + 1, name, email, error: err.message });
       }
     }
     
-    res.json({ imported: imported.length, errors, details: imported });
+    res.json({ 
+      imported: imported.length, 
+      errors, 
+      details: imported,
+      school_schema: schoolSchema
+    });
   } catch (error) {
+    console.error('Import users error:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -87,7 +87,13 @@ export const createSchool = async (req, res) => {
         [school.id, name, code, address || null, phone || null]
       );
       
-      console.log(`School synced to main database: ${name} (${code})`);
+      // Create schema for the new school
+      await getMainDBData(
+        'SELECT create_school_schema($1)',
+        [code]
+      );
+      
+      console.log(`School synced to main database with schema: ${name} (${code})`);
     } catch (mainDbError) {
       console.warn('Main DB school creation failed:', mainDbError.message);
     }
@@ -119,42 +125,8 @@ export const getSchools = async (req, res) => {
     `);
     
     console.log('Admin DB schools:', adminSchools.rows.length);
-
-    // Also try to get schools from main database
-    let mainSchools = [];
-    try {
-      const mainSchoolsResult = await getMainDBData(`
-        SELECT s.id, s.name, s.code, s.address, s.phone, s.created_at,
-               COUNT(DISTINCT u.id) as user_count,
-               COUNT(DISTINCT CASE WHEN u.role = 'admin' THEN u.id END) as admin_count
-        FROM schools s
-        LEFT JOIN users u ON s.id = u.school_id
-        GROUP BY s.id, s.name, s.code, s.address, s.phone, s.created_at
-        ORDER BY s.created_at DESC
-      `);
-      if (mainSchoolsResult.rows) {
-        mainSchools = mainSchoolsResult.rows;
-      }
-      console.log('Main DB schools:', mainSchools.length);
-    } catch (apiError) {
-      console.error('Main DB query error:', apiError.message);
-      console.warn('Could not fetch schools from main DB:', apiError.message);
-    }
-
-    // Combine schools from both databases, prioritizing main DB data
-    const schoolMap = new Map();
     
-    // Add admin schools first
-    adminSchools.rows.forEach(school => {
-      schoolMap.set(school.id, school);
-    });
-    
-    // Override with main DB schools if they exist
-    mainSchools.forEach(school => {
-      schoolMap.set(school.id, school);
-    });
-    
-    const schools = Array.from(schoolMap.values());
+    const schools = adminSchools.rows;
     console.log('Combined schools:', schools.length);
 
     res.json({ schools });
@@ -232,16 +204,8 @@ export const createSchoolAdmin = async (req, res) => {
 
 export const getSchoolAdmins = async (req, res) => {
   try {
-    // Query main database for school admins via API
-    const result = await getMainDBData(`
-      SELECT u.id, u.username, u.email, u.created_at, s.name as school_name, s.code as school_code
-      FROM users u
-      LEFT JOIN schools s ON u.school_id = s.id
-      WHERE u.role = 'admin'
-      ORDER BY u.created_at DESC
-    `);
-
-    res.json({ admins: result.rows || [] });
+    // Return empty for now since users are in school schemas
+    res.json({ admins: [] });
   } catch (error) {
     console.error('getSchoolAdmins error:', error.message);
     res.status(500).json({ error: 'Failed to fetch school admins', admins: [] });
@@ -558,12 +522,22 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         // Generate clean username from name, not email
         const baseUsername = formattedName.toLowerCase().replace(/[^a-z0-9]/g, '');
         
-        // Ensure username uniqueness by checking database
+        // Ensure username uniqueness by checking database in school schema
         let username = baseUsername;
         let counter = 1;
+        
+        // Get school code for schema first
+        const schoolResult = await getMainDBData('SELECT code FROM schools WHERE id = $1', [parsedSchoolId]);
+        if (!schoolResult.rows || schoolResult.rows.length === 0) {
+          throw new Error(`School ${parsedSchoolId} not found`);
+        }
+        
+        const schoolCode = schoolResult.rows[0].code;
+        const schoolSchema = `school_${schoolCode}`;
+        
         while (true) {
           const existingUser = await getMainDBData(
-            'SELECT id FROM users WHERE username = $1',
+            `SELECT id FROM "${schoolSchema}".users WHERE username = $1`,
             [username]
           );
           if (!existingUser.rows || existingUser.rows.length === 0) {
@@ -577,21 +551,20 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         const hashedPassword = await bcrypt.hash(defaultPassword, 12);
 
         console.log(`Importing user ${i}: ${formattedName} (${username}) -> ${userRole} for school ${parsedSchoolId}`);
-
-        // Insert user with formatted name and original role data
+        
+        // Insert user into school-specific schema
         const result = await getMainDBData(
-          `INSERT INTO users (username, email, password, role, school_id, grade_level, subject_specialization, phone, password_set) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+          `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
            ON CONFLICT (email) DO UPDATE SET 
            username = EXCLUDED.username,
            role = EXCLUDED.role,
-           school_id = EXCLUDED.school_id,
            grade_level = EXCLUDED.grade_level,
            subject_specialization = EXCLUDED.subject_specialization,
            phone = EXCLUDED.phone,
            password_set = EXCLUDED.password_set
            RETURNING id`,
-          [username, email, hashedPassword, userRole, parsedSchoolId, formattedName, role, phone, false]
+          [username, email, hashedPassword, userRole, formattedName, role, phone, false]
         );
         
         if (result.rows && result.rows.length > 0) {
@@ -648,32 +621,12 @@ export const getSystemStats = async (req, res) => {
     console.log('Admin DB user count:', adminUserCount.rows[0]?.count);
     console.log('System admin count:', systemAdminCount.rows[0]?.count);
 
-    // Query main database for user stats via API
-    let mainStats = { total_users: 0, school_admins: 0, main_schools: 0 };
-    try {
-      const userStatsResult = await getMainDBData(`
-        SELECT 
-          COUNT(*) as total_users,
-          COUNT(CASE WHEN role = 'admin' THEN 1 END) as school_admins,
-          (SELECT COUNT(*) FROM schools) as main_schools
-        FROM users
-      `);
-      if (userStatsResult.rows && userStatsResult.rows[0]) {
-        mainStats = userStatsResult.rows[0];
-      }
-      console.log('Main DB stats:', mainStats);
-    } catch (apiError) {
-      console.warn('Could not fetch main DB stats:', apiError.message);
-    }
-
+    // Return only admin stats - don't query main DB for users since they're in schemas
     const combinedStats = {
-      active_schools: Math.max(
-        parseInt(adminSchoolCount.rows[0]?.count || 0),
-        parseInt(mainStats.main_schools || 0)
-      ),
+      active_schools: parseInt(adminSchoolCount.rows[0]?.count || 0),
       system_admins: parseInt(systemAdminCount.rows[0]?.count || 0),
-      school_admins: parseInt(mainStats.school_admins || 0),
-      total_users: parseInt(mainStats.total_users || 0),
+      school_admins: 0, // Will be calculated per school
+      total_users: 0, // Will be calculated per school
       total_admin_users: parseInt(adminUserCount.rows[0]?.count || 0)
     };
     

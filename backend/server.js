@@ -16,6 +16,7 @@ import { metricsMiddleware, metricsHandler } from './middleware/metrics.js';
 import { initDB } from './database.js';
 import redisService from './utils/redis.js';
 import migrationRunner from './utils/migrationRunner.js';
+import { createSchoolSchema } from './migrations/schema-per-school.js';
 
 // Route handlers for different API endpoints
 import authRoutes from './routes/auth.js';         // User authentication
@@ -52,7 +53,11 @@ app.use(helmet({
 app.use(compression());
 
 // CORS middleware - enables cross-origin requests from frontend
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-School-Code', 'X-Admin-Panel']
+}));
 
 // Body parsing middleware - handles JSON and URL-encoded data (10MB limit for file uploads)
 app.use(express.json({ limit: '10mb' }));
@@ -76,6 +81,37 @@ app.use(apiLimiter);
 // Initialize database and Redis
 initDB();
 migrationRunner.runMigrations().catch(console.error);
+
+// Initialize schema-per-school architecture
+const initializeSchemas = async () => {
+  try {
+    const { default: pool } = await import('./database.js');
+    
+    // Ensure schools table exists first
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS schools (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        code VARCHAR(50) UNIQUE NOT NULL,
+        address VARCHAR(500),
+        phone VARCHAR(20),
+        email VARCHAR(255),
+        domain VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    const schools = await pool.query('SELECT code FROM schools');
+    for (const school of schools.rows) {
+      await createSchoolSchema(school.code);
+    }
+    console.log('✅ School schemas initialized');
+  } catch (error) {
+    console.error('❌ Schema initialization failed:', error.message);
+  }
+};
+initializeSchemas();
+
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
 // Routes with rate limiting

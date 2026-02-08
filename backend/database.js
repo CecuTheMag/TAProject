@@ -361,8 +361,8 @@ export const initDB = async () => {
     
     console.log('Database tables and indexes initialized successfully');
     
-    // Run migrations
-    await migrationRunner.runMigrations();
+    // Run migrations - temporarily disabled
+    // await migrationRunner.runMigrations();
     
     // create default admin account
     await createDefaultAdmin();

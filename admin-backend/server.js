@@ -16,7 +16,7 @@ app.use(cors({
   origin: ['http://localhost:3002', 'http://localhost:3000', 'http://127.0.0.1:3002', 'http://192.168.88.210:3002'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Admin-Panel']
 }));
 
 app.use(express.json({ limit: '50mb' }));

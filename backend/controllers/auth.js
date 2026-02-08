@@ -89,16 +89,44 @@ export const login = async (req, res) => {
     const { email, password } = value;
     console.log('🔐 Login attempt:', email);
     
-    const result = await pool.query('SELECT * FROM public.users WHERE email = $1', [email]);
-    console.log('🔍 User lookup result:', result.rows.length);
+    // First check which school this user belongs to
+    let user = null;
+    let schoolCode = null;
     
-    if (result.rows.length === 0) {
+    // Get all schools and check their schemas
+    const schools = await pool.query('SELECT id, code FROM schools');
+    
+    for (const school of schools.rows) {
+      try {
+        const result = await pool.query(`SELECT * FROM "school_${school.code}".users WHERE email = $1`, [email]);
+        if (result.rows.length > 0) {
+          user = result.rows[0];
+          schoolCode = school.code;
+          break;
+        }
+      } catch (schemaError) {
+        // Schema might not exist, continue
+      }
+    }
+    
+    // Fallback to public schema
+    if (!user) {
+      const result = await pool.query('SELECT * FROM public.users WHERE email = $1', [email]);
+      if (result.rows.length > 0) {
+        user = result.rows[0];
+        // Get school code from school_id
+        const schoolResult = await pool.query('SELECT code FROM schools WHERE id = $1', [user.school_id]);
+        schoolCode = schoolResult.rows[0]?.code;
+      }
+    }
+    
+    console.log('🔍 User lookup result:', user ? 'found' : 'not found', 'School:', schoolCode);
+    
+    if (!user) {
       console.log('❌ User not found:', email);
       return res.status(401).json({ error: 'Email not found in system. Contact your administrator.' });
     }
 
-    const user = result.rows[0];
-    
     // Check if this is a first-time user (password not set)
     if (!user.password_set) {
       console.log('🆕 First-time user detected:', email);
@@ -124,11 +152,16 @@ export const login = async (req, res) => {
       role: user.role, 
       school_id: user.school_id,
       subject_id: user.subject_id, 
-      created_at: user.created_at 
+      created_at: user.created_at,
+      schoolCode: schoolCode
     };
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    console.log('✅ Login successful:', email);
+    const token = jwt.sign({ 
+      userId: user.id, 
+      schoolCode: schoolCode 
+    }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    console.log('✅ Login successful:', email, 'School:', schoolCode);
     
     res.json({
       message: 'Login successful',

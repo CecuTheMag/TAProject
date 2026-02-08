@@ -1,8 +1,12 @@
 import express from 'express';
+import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireTeacherOrAdmin } from '../middleware/roleAuth.js';
 import pool from '../database.js';
-import { authenticateToken, requireTeacherOrAdmin } from '../middleware.js';
 
 const router = express.Router();
+
+router.use(setSchoolContext);
 
 // Test endpoint
 router.get('/test', (req, res) => {
@@ -22,47 +26,26 @@ router.get('/curriculum-test', (req, res) => {
   res.json({ message: 'Curriculum endpoint working' });
 });
 
-// Get subjects (filtered for teachers only)
-router.get('/subjects', authenticateToken, async (req, res) => {
+// Get subjects from shared table (not school-specific)
+router.get('/subjects', async (req, res) => {
   try {
-    let query = 'SELECT * FROM subjects';
-    let params = [];
-    
-    // If user is a teacher, only show their assigned subject
-    if (req.user.role === 'teacher' && req.user.subject_id) {
-      query += ' WHERE id = $1';
-      params.push(req.user.subject_id);
-    }
-    
-    query += ' ORDER BY name';
-    
-    const result = await pool.query(query, params);
+    const result = await queryInSchema('public', 'SELECT * FROM subjects ORDER BY name');
     res.json(result.rows);
   } catch (error) {
+    console.error('Get subjects error:', error);
     res.status(500).json({ error: 'Failed to fetch subjects' });
   }
 });
 
-// Get lesson plans for teacher
-router.get('/lesson-plans', authenticateToken, async (req, res) => {
+// Get lesson plans from school schema
+router.get('/lesson-plans', async (req, res) => {
   try {
-    let query = `
+    const result = await queryInSchema(req.schoolSchema, `
       SELECT lp.*, s.name as subject_name, s.code as subject_code
       FROM lesson_plans lp
       LEFT JOIN subjects s ON lp.subject_id = s.id
-      WHERE lp.teacher_id = $1
-    `;
-    let params = [req.user.id];
-    
-    // If user is a teacher with assigned subject, filter by that subject
-    if (req.user.role === 'teacher' && req.user.subject_id) {
-      query += ` AND lp.subject_id = $2`;
-      params.push(req.user.subject_id);
-    }
-    
-    query += ` ORDER BY lp.lesson_date DESC`;
-    
-    const result = await pool.query(query, params);
+      ORDER BY lp.lesson_date DESC
+    `);
     res.json(result.rows);
   } catch (error) {
     console.error('Lesson plans error:', error);

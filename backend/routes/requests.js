@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticateToken, requireAdmin, requireTeacherOrAdmin, requireManagerTeacherOrAdmin } from '../middleware.js';
+import { setSchoolContext } from '../middleware/schoolContext.js';
 import {
   createRequest,
   getUserRequests,
@@ -11,6 +12,9 @@ import {
 } from '../controllers/requests.js';
 
 const router = express.Router();
+
+// Apply schema context to all routes
+router.use(setSchoolContext);
 
 router.post('/', authenticateToken, createRequest);
 router.get('/', authenticateToken, getUserRequests);

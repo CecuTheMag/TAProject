@@ -24,12 +24,36 @@ const api = axios.create({
 /**
  * Request interceptor - automatically adds JWT authentication to all requests
  * Retrieves token from localStorage and adds to Authorization header
+ * Also adds school context header if available
  */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`; // JWT Bearer token format
   }
+  
+  // Add school context from user data if available
+  const userData = localStorage.getItem('user');
+  let schoolCode = null;
+  
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      if (user.schoolCode) {
+        schoolCode = user.schoolCode;
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+  }
+  
+  // Fallback to default school if no school code found
+  if (!schoolCode) {
+    schoolCode = 'BGVHRFDXSE'; // Default school code
+  }
+  
+  config.headers['X-School-Code'] = schoolCode;
+  
   return config;
 });
 
