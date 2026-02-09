@@ -37,6 +37,7 @@ router.get('/stats', async (req, res) => {
     const requestsResult = await queryInSchema(req.schoolSchema, 'SELECT COUNT(*) as count FROM requests');
     const availableResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'available'");
     const checkedOutResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'checked_out'");
+    const underRepairResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'under_repair'");
     const pendingResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'pending'");
     
     res.json({
@@ -45,6 +46,7 @@ router.get('/stats', async (req, res) => {
       total_requests: parseInt(requestsResult.rows[0]?.count || 0),
       available_equipment: parseInt(availableResult.rows[0]?.count || 0),
       checked_out_equipment: parseInt(checkedOutResult.rows[0]?.count || 0),
+      under_repair: parseInt(underRepairResult.rows[0]?.count || 0),
       pending_requests: parseInt(pendingResult.rows[0]?.count || 0)
     });
   } catch (error) {

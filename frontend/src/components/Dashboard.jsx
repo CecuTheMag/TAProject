@@ -141,8 +141,8 @@ const Dashboard = ({ schoolUser }) => {
           if (!prevStats) return prevStats;
           const newStats = { ...prevStats };
           if (event.detail.newStatus === 'checked_out') {
-            newStats.equipment.available = Math.max(0, parseInt(newStats.equipment.available) - 1);
-            newStats.equipment.checked_out = parseInt(newStats.equipment.checked_out) + 1;
+            newStats.available_equipment = Math.max(0, parseInt(newStats.available_equipment) - 1);
+            newStats.checked_out_equipment = parseInt(newStats.checked_out_equipment) + 1;
           }
           return newStats;
         });
@@ -225,10 +225,10 @@ const Dashboard = ({ schoolUser }) => {
    */
   const stats = dashboardStats ? {
     // Use API statistics (more accurate, includes historical data)
-    total: parseInt(dashboardStats.equipment.total_equipment) || 0,
-    available: parseInt(dashboardStats.equipment.available) || 0,
-    checkedOut: parseInt(dashboardStats.equipment.checked_out) || 0,
-    underRepair: parseInt(dashboardStats.equipment.under_repair) || 0
+    total: parseInt(dashboardStats.total_equipment) || 0,
+    available: parseInt(dashboardStats.available_equipment) || 0,
+    checkedOut: parseInt(dashboardStats.checked_out_equipment) || 0,
+    underRepair: parseInt(dashboardStats.under_repair) || 0
   } : {
     // Fallback: calculate from current equipment list
     total: equipmentList.length,

@@ -11,7 +11,7 @@ import axios from 'axios';
  */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? `${window.location.origin}/api`        // Production: nginx proxy routing
-  : `http://${window.location.hostname}:5000`; // Development: direct backend connection
+  : `http://${window.location.hostname}:5000/api`; // Development: direct backend connection with /api prefix
 
 /**
  * Create axios instance with centralized configuration
@@ -47,7 +47,7 @@ api.interceptors.request.use((config) => {
     }
   }
   
-  // Fallback to default school if no school code found
+  // Always use default school if no school code found (for login)
   if (!schoolCode) {
     schoolCode = 'BGVHRFDXSE'; // Default school code
   }

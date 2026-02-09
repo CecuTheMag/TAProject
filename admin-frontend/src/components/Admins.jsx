@@ -30,7 +30,14 @@ const Admins = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await systemAdmin.createAdmin(formData);
+      // Send username instead of name to match backend expectation
+      const adminData = {
+        username: formData.name, // Backend expects username field
+        email: formData.email,
+        password: formData.password,
+        school_id: parseInt(formData.school_id)
+      };
+      await systemAdmin.createAdmin(adminData);
       setFormData({ email: '', password: '', name: '', school_id: '' });
       setShowForm(false);
       loadData();
@@ -109,7 +116,7 @@ const Admins = () => {
         </div>
         {admins.map(admin => (
           <div key={admin.id} style={styles.tableRow}>
-            <div style={styles.td}>{admin.name}</div>
+            <div style={styles.td}>{admin.username}</div>
             <div style={styles.td}>{admin.email}</div>
             <div style={styles.td}>{admin.school_name}</div>
             <div style={styles.td}>

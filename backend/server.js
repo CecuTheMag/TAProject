@@ -11,6 +11,8 @@ import dotenv from 'dotenv';          // Environment variable management
 // Custom middleware imports
 import { apiLimiter, authLimiter, reportLimiter } from './middleware/rateLimiter.js';
 import { metricsMiddleware, metricsHandler } from './middleware/metrics.js';
+import { setSchoolContext } from './middleware/schoolContext.js';
+import { authenticateToken } from './middleware/auth.js';
 
 // Database and caching services
 import { initDB } from './database.js';
@@ -54,10 +56,52 @@ app.use(compression());
 
 // CORS middleware - enables cross-origin requests from frontend
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3002', 
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3002',
+      /^http:\/\/.*:3000$/,  // Any hostname on port 3000
+      /^http:\/\/.*:3002$/   // Any hostname on port 3002
+    ];
+    
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return allowed === origin;
+      }
+      return allowed.test(origin);
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-School-Code', 'X-Admin-Panel']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-School-Code', 'X-Admin-Panel'],
+  exposedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  optionsSuccessStatus: 200
 }));
+
+// Manual CORS headers for problematic requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:3000');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
 // Body parsing middleware - handles JSON and URL-encoded data (10MB limit for file uploads)
 app.use(express.json({ limit: '10mb' }));
@@ -114,16 +158,16 @@ initializeSchemas();
 
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
-// Routes with rate limiting
-app.use('/auth', authLimiter, authRoutes);
-app.use('/equipment', equipmentRoutes);
-app.use('/request', requestRoutes);
-app.use('/reports', reportLimiter, reportRoutes);
-app.use('/dashboard', dashboardRoutes);
-app.use('/alerts', alertRoutes);
-app.use('/documents', documentRoutes);
-app.use('/users', userRoutes);
-app.use('/education', educationRoutes);
+// Routes with rate limiting and school context
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/equipment', setSchoolContext, authenticateToken, equipmentRoutes);
+app.use('/api/request', setSchoolContext, authenticateToken, requestRoutes);
+app.use('/api/reports', setSchoolContext, authenticateToken, reportLimiter, reportRoutes);
+app.use('/api/dashboard', setSchoolContext, authenticateToken, dashboardRoutes);
+app.use('/api/alerts', setSchoolContext, authenticateToken, alertRoutes);
+app.use('/api/documents', setSchoolContext, authenticateToken, documentRoutes);
+app.use('/api/users', setSchoolContext, authenticateToken, userRoutes);
+app.use('/api/education', setSchoolContext, authenticateToken, educationRoutes);
 app.use('/api/internal', internalRoutes);
 
 // Direct curriculum test route

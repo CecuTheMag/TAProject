@@ -262,7 +262,7 @@ const AuthPage = () => {
 
               
               <div style={{ marginBottom: '20px' }}>
-                <label style={{
+                <label htmlFor="email-input" style={{
                   display: 'block',
                   fontSize: '14px',
                   fontWeight: '600',
@@ -272,6 +272,7 @@ const AuthPage = () => {
                   {t('emailAddress')}
                 </label>
                 <input
+                  id="email-input"
                   type="email"
                   name="email"
                   placeholder={t('enterEmail')}
@@ -295,7 +296,7 @@ const AuthPage = () => {
 
               
               <div style={{ marginBottom: !isLogin ? '20px' : '24px' }}>
-                <label style={{
+                <label htmlFor="password-input" style={{
                   display: 'block',
                   fontSize: '14px',
                   fontWeight: '600',
@@ -305,6 +306,7 @@ const AuthPage = () => {
                   {t('password')}
                 </label>
                 <input
+                  id="password-input"
                   type="password"
                   name="password"
                   placeholder={t('enterPassword')}

@@ -157,13 +157,17 @@ export const createSchoolAdmin = async (req, res) => {
       return res.status(400).json({ error: 'School not found' });
     }
 
+    const school = schoolCheck.rows[0];
+    const schoolSchema = `school_${school.code}`;
+    
+    console.log('School found:', school.name, 'Schema:', schoolSchema);
+
     // Ensure school exists in main database too
     try {
       const mainSchoolCheck = await getMainDBData('SELECT id FROM schools WHERE id = $1', [school_id]);
       if (!mainSchoolCheck.rows || mainSchoolCheck.rows.length === 0) {
         console.log('School not found in main database, creating it...');
         // Create school in main database
-        const school = schoolCheck.rows[0];
         const schoolName = school.name || `School ${school.id}`;
         const schoolCode = school.code || `SCH${school.id}`;
         await getMainDBData(
@@ -179,15 +183,15 @@ export const createSchoolAdmin = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     
-    console.log('Creating admin in main database...');
+    console.log('Creating admin in school schema:', schoolSchema);
     
-    // Create admin in main database with school schema context
+    // Create admin in school-specific schema, not main users table
     const result = await getMainDBData(
-      'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, created_at',
-      [username, email, hashedPassword, 'admin', school_id]
+      `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, email, role, created_at`,
+      [username, email, hashedPassword, 'admin', username, 'Administrator', null, true]
     );
 
-    console.log('Admin created successfully:', result.rows[0]);
+    console.log('Admin created successfully in schema:', result.rows[0]);
     
     res.status(201).json({
       message: 'School admin created successfully',
@@ -204,8 +208,44 @@ export const createSchoolAdmin = async (req, res) => {
 
 export const getSchoolAdmins = async (req, res) => {
   try {
-    // Return empty for now since users are in school schemas
-    res.json({ admins: [] });
+    console.log('getSchoolAdmins called');
+    
+    // Get all schools from admin database
+    const schoolsResult = await pool.query('SELECT id, name, code FROM schools ORDER BY name');
+    const schools = schoolsResult.rows;
+    
+    console.log(`Found ${schools.length} schools`);
+    
+    const allAdmins = [];
+    
+    // Query each school schema for admin users
+    for (const school of schools) {
+      try {
+        const schoolSchema = `school_${school.code}`;
+        console.log(`Querying admins from schema: ${schoolSchema}`);
+        
+        const adminsResult = await getMainDBData(
+          `SELECT id, username, email, role, created_at FROM "${schoolSchema}".users WHERE role = 'admin'`,
+          []
+        );
+        
+        if (adminsResult.rows && adminsResult.rows.length > 0) {
+          const schoolAdmins = adminsResult.rows.map(admin => ({
+            ...admin,
+            school_id: school.id,
+            school_name: school.name,
+            school_code: school.code
+          }));
+          allAdmins.push(...schoolAdmins);
+          console.log(`Found ${schoolAdmins.length} admins in ${school.name}`);
+        }
+      } catch (schemaError) {
+        console.log(`Error querying schema for school ${school.name}:`, schemaError.message);
+      }
+    }
+    
+    console.log(`Total admins found: ${allAdmins.length}`);
+    res.json({ admins: allAdmins });
   } catch (error) {
     console.error('getSchoolAdmins error:', error.message);
     res.status(500).json({ error: 'Failed to fetch school admins', admins: [] });
