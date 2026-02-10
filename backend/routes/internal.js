@@ -1,5 +1,6 @@
 import express from 'express';
 import pool from '../database.js';
+import { createSchoolSchema } from '../migrations/schema-per-school.js';
 
 const router = express.Router();
 
@@ -11,6 +12,27 @@ const validateAPIKey = (req, res, next) => {
   }
   next();
 };
+
+router.post('/create-school-schema', validateAPIKey, async (req, res) => {
+  try {
+    const { schoolCode } = req.body;
+    if (!schoolCode) {
+      return res.status(400).json({ error: 'School code is required' });
+    }
+    
+    console.log(`Creating schema for school: ${schoolCode}`);
+    const success = await createSchoolSchema(schoolCode);
+    
+    if (success) {
+      res.json({ message: `Schema created successfully for school: ${schoolCode}` });
+    } else {
+      res.status(500).json({ error: 'Failed to create school schema' });
+    }
+  } catch (error) {
+    console.error('Create school schema error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.post('/query', validateAPIKey, async (req, res) => {
   const client = await pool.connect();

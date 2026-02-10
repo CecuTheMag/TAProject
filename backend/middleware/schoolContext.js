@@ -14,6 +14,20 @@ export const setSchoolContext = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         if (decoded.schoolCode) {
           schoolCode = decoded.schoolCode;
+        } else if (decoded.userId && decoded.userId !== 999999) {
+          // Try to find user's school from database
+          const schools = await pool.query('SELECT code FROM schools');
+          for (const school of schools.rows) {
+            try {
+              const result = await pool.query(`SELECT id FROM "school_${school.code}".users WHERE id = $1`, [decoded.userId]);
+              if (result.rows.length > 0) {
+                schoolCode = school.code;
+                break;
+              }
+            } catch (schemaError) {
+              // Schema doesn't exist, continue
+            }
+          }
         }
       } catch (tokenError) {
         // Token invalid, continue to other methods
@@ -39,16 +53,19 @@ export const setSchoolContext = async (req, res, next) => {
       schoolCode = req.query.school.toUpperCase();
     }
     
-    // Method 5: For admin panel, use default school for now
-    if (!schoolCode && req.headers['x-admin-panel']) {
-      schoolCode = 'BGVHRFDXSE'; // Default to existing school for admin panel
+    // Method 5: For admin panel or if no school found, use first available school
+    if (!schoolCode) {
+      const schools = await pool.query('SELECT code FROM schools LIMIT 1');
+      if (schools.rows.length > 0) {
+        schoolCode = schools.rows[0].code;
+      }
     }
     
-    // If no school code found, return error (except for auth routes)
+    // If still no school code found, return error (except for auth routes)
     if (!schoolCode) {
       return res.status(400).json({ 
         error: 'School context required', 
-        message: 'Please provide school code via token, header, or subdomain' 
+        message: 'No schools available in system' 
       });
     }
     

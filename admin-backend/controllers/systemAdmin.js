@@ -162,7 +162,7 @@ export const createSchoolAdmin = async (req, res) => {
     
     console.log('School found:', school.name, 'Schema:', schoolSchema);
 
-    // Ensure school exists in main database too
+    // Ensure school exists in main database and create schema
     try {
       const mainSchoolCheck = await getMainDBData('SELECT id FROM schools WHERE id = $1', [school_id]);
       if (!mainSchoolCheck.rows || mainSchoolCheck.rows.length === 0) {
@@ -176,6 +176,21 @@ export const createSchoolAdmin = async (req, res) => {
         );
         console.log('School created in main database');
       }
+      
+      // Create school schema
+      console.log('Creating school schema...');
+      const schemaResponse = await axios.post(
+        `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/create-school-schema`,
+        { schoolCode: school.code },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
+          },
+          timeout: 15000
+        }
+      );
+      console.log('Schema creation response:', schemaResponse.data);
     } catch (schoolSyncError) {
       console.error('Error syncing school to main database:', schoolSyncError.message);
       return res.status(500).json({ error: 'Failed to sync school data' });
@@ -185,7 +200,7 @@ export const createSchoolAdmin = async (req, res) => {
     
     console.log('Creating admin in school schema:', schoolSchema);
     
-    // Create admin in school-specific schema, not main users table
+    // Create admin in school-specific schema
     const result = await getMainDBData(
       `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, email, role, created_at`,
       [username, email, hashedPassword, 'admin', username, 'Administrator', null, true]

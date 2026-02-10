@@ -15,9 +15,10 @@ export const createRequest = async (req, res) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const { equipment_id, start_date, end_date, notes } = value;
+    const schema = req.schoolSchema;
     
     // check if equipment exists and is available
-    const equipmentResult = await pool.query('SELECT * FROM equipment WHERE id = $1', [equipment_id]);
+    const equipmentResult = await pool.query(`SELECT * FROM "${schema}".equipment WHERE id = $1`, [equipment_id]);
     if (equipmentResult.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
     }
@@ -28,24 +29,26 @@ export const createRequest = async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO requests (user_id, equipment_id, start_date, end_date, notes) 
+      `INSERT INTO "${schema}".requests (user_id, equipment_id, start_date, end_date, notes) 
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [req.user.id, equipment_id, start_date, end_date, notes]
     );
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    console.error('createRequest error:', error);
     res.status(500).json({ error: 'Failed to create request' });
   }
 };
 
 export const getUserRequests = async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     const result = await pool.query(
       `SELECT r.*, u.username, u.username as user_name, e.name as equipment_name, e.type as equipment_type 
-       FROM requests r 
-       JOIN users u ON r.user_id = u.id
-       JOIN equipment e ON r.equipment_id = e.id 
+       FROM "${schema}".requests r 
+       JOIN "${schema}".users u ON r.user_id = u.id
+       JOIN "${schema}".equipment e ON r.equipment_id = e.id 
        WHERE r.user_id = $1 
        ORDER BY r.request_date DESC`,
       [req.user.id]
@@ -53,24 +56,25 @@ export const getUserRequests = async (req, res) => {
     
     res.json(result.rows);
   } catch (error) {
+    console.error('getUserRequests error:', error);
     res.status(500).json({ error: 'Failed to fetch requests' });
   }
 };
 
 export const getAllRequests = async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     const result = await pool.query(
       `SELECT r.*, u.username, u.username as user_name, e.name as equipment_name, e.type as equipment_type 
-       FROM requests r 
-       JOIN users u ON r.user_id = u.id 
-       JOIN equipment e ON r.equipment_id = e.id 
-       WHERE u.school_id = $1
-       ORDER BY r.request_date DESC`,
-      [req.user.school_id]
+       FROM "${schema}".requests r 
+       JOIN "${schema}".users u ON r.user_id = u.id 
+       JOIN "${schema}".equipment e ON r.equipment_id = e.id 
+       ORDER BY r.request_date DESC`
     );
     
     res.json(result.rows);
   } catch (error) {
+    console.error('getAllRequests error:', error);
     res.status(500).json({ error: 'Failed to fetch requests' });
   }
 };

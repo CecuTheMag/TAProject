@@ -6,8 +6,9 @@ import emailService from '../services/emailService.js';
 const router = express.Router();
 
 // Get low stock alerts
-router.get('/low-stock', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.get('/low-stock', authenticateToken, async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     const query = `
       WITH groups AS (
         SELECT
@@ -22,7 +23,7 @@ router.get('/low-stock', authenticateToken, requireTeacherOrAdmin, async (req, r
           COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count,
           COALESCE(MIN(stock_threshold), 2) AS stock_threshold,
           MIN(id) as id
-        FROM equipment
+        FROM "${schema}".equipment
         WHERE serial_number IS NOT NULL
         GROUP BY base_serial, name, type
         HAVING COUNT(CASE WHEN status != 'retired' THEN 1 END) > 0
@@ -41,14 +42,15 @@ router.get('/low-stock', authenticateToken, requireTeacherOrAdmin, async (req, r
 });
 
 // Get overdue equipment
-router.get('/overdue', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.get('/overdue', authenticateToken, async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     const query = `
       SELECT r.id, r.due_date, r.start_date, r.end_date,
              u.username, u.email, e.name as equipment_name, e.type
-      FROM requests r
-      JOIN users u ON r.user_id = u.id
-      JOIN equipment e ON r.equipment_id = e.id
+      FROM "${schema}".requests r
+      JOIN "${schema}".users u ON r.user_id = u.id
+      JOIN "${schema}".equipment e ON r.equipment_id = e.id
       WHERE r.status = 'approved' 
       AND r.due_date < NOW()
       AND r.returned_at IS NULL

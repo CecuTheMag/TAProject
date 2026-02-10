@@ -24,15 +24,46 @@ export const authenticateToken = async (req, res, next) => {
       return next();
     }
     
-    const result = await pool.query('SELECT * FROM public.users WHERE id = $1', [decoded.userId]);
+    // First try to find user in public.users (legacy)
+    let result = await pool.query('SELECT * FROM public.users WHERE id = $1', [decoded.userId]);
     
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid token' });
+    if (result.rows.length > 0) {
+      req.user = result.rows[0];
+      return next();
     }
-
-    req.user = result.rows[0];
-    next();
+    
+    // If not found in public.users, search in school schemas
+    if (decoded.schoolCode) {
+      const schoolSchema = `school_${decoded.schoolCode}`;
+      try {
+        result = await pool.query(`SELECT * FROM "${schoolSchema}".users WHERE id = $1`, [decoded.userId]);
+        if (result.rows.length > 0) {
+          req.user = { ...result.rows[0], school_code: decoded.schoolCode };
+          return next();
+        }
+      } catch (schemaError) {
+        console.log(`Schema ${schoolSchema} not found or user not in schema`);
+      }
+    }
+    
+    // If still not found, try to find in any school schema
+    const schools = await pool.query('SELECT code FROM schools');
+    for (const school of schools.rows) {
+      try {
+        const schoolSchema = `school_${school.code}`;
+        result = await pool.query(`SELECT * FROM "${schoolSchema}".users WHERE id = $1`, [decoded.userId]);
+        if (result.rows.length > 0) {
+          req.user = { ...result.rows[0], school_code: school.code };
+          return next();
+        }
+      } catch (schemaError) {
+        // Schema doesn't exist or user not found, continue
+      }
+    }
+    
+    return res.status(401).json({ error: 'Invalid token - user not found' });
   } catch (error) {
+    console.error('Auth error:', error);
     return res.status(403).json({ error: 'Invalid token' });
   }
 };
@@ -66,7 +97,12 @@ export const requireManagerOrAdmin = (req, res, next) => {
 };
 
 export const requireManagerTeacherOrAdmin = (req, res, next) => {
+  console.log('Role check - User role:', req.user?.role, 'User:', req.user?.username);
+  if (!req.user) {
+    return res.status(403).json({ error: 'User not authenticated' });
+  }
   if (!['teacher', 'manager', 'admin'].includes(req.user.role)) {
+    console.log('Access denied - Role required: teacher/manager/admin, User has:', req.user.role);
     return res.status(403).json({ error: 'Teacher, Manager or Admin access required' });
   }
   next();
