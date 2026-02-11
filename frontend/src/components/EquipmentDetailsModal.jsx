@@ -295,6 +295,12 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
                     border: '2px solid #e2e8f0',
                     borderRadius: '8px'
                   }}
+                  onError={(e) => {
+                    console.error('QR Code failed to load:', equipment.qr_code?.substring(0, 50));
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = '<div style="padding: 20px; color: #ef4444; font-size: 14px;">QR Code failed to load</div>';
+                  }}
+                  onLoad={() => console.log('QR Code loaded successfully')}
                 />
               </div>
               <p style={{

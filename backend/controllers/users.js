@@ -129,7 +129,7 @@ export const deleteUser = async (req, res) => {
 
 export const createUser = async (req, res) => {
   try {
-    const { username, email, password, role = 'student' } = req.body;
+    const { username, email, role = 'student' } = req.body;
     
     // Check if user already exists
     const existingUser = await pool.query(
@@ -141,11 +141,12 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
     
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const tempPassword = 'temp';
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
     
     const result = await pool.query(
-      'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
-      [username, email, hashedPassword, role]
+      'INSERT INTO users (username, email, password, role, password_set) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, created_at',
+      [username, email, hashedPassword, role, false]
     );
     
     res.status(201).json(result.rows[0]);

@@ -59,7 +59,6 @@ const schoolSchema = Joi.object({
 const schoolAdminSchema = Joi.object({
   username: Joi.string().alphanum().min(3).max(30).required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
   school_id: Joi.number().integer().required()
 });
 
@@ -189,7 +188,7 @@ export const createSchoolAdmin = async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { username, email, password, school_id } = value;
+    const { username, email, school_id } = value;
     
     console.log('Creating admin for school_id:', school_id);
     
@@ -239,14 +238,15 @@ export const createSchoolAdmin = async (req, res) => {
       return res.status(500).json({ error: 'Failed to sync school data' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const tempPassword = 'temp';
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
     
     console.log('Creating admin in school schema:', schoolSchema);
     
     // Create admin in school-specific schema
     const result = await getMainDBData(
       `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, email, role, created_at`,
-      [username, email, hashedPassword, 'admin', username, 'Administrator', null, true]
+      [username, email, hashedPassword, 'admin', username, 'Administrator', null, false]
     );
 
     console.log('Admin created successfully in schema:', result.rows[0]);

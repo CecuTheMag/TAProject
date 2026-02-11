@@ -36,25 +36,35 @@ const AuthPage = () => {
     setError('');
 
     try {
-      if (!isLogin && formData.password !== formData.confirmPassword) {
-        setError(t('passwordsDoNotMatch'));
-        return;
+      if (isLogin) {
+        // Login flow
+        const response = await auth.login({ email: formData.email, password: formData.password });
+        
+        if (response.data.requiresSetup) {
+          setVerificationEmail(formData.email);
+          setShowVerification(true);
+          return;
+        }
+        
+        login(response.data.user, response.data.token);
+      } else {
+        // Signup flow - only email required
+        const response = await auth.login({ email: formData.email, password: 'temp' });
+        
+        if (response.data.requiresSetup) {
+          setVerificationEmail(formData.email);
+          setShowVerification(true);
+          return;
+        }
+        
+        setError('Account already exists and is activated. Please use login.');
       }
-      
-      const response = isLogin 
-        ? await auth.login({ email: formData.email, password: formData.password })
-        : await auth.register({ username: formData.username, email: formData.email, password: formData.password });
-      
-      // Check if this is a first-time user requiring setup
-      if (response.data.requiresSetup) {
-        setVerificationEmail(formData.email);
-        setShowVerification(true);
-        return;
-      }
-      
-      login(response.data.user, response.data.token);
     } catch (err) {
-      setError(err.response?.data?.error || (isLogin ? t('loginFailed') : t('signupFailed')));
+      if (!isLogin && err.response?.status === 401) {
+        setError('Email not found in school system. Contact your administrator.');
+      } else {
+        setError(err.response?.data?.error || (isLogin ? t('loginFailed') : 'Account setup failed'));
+      }
     } finally {
       setLoading(false);
     }
@@ -209,7 +219,7 @@ const AuthPage = () => {
               color: '#0f172a',
               margin: '0 0 8px 0'
             }}>
-              {isLogin ? t('welcomeBack') : t('createAccount')}
+              {isLogin ? t('welcomeBack') : 'Get Started'}
             </h2>
             
             <p style={{
@@ -217,50 +227,10 @@ const AuthPage = () => {
               fontSize: '16px',
               margin: '0 0 32px 0'
             }}>
-              {isLogin ? 'Sign in to your account' : t('getStarted')}
+              {isLogin ? 'Sign in to your account' : 'Enter your school email to begin'}
             </p>
 
             <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  style={{ marginBottom: '20px' }}
-                >
-                  <label style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#374151',
-                    marginBottom: '8px'
-                  }}>
-                    {t('username')}
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    placeholder={t('enterUsername')}
-                    value={formData.username}
-                    onChange={handleChange}
-                    required={!isLogin}
-                    style={{
-                      width: '100%',
-                      padding: '16px',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      fontSize: '16px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                    onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                  />
-                </motion.div>
-              )}
-
-              
               <div style={{ marginBottom: '20px' }}>
                 <label htmlFor="email-input" style={{
                   display: 'block',
@@ -294,64 +264,25 @@ const AuthPage = () => {
                 />
               </div>
 
-              
-              <div style={{ marginBottom: !isLogin ? '20px' : '24px' }}>
-                <label htmlFor="password-input" style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  marginBottom: '8px'
-                }}>
-                  {t('password')}
-                </label>
-                <input
-                  id="password-input"
-                  type="password"
-                  name="password"
-                  placeholder={t('enterPassword')}
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '16px',
-                    border: '2px solid #e5e7eb',
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                />
-              </div>
-
-              
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  style={{ marginBottom: '24px' }}
-                >
-                  <label style={{
+              {isLogin && (
+                <div style={{ marginBottom: '24px' }}>
+                  <label htmlFor="password-input" style={{
                     display: 'block',
                     fontSize: '14px',
                     fontWeight: '600',
                     color: '#374151',
                     marginBottom: '8px'
                   }}>
-                    {t('confirmPassword')}
+                    {t('password')}
                   </label>
                   <input
+                    id="password-input"
                     type="password"
-                    name="confirmPassword"
-                    placeholder={t('confirmPassword')}
-                    value={formData.confirmPassword}
+                    name="password"
+                    placeholder={t('enterPassword')}
+                    value={formData.password}
                     onChange={handleChange}
-                    required={!isLogin}
+                    required
                     style={{
                       width: '100%',
                       padding: '16px',
@@ -365,7 +296,7 @@ const AuthPage = () => {
                     onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
                     onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                   />
-                </motion.div>
+                </div>
               )}
 
               
@@ -416,8 +347,8 @@ const AuthPage = () => {
                 }}
               >
                 {loading 
-                  ? (isLogin ? t('loggingIn') : t('signingUp'))
-                  : (isLogin ? t('login') : t('signup'))
+                  ? (isLogin ? t('loggingIn') : 'Checking Account...')
+                  : (isLogin ? t('login') : 'Continue')
                 }
               </button>
             </form>
@@ -427,7 +358,7 @@ const AuthPage = () => {
               fontSize: '14px',
               color: '#64748b'
             }}>
-              {isLogin ? t('dontHaveAccount') : t('alreadyHaveAccount')}
+              {isLogin ? 'New to AssetFlow?' : 'Already have an account?'}
               {' '}
               <button
                 onClick={() => {
@@ -445,7 +376,7 @@ const AuthPage = () => {
                   fontSize: '14px'
                 }}
               >
-                {isLogin ? t('signUpHere') : t('loginHere')}
+                {isLogin ? 'Get Started' : t('loginHere')}
               </button>
             </div>
           </motion.div>

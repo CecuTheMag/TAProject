@@ -2,7 +2,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import pool from '../database.js';
-import { generateVerificationCode, sendEmailVerification, sendSMSVerification } from '../services/notificationService.js';
+import emailService from '../services/emailService.js';
+
+// Generate 6-digit verification code
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 const registerSchema = Joi.object({
   username: Joi.string().alphanum().min(3).max(30).required(),
@@ -26,7 +31,7 @@ const passwordSetupSchema = Joi.object({
   password: Joi.string().min(6).required(),
   confirmPassword: Joi.string().min(6).required(),
   emailCode: Joi.string().length(6).required(),
-  smsCode: Joi.string().length(6).required()
+  smsCode: Joi.string().length(6).allow('').optional()
 });
 
 export const register = async (req, res) => {
@@ -183,12 +188,29 @@ export const sendVerificationCodes = async (req, res) => {
   try {
     const { email } = req.body;
     
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0) {
+    // Find user in school schemas
+    let user = null;
+    let schoolCode = null;
+    
+    const schools = await pool.query('SELECT id, code FROM schools');
+    
+    for (const school of schools.rows) {
+      try {
+        const result = await pool.query(`SELECT * FROM "school_${school.code}".users WHERE email = $1`, [email]);
+        if (result.rows.length > 0) {
+          user = result.rows[0];
+          schoolCode = school.code;
+          break;
+        }
+      } catch (schemaError) {
+        // Schema might not exist, continue
+      }
+    }
+    
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const user = result.rows[0];
     if (user.password_set) {
       return res.status(400).json({ error: 'Account already activated' });
     }
@@ -200,13 +222,13 @@ export const sendVerificationCodes = async (req, res) => {
     
     // Update user with verification codes
     await pool.query(
-      'UPDATE users SET email_verification_code = $1, sms_verification_code = $2, verification_expires_at = $3, verification_attempts = 0 WHERE email = $4',
+      `UPDATE "school_${schoolCode}".users SET email_verification_code = $1, sms_verification_code = $2, verification_expires_at = $3, verification_attempts = 0 WHERE email = $4`,
       [emailCode, smsCode, expiresAt, email]
     );
     
     // Send codes
-    const emailSent = await sendEmailVerification(user.email, emailCode, user.grade_level || user.username);
-    const smsSent = user.phone ? await sendSMSVerification(user.phone, smsCode, user.grade_level || user.username) : false;
+    const emailSent = await emailService.sendVerificationCode(user.email, emailCode, user.username);
+    const smsSent = false; // SMS not implemented
     
     res.json({ 
       message: 'Verification codes sent',
@@ -232,12 +254,28 @@ export const setupPassword = async (req, res) => {
       return res.status(400).json({ error: 'Passwords do not match' });
     }
     
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    // Find user in school schemas
+    let user = null;
+    let schoolCode = null;
+    
+    const schools = await pool.query('SELECT id, code FROM schools');
+    
+    for (const school of schools.rows) {
+      try {
+        const result = await pool.query(`SELECT * FROM "school_${school.code}".users WHERE email = $1`, [email]);
+        if (result.rows.length > 0) {
+          user = result.rows[0];
+          schoolCode = school.code;
+          break;
+        }
+      } catch (schemaError) {
+        // Schema might not exist, continue
+      }
     }
     
-    const user = result.rows[0];
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
     
     // Check if codes are valid and not expired
     if (!user.verification_expires_at || new Date() > user.verification_expires_at) {
@@ -249,19 +287,19 @@ export const setupPassword = async (req, res) => {
     }
     
     if (user.email_verification_code !== emailCode) {
-      await pool.query('UPDATE users SET verification_attempts = verification_attempts + 1 WHERE email = $1', [email]);
+      await pool.query(`UPDATE "school_${schoolCode}".users SET verification_attempts = verification_attempts + 1 WHERE email = $1`, [email]);
       return res.status(400).json({ error: 'Invalid email verification code' });
     }
     
-    if (user.phone && user.sms_verification_code !== smsCode) {
-      await pool.query('UPDATE users SET verification_attempts = verification_attempts + 1 WHERE email = $1', [email]);
+    if (user.phone && user.sms_verification_code && user.sms_verification_code !== smsCode) {
+      await pool.query(`UPDATE "school_${schoolCode}".users SET verification_attempts = verification_attempts + 1 WHERE email = $1`, [email]);
       return res.status(400).json({ error: 'Invalid SMS verification code' });
     }
     
     // Hash new password and activate account
     const hashedPassword = await bcrypt.hash(password, 12);
     await pool.query(
-      'UPDATE users SET password = $1, password_set = true, email_verification_code = NULL, sms_verification_code = NULL, verification_expires_at = NULL, verification_attempts = 0 WHERE email = $2',
+      `UPDATE "school_${schoolCode}".users SET password = $1, password_set = true, email_verification_code = NULL, sms_verification_code = NULL, verification_expires_at = NULL, verification_attempts = 0 WHERE email = $2`,
       [hashedPassword, email]
     );
     
@@ -270,10 +308,14 @@ export const setupPassword = async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role,
-      school_id: user.school_id
+      school_id: user.school_id,
+      schoolCode: schoolCode
     };
     
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ 
+      userId: user.id, 
+      schoolCode: schoolCode 
+    }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     res.json({
       message: 'Password setup successful',

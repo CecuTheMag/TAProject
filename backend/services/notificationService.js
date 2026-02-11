@@ -6,8 +6,8 @@ const emailTransporter = nodemailer.createTransport({
   port: process.env.EMAIL_PORT || 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
+    pass: process.env.EMAIL_PASS || 'eieo fqhh rfcc tgsa'
   }
 });
 
@@ -20,7 +20,7 @@ export const generateVerificationCode = () => {
 export const sendEmailVerification = async (email, code, name) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'noreply@assetflow.bg',
+      from: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
       to: email,
       subject: 'AssetFlow - Account Verification Code',
       html: `

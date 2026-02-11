@@ -636,11 +636,10 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
   const [isMobile, setIsMobile] = useState(false);
   
   const validation = useFormValidation(
-    { username: '', email: '', password: '', role: 'student' },
+    { username: '', email: '', role: 'student' },
     {
       username: [validationRules.required, validationRules.minLength(3)],
       email: [validationRules.required, validationRules.email],
-      password: [validationRules.required, validationRules.password],
       role: [validationRules.required]
     }
   );
@@ -778,30 +777,6 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
             {validation.errors.email && validation.touched.email && (
               <div id="email-error" role="alert" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
                 {validation.errors.email}
-              </div>
-            )}
-          </div>
-          
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              {t('password')}
-            </label>
-            <input
-              type="password"
-              value={validation.values.password}
-              onChange={(e) => validation.handleChange('password', e.target.value)}
-              onBlur={() => validation.handleBlur('password')}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: `1px solid ${validation.errors.password ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: '8px',
-                boxSizing: 'border-box'
-              }}
-            />
-            {validation.errors.password && validation.touched.password && (
-              <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
-                {validation.errors.password}
               </div>
             )}
           </div>
