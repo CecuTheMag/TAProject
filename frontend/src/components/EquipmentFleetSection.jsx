@@ -50,7 +50,7 @@ const EquipmentFleetSection = ({ equipmentFleets, isMobile, onDelete }) => {
         <div style={{ display: 'grid', gap: '16px' }}>
           {equipmentFleets.map((fleet) => (
             <motion.div
-              key={fleet.base_serial}
+              key={`${fleet.base_serial}-${fleet.name}-${fleet.type}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               style={{

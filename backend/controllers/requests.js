@@ -140,6 +140,7 @@ export const returnEquipment = async (req, res) => {
   try {
     const { id } = req.params;
     const { return_condition, notes, early_return = false } = req.body;
+    const schema = req.schoolSchema;
     
     if (!['excellent', 'good', 'fair', 'poor'].includes(return_condition)) {
       return res.status(400).json({ error: 'Invalid return condition' });
@@ -148,7 +149,7 @@ export const returnEquipment = async (req, res) => {
     const status = early_return ? 'early_returned' : 'returned';
     
     const result = await pool.query(
-      `UPDATE requests SET status = $1, returned_at = CURRENT_TIMESTAMP, 
+      `UPDATE "${schema}".requests SET status = $1, returned_at = CURRENT_TIMESTAMP, 
        return_condition = $2, notes = $3 WHERE id = $4 AND status = 'approved' RETURNING *`,
       [status, return_condition, notes, id]
     );
@@ -159,19 +160,20 @@ export const returnEquipment = async (req, res) => {
 
     // Update equipment status and condition
     await pool.query(
-      'UPDATE equipment SET status = $1, condition = $2 WHERE id = $3',
+      `UPDATE "${schema}".equipment SET status = $1, condition_status = $2 WHERE id = $3`,
       ['available', return_condition, result.rows[0].equipment_id]
     );
 
     // log condition change
     await pool.query(
-      `INSERT INTO condition_logs (equipment_id, user_id, new_condition, notes) 
+      `INSERT INTO "${schema}".condition_logs (equipment_id, user_id, condition_after, notes) 
        VALUES ($1, $2, $3, $4)`,
       [result.rows[0].equipment_id, req.user.id, return_condition, notes]
     );
 
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Return equipment error:', error);
     res.status(500).json({ error: 'Failed to return equipment' });
   }
 };
@@ -180,13 +182,14 @@ export const earlyReturnEquipment = async (req, res) => {
   try {
     const { id } = req.params;
     const { return_condition, notes } = req.body;
+    const schema = req.schoolSchema;
     
     if (!['excellent', 'good', 'fair', 'poor'].includes(return_condition)) {
       return res.status(400).json({ error: 'Invalid return condition' });
     }
 
     const result = await pool.query(
-      `UPDATE requests SET status = 'early_returned', returned_at = CURRENT_TIMESTAMP, 
+      `UPDATE "${schema}".requests SET status = 'early_returned', returned_at = CURRENT_TIMESTAMP, 
        return_condition = $1, notes = $2 WHERE id = $3 AND status = 'approved' RETURNING *`,
       [return_condition, notes, id]
     );
@@ -197,19 +200,20 @@ export const earlyReturnEquipment = async (req, res) => {
 
     // Update equipment status and condition
     await pool.query(
-      'UPDATE equipment SET status = $1, condition = $2 WHERE id = $3',
+      `UPDATE "${schema}".equipment SET status = $1, condition_status = $2 WHERE id = $3`,
       ['available', return_condition, result.rows[0].equipment_id]
     );
 
     // log condition change
     await pool.query(
-      `INSERT INTO condition_logs (equipment_id, user_id, new_condition, notes) 
+      `INSERT INTO "${schema}".condition_logs (equipment_id, user_id, condition_after, notes) 
        VALUES ($1, $2, $3, $4)`,
       [result.rows[0].equipment_id, req.user.id, return_condition, notes]
     );
 
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Early return error:', error);
     res.status(500).json({ error: 'Failed to process early return' });
   }
 };

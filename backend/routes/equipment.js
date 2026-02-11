@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../database.js';
-import { authenticateToken, requireAdmin, requireManagerTeacherOrAdmin } from '../middleware.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireAdmin, requireManagerOrAdmin } from '../middleware/roleAuth.js';
 import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
 import {
   getAllEquipment,
@@ -18,7 +19,8 @@ import {
 
 const router = express.Router();
 
-// Apply schema context to all routes
+// Apply authentication and schema context to all routes
+router.use(authenticateToken);
 router.use(setSchoolContext);
 
 router.get('/', async (req, res) => {
@@ -51,8 +53,8 @@ router.get('/search/:serial', async (req, res) => {
   }
 });
 router.put('/retire-fleet', requireAdmin, retireFleet);
-router.put('/repair', requireManagerTeacherOrAdmin, updateRepairStatus);
-router.put('/repair-complete', requireManagerTeacherOrAdmin, completeRepair);
+router.put('/repair', requireManagerOrAdmin, updateRepairStatus);
+router.put('/repair-complete', requireManagerOrAdmin, completeRepair);
 router.post('/sync-status', async (req, res) => {
   try {
     await queryInSchema(req.schoolSchema, `

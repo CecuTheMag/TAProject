@@ -1,5 +1,6 @@
 import express from 'express';
-import { authenticateToken, requireAdmin, requireTeacherOrAdmin, requireManagerTeacherOrAdmin } from '../middleware.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireAdmin, requireTeacherOrAdmin, requireManagerOrAdmin } from '../middleware/roleAuth.js';
 import { setSchoolContext } from '../middleware/schoolContext.js';
 import {
   createRequest,
@@ -13,15 +14,15 @@ import {
 
 const router = express.Router();
 
-// Apply schema context to all routes
+router.use(authenticateToken);
 router.use(setSchoolContext);
 
-router.post('/', authenticateToken, createRequest);
-router.get('/', authenticateToken, getUserRequests);
-router.get('/manager', authenticateToken, getAllRequests);
-router.put('/:id/approve', authenticateToken, approveRequest);
-router.put('/:id/reject', authenticateToken, rejectRequest);
-router.put('/:id/return', authenticateToken, returnEquipment);
-router.put('/:id/early-return', authenticateToken, earlyReturnEquipment);
+router.post('/', createRequest);
+router.get('/', getUserRequests);
+router.get('/manager', getAllRequests);
+router.put('/:id/approve', approveRequest);
+router.put('/:id/reject', rejectRequest);
+router.put('/:id/return', returnEquipment);
+router.put('/:id/early-return', earlyReturnEquipment);
 
 export default router;

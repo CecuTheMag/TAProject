@@ -6,6 +6,8 @@ import pool from '../database.js';
 
 const router = express.Router();
 
+// Apply authentication and school context to all routes
+router.use(authenticateToken);
 router.use(setSchoolContext);
 
 // Test endpoint
@@ -56,7 +58,7 @@ router.get('/lesson-plans', async (req, res) => {
 });
 
 // Update lesson plan
-router.put('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.put('/lesson-plans/:id', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { subject_id, title, description, learning_objectives, lesson_date, duration_minutes, grade_level, required_equipment, start_date, end_date } = req.body;
@@ -83,7 +85,7 @@ router.put('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, async 
 });
 
 // Create subject
-router.post('/subjects', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.post('/subjects', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { name, code, description, grade_level, room, teacher_id, equipment_fleets } = req.body;
     const schema = req.schoolSchema;
@@ -124,7 +126,7 @@ router.post('/subjects', authenticateToken, requireTeacherOrAdmin, async (req, r
 });
 
 // Update subject
-router.put('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.put('/subjects/:id', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, code, description, grade_level, room, teacher_id, equipment_fleets } = req.body;
@@ -174,7 +176,7 @@ router.put('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req
 });
 
 // Create lesson plan
-router.post('/lesson-plans', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.post('/lesson-plans', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { subject_id, title, description, learning_objectives, lesson_date, duration_minutes, grade_level, required_equipment, start_date, end_date } = req.body;
     const schema = req.schoolSchema;
@@ -200,7 +202,7 @@ router.post('/lesson-plans', authenticateToken, requireTeacherOrAdmin, async (re
 });
 
 // Get comprehensive curriculum mapping
-router.get('/curriculum', authenticateToken, async (req, res) => {
+router.get('/curriculum', async (req, res) => {
   try {
     const schema = req.schoolSchema;
     // Get subjects with lesson counts, fleet information, and assigned teacher
@@ -270,7 +272,7 @@ router.get('/curriculum', authenticateToken, async (req, res) => {
 });
 
 // Request equipment for lesson plan with automatic fleet cycling
-router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req, res) => {
+router.post('/lesson-plans/:id/request-equipment', async (req, res) => {
   try {
     const { id } = req.params;
     const { equipment_ids, start_date, end_date, notes } = req.body;
@@ -391,7 +393,7 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
 });
 
 // Get next available equipment in fleet
-router.get('/equipment/fleet/:baseSerial/next-available', authenticateToken, async (req, res) => {
+router.get('/equipment/fleet/:baseSerial/next-available', async (req, res) => {
   try {
     const { baseSerial } = req.params;
     const { start_date, end_date } = req.query;
@@ -428,7 +430,7 @@ router.get('/equipment/fleet/:baseSerial/next-available', authenticateToken, asy
 });
 
 // Get equipment recommendations for subject
-router.get('/curriculum/:subjectCode/recommendations', authenticateToken, async (req, res) => {
+router.get('/curriculum/:subjectCode/recommendations', async (req, res) => {
   try {
     const { subjectCode } = req.params;
     const schema = req.schoolSchema;
@@ -485,7 +487,7 @@ router.get('/curriculum/:subjectCode/recommendations', authenticateToken, async 
 });
 
 // Get single lesson plan
-router.get('/lesson-plans/:id', authenticateToken, async (req, res) => {
+router.get('/lesson-plans/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const schema = req.schoolSchema;
@@ -509,7 +511,7 @@ router.get('/lesson-plans/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete lesson plan
-router.delete('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.delete('/lesson-plans/:id', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const schema = req.schoolSchema;
@@ -531,7 +533,7 @@ router.delete('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, asy
 });
 
 // Get teacher's lesson plan statistics
-router.get('/teacher/stats', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.get('/teacher/stats', requireTeacherOrAdmin, async (req, res) => {
   try {
     const schema = req.schoolSchema;
     const stats = await pool.query(`
@@ -564,7 +566,7 @@ router.get('/teacher/stats', authenticateToken, requireTeacherOrAdmin, async (re
 });
 
 // Delete subject (admin only)
-router.delete('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.delete('/subjects/:id', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const schema = req.schoolSchema;
@@ -598,7 +600,7 @@ router.delete('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (
 });
 
 // Bulk create lesson plans
-router.post('/lesson-plans/bulk', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
+router.post('/lesson-plans/bulk', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { plans } = req.body;
     const schema = req.schoolSchema;

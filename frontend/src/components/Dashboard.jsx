@@ -96,8 +96,6 @@ const Dashboard = ({ schoolUser }) => {
     const fetchData = async () => {
       try {
         setError(null);
-        // Sync equipment statuses first, then fetch data
-        await equipment.syncStatus().catch(() => {}); // Non-blocking sync
         // Parallel API calls for better performance
         const [equipmentResponse, statsResponse] = await Promise.all([
           equipment.getAll(),

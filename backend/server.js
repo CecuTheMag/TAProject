@@ -158,16 +158,16 @@ initializeSchemas();
 
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
-// Routes with rate limiting and school context
+// Routes with rate limiting
 app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/equipment', setSchoolContext, authenticateToken, equipmentRoutes);
-app.use('/api/request', setSchoolContext, authenticateToken, requestRoutes);
-app.use('/api/reports', setSchoolContext, authenticateToken, reportLimiter, reportRoutes);
-app.use('/api/dashboard', setSchoolContext, authenticateToken, dashboardRoutes);
-app.use('/api/alerts', setSchoolContext, authenticateToken, alertRoutes);
-app.use('/api/documents', setSchoolContext, authenticateToken, documentRoutes);
-app.use('/api/users', setSchoolContext, authenticateToken, userRoutes);
-app.use('/api/education', setSchoolContext, authenticateToken, educationRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/request', requestRoutes);
+app.use('/api/reports', reportLimiter, reportRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/education', educationRoutes);
 app.use('/api/internal', internalRoutes);
 
 // Direct curriculum test route

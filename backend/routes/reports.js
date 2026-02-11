@@ -6,10 +6,11 @@ import { getUsageReport, getHistoryReport, exportReport } from '../controllers/r
 
 const router = express.Router();
 
+router.use(authenticateToken);
 router.use(setSchoolContext);
 
-router.get('/usage', authenticateToken, requireTeacherOrAdmin, getUsageReport);
-router.get('/history', authenticateToken, getHistoryReport);
-router.get('/export', authenticateToken, requireTeacherOrAdmin, exportReport);
+router.get('/usage', requireTeacherOrAdmin, getUsageReport);
+router.get('/history', getHistoryReport);
+router.get('/export', requireTeacherOrAdmin, exportReport);
 
 export default router;

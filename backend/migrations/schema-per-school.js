@@ -1,23 +1,24 @@
 import pool from '../database.js';
+import { createSchoolSampleData } from '../utils/createSchoolSampleData.js';
 
 const createSampleCurriculum = async (schoolCode, client) => {
   try {
     const sampleSubjects = [
-      { name: 'Mathematics', code: 'MATH', description: 'Mathematical concepts and problem solving', grade_level: 'All Grades', room: 'Math Lab' },
-      { name: 'Science', code: 'SCI', description: 'Natural sciences and laboratory work', grade_level: 'All Grades', room: 'Science Lab' },
-      { name: 'Computer Science', code: 'CS', description: 'Programming and digital literacy', grade_level: 'All Grades', room: 'Computer Lab' },
-      { name: 'English Language', code: 'ENG', description: 'Language arts and literature', grade_level: 'All Grades', room: 'English Room' },
-      { name: 'History', code: 'HIST', description: 'Historical studies and social sciences', grade_level: 'All Grades', room: 'History Room' },
-      { name: 'Art', code: 'ART', description: 'Visual arts and creative expression', grade_level: 'All Grades', room: 'Art Studio' },
-      { name: 'Music', code: 'MUS', description: 'Musical education and performance', grade_level: 'All Grades', room: 'Music Room' },
-      { name: 'Physical Education', code: 'PE', description: 'Physical fitness and sports', grade_level: 'All Grades', room: 'Gymnasium' }
+      { name: 'Mathematics', code: 'MATH', description: 'Mathematical concepts and problem solving', grade_level: 'All Grades', room: 'Math Lab', equipment_fleets: [] },
+      { name: 'Science', code: 'SCI', description: 'Natural sciences and laboratory work', grade_level: 'All Grades', room: 'Science Lab', equipment_fleets: [] },
+      { name: 'Computer Science', code: 'CS', description: 'Programming and digital literacy', grade_level: 'All Grades', room: 'Computer Lab', equipment_fleets: ['sgesgesge', 'MON', 'PROJ'] },
+      { name: 'English Language', code: 'ENG', description: 'Language arts and literature', grade_level: 'All Grades', room: 'English Room', equipment_fleets: [] },
+      { name: 'History', code: 'HIST', description: 'Historical studies and social sciences', grade_level: 'All Grades', room: 'History Room', equipment_fleets: [] },
+      { name: 'Art', code: 'ART', description: 'Visual arts and creative expression', grade_level: 'All Grades', room: 'Art Studio', equipment_fleets: ['IPD', 'MBP', 'CAM'] },
+      { name: 'Music', code: 'MUS', description: 'Musical education and performance', grade_level: 'All Grades', room: 'Music Room', equipment_fleets: ['PROJ', 'AUD', 'MBP'] },
+      { name: 'Physical Education', code: 'PE', description: 'Physical fitness and sports', grade_level: 'All Grades', room: 'Gymnasium', equipment_fleets: [] }
     ];
 
     for (const subject of sampleSubjects) {
       await client.query(
         `INSERT INTO "school_${schoolCode}".subjects (name, code, description, grade_level, room, equipment_fleets) 
          VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (code) DO NOTHING`,
-        [subject.name, subject.code, subject.description, subject.grade_level, subject.room, []]
+        [subject.name, subject.code, subject.description, subject.grade_level, subject.room, subject.equipment_fleets]
       );
     }
 
@@ -81,6 +82,7 @@ const createSchoolSchema = async (schoolCode) => {
         qr_code TEXT,
         image_url VARCHAR(500),
         learning_impact_score DECIMAL(3,2),
+        stock_threshold INTEGER DEFAULT 2,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )`,
@@ -161,6 +163,9 @@ const createSchoolSchema = async (schoolCode) => {
     
     // Create sample curriculum for the school
     await createSampleCurriculum(schoolCode, client);
+    
+    // Create sample equipment and users
+    await createSchoolSampleData(schoolCode);
     
     return true;
   } catch (error) {

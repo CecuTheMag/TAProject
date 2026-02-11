@@ -19,32 +19,65 @@ export const authenticateToken = async (req, res, next) => {
         username: 'system_admin',
         email: 'system@admin.local',
         role: 'admin',
-        is_system_admin: true
+        is_system_admin: true,
+        school_code: null
       };
       return next();
     }
     
-    // Use school schema if available, otherwise fall back to public
-    let userResult;
-    if (req.schoolSchema) {
-      // Query from school schema
-      userResult = await pool.query(
-        `SELECT id, username, email, role, grade_level, subject_specialization, subject_id FROM "${req.schoolSchema}".users WHERE id = $1`,
-        [decoded.userId]
-      );
-    } else {
-      // Fallback to public schema
-      userResult = await pool.query(
-        'SELECT id, username, email, role, grade_level, subject_specialization, subject_id FROM users WHERE id = $1',
-        [decoded.userId]
-      );
+    // Store decoded token for later use
+    req.decodedToken = decoded;
+    
+    // If school code is in token, use it directly
+    if (decoded.schoolCode) {
+      try {
+        const userResult = await pool.query(
+          `SELECT id, username, email, role, grade_level, subject_specialization, subject_id FROM "school_${decoded.schoolCode}".users WHERE id = $1`,
+          [decoded.userId]
+        );
+        
+        if (userResult.rows.length > 0) {
+          req.user = {
+            ...userResult.rows[0],
+            school_code: decoded.schoolCode
+          };
+          return next();
+        }
+      } catch (schemaError) {
+        console.log(`Schema school_${decoded.schoolCode} not found or user not in schema`);
+      }
     }
-
-    if (userResult.rows.length === 0) {
-      return res.status(401).json({ error: 'User not found' });
+    
+    // Fallback: search all school schemas for the user
+    const schools = await pool.query('SELECT code FROM schools');
+    let userFound = false;
+    
+    for (const school of schools.rows) {
+      try {
+        const result = await pool.query(
+          `SELECT id, username, email, role, grade_level, subject_specialization, subject_id FROM "school_${school.code}".users WHERE id = $1`,
+          [decoded.userId]
+        );
+        
+        if (result.rows.length > 0) {
+          req.user = {
+            ...result.rows[0],
+            school_code: school.code
+          };
+          userFound = true;
+          console.log(`User ${decoded.userId} found in school ${school.code}`);
+          break;
+        }
+      } catch (schemaError) {
+        // Schema doesn't exist or user not found, continue
+      }
     }
-
-    req.user = userResult.rows[0];
+    
+    if (!userFound) {
+      console.error(`User ${decoded.userId} not found in any school schema`);
+      return res.status(401).json({ error: 'User not found in any school' });
+    }
+    
     next();
   } catch (error) {
     console.error('Token verification error:', error);

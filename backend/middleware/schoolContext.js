@@ -3,40 +3,18 @@ import pool from '../database.js';
 
 export const setSchoolContext = async (req, res, next) => {
   try {
-    // Extract school code from request - could be from JWT token, header, or subdomain
     let schoolCode = null;
     
-    // Method 1: From Authorization token (if user is logged in)
-    const authHeader = req.headers['authorization'];
-    if (authHeader) {
-      try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        if (decoded.schoolCode) {
-          schoolCode = decoded.schoolCode;
-        } else if (decoded.userId && decoded.userId !== 999999) {
-          // Try to find user's school from database
-          const schools = await pool.query('SELECT code FROM schools');
-          for (const school of schools.rows) {
-            try {
-              const result = await pool.query(`SELECT id FROM "school_${school.code}".users WHERE id = $1`, [decoded.userId]);
-              if (result.rows.length > 0) {
-                schoolCode = school.code;
-                break;
-              }
-            } catch (schemaError) {
-              // Schema doesn't exist, continue
-            }
-          }
-        }
-      } catch (tokenError) {
-        // Token invalid, continue to other methods
-      }
+    // Method 1: From authenticated user's school_code (set by auth middleware)
+    if (req.user && req.user.school_code) {
+      schoolCode = req.user.school_code;
+      console.log(`School context from user: ${schoolCode}`);
     }
     
     // Method 2: From X-School-Code header
     if (!schoolCode && req.headers['x-school-code']) {
       schoolCode = req.headers['x-school-code'];
+      console.log(`School context from header: ${schoolCode}`);
     }
     
     // Method 3: From subdomain (e.g., hbhs.assetflow.bg)
@@ -45,24 +23,28 @@ export const setSchoolContext = async (req, res, next) => {
       const subdomain = host.split('.')[0];
       if (subdomain !== 'localhost' && subdomain !== 'admin' && subdomain !== '127') {
         schoolCode = subdomain.toUpperCase();
+        console.log(`School context from subdomain: ${schoolCode}`);
       }
     }
     
     // Method 4: From query parameter (for testing)
     if (!schoolCode && req.query.school) {
       schoolCode = req.query.school.toUpperCase();
+      console.log(`School context from query: ${schoolCode}`);
     }
     
-    // Method 5: For admin panel or if no school found, use first available school
+    // Method 5: Use default school if available
     if (!schoolCode) {
-      const schools = await pool.query('SELECT code FROM schools LIMIT 1');
+      const schools = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
       if (schools.rows.length > 0) {
         schoolCode = schools.rows[0].code;
+        console.log(`School context from default: ${schoolCode}`);
       }
     }
     
-    // If still no school code found, return error (except for auth routes)
+    // If still no school code found, return error
     if (!schoolCode) {
+      console.error('No school context available');
       return res.status(400).json({ 
         error: 'School context required', 
         message: 'No schools available in system' 
@@ -72,7 +54,12 @@ export const setSchoolContext = async (req, res, next) => {
     req.schoolSchema = `school_${schoolCode}`;
     req.schoolCode = schoolCode;
     
-    console.log(`School context set: ${schoolCode} -> ${req.schoolSchema}`);
+    // If user was found by auth middleware but doesn't have school_code, update it
+    if (req.user && !req.user.school_code) {
+      req.user.school_code = schoolCode;
+    }
+    
+    console.log(`✅ School context set: ${schoolCode} -> ${req.schoolSchema}`);
     
     next();
   } catch (error) {

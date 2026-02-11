@@ -1,8 +1,10 @@
 import express from 'express';
+import { authenticateToken } from '../middleware/auth.js';
 import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
 
 const router = express.Router();
 
+router.use(authenticateToken);
 router.use(setSchoolContext);
 
 // Test route without auth
@@ -47,23 +49,20 @@ router.get('/stats', async (req, res) => {
     const returnedResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'returned'");
     const earlyReturnedResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'early_returned'");
     
+    // Return flat structure that matches frontend expectations
     res.json({
-      equipment: {
-        total_equipment: parseInt(equipmentResult.rows[0]?.count || 0),
-        available: parseInt(availableResult.rows[0]?.count || 0),
-        checked_out: parseInt(checkedOutResult.rows[0]?.count || 0),
-        under_repair: parseInt(underRepairResult.rows[0]?.count || 0),
-        retired: parseInt(retiredResult.rows[0]?.count || 0)
-      },
-      requests: {
-        total_requests: parseInt(requestsResult.rows[0]?.count || 0),
-        pending_requests: parseInt(pendingResult.rows[0]?.count || 0),
-        approved_requests: parseInt(approvedResult.rows[0]?.count || 0),
-        rejected_requests: parseInt(rejectedResult.rows[0]?.count || 0),
-        returned_requests: parseInt(returnedResult.rows[0]?.count || 0),
-        early_returned_requests: parseInt(earlyReturnedResult.rows[0]?.count || 0),
-        total_returned_requests: parseInt(returnedResult.rows[0]?.count || 0) + parseInt(earlyReturnedResult.rows[0]?.count || 0)
-      }
+      total_equipment: parseInt(equipmentResult.rows[0]?.count || 0),
+      available_equipment: parseInt(availableResult.rows[0]?.count || 0),
+      checked_out_equipment: parseInt(checkedOutResult.rows[0]?.count || 0),
+      under_repair: parseInt(underRepairResult.rows[0]?.count || 0),
+      retired: parseInt(retiredResult.rows[0]?.count || 0),
+      total_requests: parseInt(requestsResult.rows[0]?.count || 0),
+      pending_requests: parseInt(pendingResult.rows[0]?.count || 0),
+      approved_requests: parseInt(approvedResult.rows[0]?.count || 0),
+      rejected_requests: parseInt(rejectedResult.rows[0]?.count || 0),
+      returned_requests: parseInt(returnedResult.rows[0]?.count || 0),
+      early_returned_requests: parseInt(earlyReturnedResult.rows[0]?.count || 0),
+      total_returned_requests: parseInt(returnedResult.rows[0]?.count || 0) + parseInt(earlyReturnedResult.rows[0]?.count || 0)
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);

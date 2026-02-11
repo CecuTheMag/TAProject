@@ -5,6 +5,19 @@ import pool from '../database.js';
 import cache from '../utils/cache.js';
 import { queryInSchema } from '../middleware/schoolContext.js';
 
+// Import Redis service for caching
+let redisService;
+try {
+  redisService = (await import('../services/redisService.js')).default;
+} catch (error) {
+  console.log('Redis service not available, using fallback');
+  redisService = {
+    get: () => null,
+    set: () => {},
+    flushAll: () => {}
+  };
+}
+
 // Validation schema for equipment data
 const equipmentSchema = Joi.object({
   name: Joi.string().required(),
@@ -26,18 +39,11 @@ const equipmentSchema = Joi.object({
 export const getAllEquipment = async (req, res) => {
   try {
     const { search, type, status, condition } = req.query;
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const cacheKey = `equipment:${req.user.school_id}:${JSON.stringify(req.query)}`;
+    const schema = req.schoolSchema;
     
-    // Check Redis cache first for performance optimization
-    const cached = await redisService.get(cacheKey);
-    if (cached) {
-      return res.json(cached);
-    }
-    
-    let query = 'SELECT * FROM equipment WHERE school_id = $1';
-    const params = [req.user.school_id];
-    let paramCount = 1;
+    let query = `SELECT * FROM "${schema}".equipment WHERE 1=1`;
+    const params = [];
+    let paramCount = 0;
 
     if (search) {
       paramCount++;
@@ -56,18 +62,16 @@ export const getAllEquipment = async (req, res) => {
     }
     if (condition) {
       paramCount++;
-      query += ` AND condition = $${paramCount}`;
+      query += ` AND condition_status = $${paramCount}`;
       params.push(condition);
     }
 
     query += ' ORDER BY name, serial_number';
-    const result = await queryFn(query, params);
-    
-    // Cache result for 5 minutes
-    await redisService.set(cacheKey, result.rows, 300);
+    const result = await pool.query(query, params);
     
     res.json(result.rows);
   } catch (error) {
+    console.error('Get all equipment error:', error);
     res.status(500).json({ error: 'Failed to fetch equipment' });
   }
 };
@@ -127,10 +131,11 @@ export const createEquipment = async (req, res) => {
         throw new Error(`Serial number ${itemSerial} already exists`);
       }
       
-      // Generate QR code for mobile scanning capability
+      // Generate QR code for mobile scanning capability (limit to 200 chars)
       let qrCode = null;
       try {
-        qrCode = await QRCode.toDataURL(itemSerial);
+        const qrData = await QRCode.toDataURL(itemSerial);
+        qrCode = qrData.length > 200 ? qrData.substring(0, 200) : qrData;
       } catch (qrError) {
         console.error('QR generation error:', qrError);
       }
@@ -211,19 +216,16 @@ export const updateEquipmentStatus = async (req, res) => {
 export const updateRepairStatus = async (req, res) => {
   try {
     const { ids } = req.body;
+    const schema = req.schoolSchema;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn(
-      'UPDATE equipment SET status = $1 WHERE id = ANY($2) AND status = $3 RETURNING *',
+    const result = await pool.query(
+      `UPDATE "${schema}".equipment SET status = $1 WHERE id = ANY($2) AND status = $3 RETURNING *`,
       ['under_repair', ids, 'available']
     );
-    
-    cache.delete('dashboard_stats');
-    await redisService.flushAll();
     
     res.json({ message: `${result.rows.length} items put under repair`, updated_items: result.rows.length });
   } catch (error) {
@@ -235,6 +237,7 @@ export const updateRepairStatus = async (req, res) => {
 export const completeRepair = async (req, res) => {
   try {
     const { ids, condition } = req.body;
+    const schema = req.schoolSchema;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
@@ -244,14 +247,10 @@ export const completeRepair = async (req, res) => {
       return res.status(400).json({ error: 'Valid condition required' });
     }
 
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn(
-      'UPDATE equipment SET status = $1, condition = $2 WHERE id = ANY($3) AND status = $4 RETURNING *',
+    const result = await pool.query(
+      `UPDATE "${schema}".equipment SET status = $1, condition_status = $2 WHERE id = ANY($3) AND status = $4 RETURNING *`,
       ['available', condition, ids, 'under_repair']
     );
-    
-    cache.delete('dashboard_stats');
-    await redisService.flushAll();
     
     res.json({ message: `${result.rows.length} items completed repair`, updated_items: result.rows.length });
   } catch (error) {
@@ -263,29 +262,16 @@ export const completeRepair = async (req, res) => {
 export const retireFleet = async (req, res) => {
   try {
     const { ids } = req.body;
-    
-    console.log('Retiring fleet items:', ids);
+    const schema = req.schoolSchema;
     
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn(
-      'UPDATE equipment SET status = $1 WHERE id = ANY($2::int[]) RETURNING *',
+    const result = await pool.query(
+      `UPDATE "${schema}".equipment SET status = $1 WHERE id = ANY($2::int[]) RETURNING *`,
       ['retired', ids]
     );
-    
-    console.log(`Retired ${result.rows.length} items`);
-    
-    // Clear all caches
-    cache.delete('dashboard_stats');
-    cache.delete('usage_report');
-    try {
-      await redisService.flushAll();
-    } catch (error) {
-      console.log('Redis cache clear failed:', error.message);
-    }
     
     res.json({ message: `${result.rows.length} items retired from fleet`, updated_items: result.rows.length });
   } catch (error) {
@@ -343,8 +329,8 @@ export const deleteEquipment = async (req, res) => {
 
 export const getLowStockAlerts = async (req, res) => {
   try {
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn(`
+    const schema = req.schoolSchema;
+    const result = await pool.query(`
       WITH groups AS (
         SELECT
           CASE
@@ -357,7 +343,7 @@ export const getLowStockAlerts = async (req, res) => {
           COUNT(*) AS total_count,
           COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count,
           COALESCE(MIN(stock_threshold), 2) AS stock_threshold
-        FROM equipment
+        FROM "${schema}".equipment
         WHERE serial_number IS NOT NULL
         GROUP BY base_serial, name, type
       )

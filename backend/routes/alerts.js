@@ -1,12 +1,17 @@
 import express from 'express';
 import pool from '../database.js';
-import { authenticateToken, requireAdmin, requireTeacherOrAdmin } from '../middleware.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireAdmin, requireTeacherOrAdmin } from '../middleware/roleAuth.js';
+import { setSchoolContext } from '../middleware/schoolContext.js';
 import emailService from '../services/emailService.js';
 
 const router = express.Router();
 
+router.use(authenticateToken);
+router.use(setSchoolContext);
+
 // Get low stock alerts
-router.get('/low-stock', authenticateToken, async (req, res) => {
+router.get('/low-stock', async (req, res) => {
   try {
     const schema = req.schoolSchema;
     const query = `
@@ -42,7 +47,7 @@ router.get('/low-stock', authenticateToken, async (req, res) => {
 });
 
 // Get overdue equipment
-router.get('/overdue', authenticateToken, async (req, res) => {
+router.get('/overdue', async (req, res) => {
   try {
     const schema = req.schoolSchema;
     const query = `
@@ -66,16 +71,17 @@ router.get('/overdue', authenticateToken, async (req, res) => {
 });
 
 // Update equipment stock threshold
-router.put('/threshold/:base_serial', authenticateToken, requireAdmin, async (req, res) => {
+router.put('/threshold/:base_serial', requireAdmin, async (req, res) => {
   try {
     const { base_serial } = req.params;
     const { stock_threshold } = req.body;
+    const schema = req.schoolSchema;
     
     console.log('Updating threshold for base_serial:', base_serial, 'to:', stock_threshold);
     
     // Update all equipment items with the same base serial
     const query = `
-      UPDATE equipment 
+      UPDATE "${schema}".equipment 
       SET stock_threshold = $1 
       WHERE (
         CASE
@@ -101,7 +107,7 @@ router.put('/threshold/:base_serial', authenticateToken, requireAdmin, async (re
 });
 
 // Test email reminders manually
-router.post('/test-emails', authenticateToken, requireAdmin, async (req, res) => {
+router.post('/test-emails', requireAdmin, async (req, res) => {
   try {
     const count = await emailService.checkAndSendOverdueReminders();
     res.json({ message: `Sent ${count} reminder emails`, count });

@@ -21,10 +21,20 @@ router.post('/create-school-schema', validateAPIKey, async (req, res) => {
     }
     
     console.log(`Creating schema for school: ${schoolCode}`);
+    
+    // Ensure school exists in main database first
+    const schoolCheck = await pool.query('SELECT id, name FROM schools WHERE code = $1', [schoolCode]);
+    if (schoolCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'School not found in main database' });
+    }
+    
     const success = await createSchoolSchema(schoolCode);
     
     if (success) {
-      res.json({ message: `Schema created successfully for school: ${schoolCode}` });
+      res.json({ 
+        message: `Schema created successfully for school: ${schoolCode}`,
+        school: schoolCheck.rows[0]
+      });
     } else {
       res.status(500).json({ error: 'Failed to create school schema' });
     }

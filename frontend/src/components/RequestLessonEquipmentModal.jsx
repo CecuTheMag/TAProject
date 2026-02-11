@@ -34,21 +34,28 @@ const RequestLessonEquipmentModal = ({ lessonPlan, onClose, onSuccess }) => {
       const subject = subjectResponse.data.find(s => s.id === lessonPlan.subject_id);
       
       if (!subject || !subject.equipment_fleets || subject.equipment_fleets.length === 0) {
+        console.log('No equipment fleets found for subject:', subject);
         setAvailableFleetItems([]);
         return;
       }
+
+      console.log('Subject equipment fleets:', subject.equipment_fleets);
 
       // Get all equipment and filter by fleet
       const equipmentResponse = await equipment.getAll();
       const allEquipment = equipmentResponse.data;
       
+      console.log('All equipment:', allEquipment.length, 'items');
+      
       // Group equipment by fleet base serial
       const fleetItems = [];
       subject.equipment_fleets.forEach(fleetSerial => {
+        console.log('Looking for fleet:', fleetSerial);
         const items = allEquipment.filter(item => 
           item.serial_number && 
           item.serial_number.startsWith(fleetSerial)
         );
+        console.log('Found items for fleet', fleetSerial, ':', items.length);
         if (items.length > 0) {
           const availableItems = items.filter(item => item.status === 'available');
           fleetItems.push({
@@ -61,6 +68,7 @@ const RequestLessonEquipmentModal = ({ lessonPlan, onClose, onSuccess }) => {
         }
       });
       
+      console.log('Final fleet items:', fleetItems);
       setAvailableFleetItems(fleetItems);
     } catch (error) {
       console.error('Failed to fetch fleet equipment:', error);

@@ -72,30 +72,44 @@ export const createSchool = async (req, res) => {
 
     const { name, code, address, phone, email, domain } = value;
     
-    // Create school in admin database
+    // Create school in admin database first
     const result = await pool.query(
       'INSERT INTO schools (name, code, address, phone, email, domain) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [name, code, address || null, phone || null, email || null, domain || null]
     );
 
     const school = result.rows[0];
+    console.log('School created in admin DB:', school);
     
-    // Create dedicated schema in main database
+    // Create school in main database and schema
     try {
+      // First, ensure school exists in main database schools table
+      console.log('Syncing school to main database...');
       await getMainDBData(
         'INSERT INTO schools (id, name, code, address, phone) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, code = EXCLUDED.code, address = EXCLUDED.address, phone = EXCLUDED.phone',
         [school.id, name, code, address || null, phone || null]
       );
+      console.log('School synced to main database');
       
-      // Create schema for the new school
-      await getMainDBData(
-        'SELECT create_school_schema($1)',
-        [code]
+      // Create dedicated schema for the new school
+      console.log('Creating school schema...');
+      const schemaResponse = await axios.post(
+        `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/create-school-schema`,
+        { schoolCode: code },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
+          },
+          timeout: 30000
+        }
       );
+      console.log('Schema creation response:', schemaResponse.data);
       
-      console.log(`School synced to main database with schema: ${name} (${code})`);
     } catch (mainDbError) {
-      console.warn('Main DB school creation failed:', mainDbError.message);
+      console.error('Main DB school creation failed:', mainDbError.message);
+      // Don't fail the entire operation, but log the error
+      console.warn('School created in admin DB but main DB sync failed. Manual sync may be required.');
     }
     
     res.status(201).json({
@@ -117,17 +131,46 @@ export const getSchools = async (req, res) => {
     
     // Query admin database for schools
     const adminSchools = await pool.query(`
-      SELECT s.*, 
-             0 as user_count,
-             0 as admin_count
+      SELECT s.*
       FROM schools s
       ORDER BY s.created_at DESC
     `);
     
     console.log('Admin DB schools:', adminSchools.rows.length);
     
-    const schools = adminSchools.rows;
-    console.log('Combined schools:', schools.length);
+    const schools = [];
+    
+    // For each school, count users in their schema
+    for (const school of adminSchools.rows) {
+      try {
+        const schoolSchema = `school_${school.code}`;
+        console.log(`Counting users in schema: ${schoolSchema}`);
+        
+        const usersResult = await getMainDBData(
+          `SELECT COUNT(*) as count FROM "${schoolSchema}".users`,
+          []
+        );
+        
+        const userCount = parseInt(usersResult.rows[0]?.count || 0);
+        console.log(`School ${school.name}: ${userCount} users`);
+        
+        schools.push({
+          ...school,
+          user_count: userCount,
+          admin_count: 0
+        });
+      } catch (schemaError) {
+        console.log(`Error querying schema for school ${school.name}:`, schemaError.message);
+        // Still add the school but with 0 user count
+        schools.push({
+          ...school,
+          user_count: 0,
+          admin_count: 0
+        });
+      }
+    }
+    
+    console.log('Schools with user counts:', schools.length);
 
     res.json({ schools });
   } catch (error) {

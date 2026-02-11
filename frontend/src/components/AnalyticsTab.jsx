@@ -75,8 +75,22 @@ const AnalyticsTab = () => {
     );
   }
 
-  const equipmentStats = analyticsData?.equipment || {};
-  const requestStats = analyticsData?.requests || {};
+  const equipmentStats = {
+    total_equipment: analyticsData?.total_equipment || 0,
+    available: analyticsData?.available_equipment || 0,
+    checked_out: analyticsData?.checked_out_equipment || 0,
+    under_repair: analyticsData?.under_repair || 0,
+    retired: analyticsData?.retired || 0
+  };
+  
+  const requestStats = {
+    total_requests: analyticsData?.total_requests || 0,
+    pending_requests: analyticsData?.pending_requests || 0,
+    approved_requests: analyticsData?.approved_requests || 0,
+    rejected_requests: analyticsData?.rejected_requests || 0,
+    total_returned_requests: analyticsData?.total_returned_requests || 0,
+    early_returned_requests: analyticsData?.early_returned_requests || 0
+  };
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
