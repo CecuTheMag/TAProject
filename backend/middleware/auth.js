@@ -12,6 +12,18 @@ export const authenticateToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
+    // Handle system admin tokens (ID 999999)
+    if (decoded.userId === 999999) {
+      req.user = {
+        id: 999999,
+        username: 'system_admin',
+        email: 'system@admin.local',
+        role: 'admin',
+        is_system_admin: true
+      };
+      return next();
+    }
+    
     // Use school schema if available, otherwise fall back to public
     let userResult;
     if (req.schoolSchema) {

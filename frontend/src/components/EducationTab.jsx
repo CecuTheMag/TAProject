@@ -234,7 +234,7 @@ const EducationTab = () => {
                 </p>
               )}
 
-              {lesson.required_equipment && lesson.required_equipment.length > 0 && (
+              {lesson.required_equipment && Array.isArray(lesson.required_equipment) && lesson.required_equipment.length > 0 && (
                 <div style={{ marginBottom: '12px' }}>
                   <h4 style={{ 
                     margin: '0 0 8px 0', 
@@ -261,7 +261,7 @@ const EducationTab = () => {
                 </div>
               )}
 
-              {lesson.learning_objectives && lesson.learning_objectives.length > 0 && (
+              {lesson.learning_objectives && Array.isArray(lesson.learning_objectives) && lesson.learning_objectives.length > 0 && (
                 <div style={{ marginBottom: isMobile ? '16px' : '0' }}>
                   <h4 style={{ 
                     margin: '0 0 8px 0', 

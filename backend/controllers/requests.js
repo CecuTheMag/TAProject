@@ -82,25 +82,13 @@ export const getAllRequests = async (req, res) => {
 export const approveRequest = async (req, res) => {
   try {
     const { id } = req.params;
+    const schema = req.schoolSchema;
     
-    // Check if equipment requires manager approval and low stock status
+    // Check if request exists
     const requestResult = await pool.query(
-      `SELECT r.*, e.requires_approval, e.name, e.serial_number, e.stock_threshold,
-       (
-         SELECT COUNT(*) FROM equipment e2 
-         WHERE CASE
-           WHEN RIGHT(e.serial_number, 3) ~ '^[0-9]{3}$'
-             THEN LEFT(e.serial_number, GREATEST(LENGTH(e.serial_number) - 3, 0))
-           ELSE e.serial_number
-         END = CASE
-           WHEN RIGHT(e2.serial_number, 3) ~ '^[0-9]{3}$'
-             THEN LEFT(e2.serial_number, GREATEST(LENGTH(e2.serial_number) - 3, 0))
-           ELSE e2.serial_number
-         END
-         AND e2.status = 'available'
-       ) as available_count
-       FROM requests r 
-       JOIN equipment e ON r.equipment_id = e.id 
+      `SELECT r.*, e.name, e.serial_number
+       FROM "${schema}".requests r 
+       JOIN "${schema}".equipment e ON r.equipment_id = e.id 
        WHERE r.id = $1 AND r.status = 'pending'`,
       [id]
     );
@@ -109,57 +97,19 @@ export const approveRequest = async (req, res) => {
       return res.status(404).json({ error: 'Request not found or already processed' });
     }
 
-    const request = requestResult.rows[0];
-    const isLowStock = request.available_count <= request.stock_threshold;
-    
-    // If equipment is low stock, only admins can approve
-    if (isLowStock && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'This equipment is low stock and requires admin approval only' });
-    }
-    
-    // If equipment requires approval and user is not admin, need manager approval first
-    if (request.requires_approval && req.user.role !== 'admin' && !request.manager_approved_by) {
-      if (req.user.role === 'manager') {
-        // Manager approval step
-        const result = await pool.query(
-          `UPDATE requests SET manager_approved_by = $1, manager_approved_at = CURRENT_TIMESTAMP 
-           WHERE id = $2 RETURNING *`,
-          [req.user.id, id]
-        );
-        return res.json({ ...result.rows[0], message: 'Manager approval recorded. Awaiting final approval.' });
-      } else {
-        return res.status(403).json({ error: 'This equipment requires manager approval first' });
-      }
-    }
-
     // Final approval
     const result = await pool.query(
-      `UPDATE requests SET status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP, 
+      `UPDATE "${schema}".requests SET status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP, 
        due_date = end_date WHERE id = $2 RETURNING *`,
       [req.user.id, id]
     );
 
     // Update equipment status to checked_out
-    await pool.query('UPDATE equipment SET status = $1 WHERE id = $2', ['checked_out', result.rows[0].equipment_id]);
-
-    // Get user email and equipment name for notification
-    const notificationData = await pool.query(
-      `SELECT u.email, e.name as equipment_name, u2.username as approver_name
-       FROM requests r
-       JOIN users u ON r.user_id = u.id
-       JOIN equipment e ON r.equipment_id = e.id
-       JOIN users u2 ON r.approved_by = u2.id
-       WHERE r.id = $1`,
-      [id]
-    );
-
-    if (notificationData.rows.length > 0) {
-      const { email, equipment_name, approver_name } = notificationData.rows[0];
-      await emailService.sendRequestApprovalNotification(email, equipment_name, approver_name);
-    }
+    await pool.query(`UPDATE "${schema}".equipment SET status = $1 WHERE id = $2`, ['checked_out', result.rows[0].equipment_id]);
 
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Approve request error:', error);
     res.status(500).json({ error: 'Failed to approve request' });
   }
 };
@@ -167,9 +117,10 @@ export const approveRequest = async (req, res) => {
 export const rejectRequest = async (req, res) => {
   try {
     const { id } = req.params;
+    const schema = req.schoolSchema;
     
     const result = await pool.query(
-      `UPDATE requests SET status = 'rejected', approved_by = $1, approved_at = CURRENT_TIMESTAMP 
+      `UPDATE "${schema}".requests SET status = 'rejected', approved_by = $1, approved_at = CURRENT_TIMESTAMP 
        WHERE id = $2 AND status = 'pending' RETURNING *`,
       [req.user.id, id]
     );
@@ -180,6 +131,7 @@ export const rejectRequest = async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
+    console.error('Reject request error:', error);
     res.status(500).json({ error: 'Failed to reject request' });
   }
 };

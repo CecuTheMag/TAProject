@@ -30,21 +30,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch equipment' });
   }
 });
-router.get('/groups', async (req, res) => {
-  try {
-    const result = await queryInSchema(req.schoolSchema, `
-      SELECT category, COUNT(*) as count 
-      FROM equipment 
-      WHERE status != 'retired' 
-      GROUP BY category 
-      ORDER BY category
-    `);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Get groups error:', error);
-    res.status(500).json({ error: 'Failed to fetch groups' });
-  }
-});
+router.get('/groups', getEquipmentGroups);
 router.get('/low-stock', getLowStockAlerts);
 router.get('/search/:serial', async (req, res) => {
   try {

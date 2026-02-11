@@ -29,6 +29,7 @@ export const auth = {
 
 export const systemAdmin = {
   getStats: () => api.get('/system-admin/stats'),
+  getSystemInfo: () => api.get('/system-admin/system-info'),
   getSchools: () => api.get('/system-admin/schools'),
   createSchool: (data) => api.post('/system-admin/schools', data),
   updateSchool: (id, data) => api.put(`/system-admin/schools/${id}`, data),

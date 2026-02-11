@@ -72,6 +72,8 @@ export const setSchoolContext = async (req, res, next) => {
     req.schoolSchema = `school_${schoolCode}`;
     req.schoolCode = schoolCode;
     
+    console.log(`School context set: ${schoolCode} -> ${req.schoolSchema}`);
+    
     next();
   } catch (error) {
     console.error('Schema context error:', error);

@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
-import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, parseAccdbFile, importAccdbData } from '../controllers/systemAdmin.js';
+import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, getSystemInfo, parseAccdbFile, importAccdbData } from '../controllers/systemAdmin.js';
 import pool from '../database.js';
 import bcrypt from 'bcryptjs';
 import XLSX from 'xlsx';
@@ -38,6 +38,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/stats', getSystemStats);
+router.get('/system-info', getSystemInfo);
 router.get('/schools', getSchools);
 router.post('/schools', createSchool);
 router.get('/admins', getSchoolAdmins);
@@ -95,7 +96,11 @@ router.get('/users', async (req, res) => {
     const result = await getMainDBData(query, [school.name]);
     console.log(`Found ${result.rows?.length || 0} users in ${schoolSchema}`);
     
-    res.json({ users: result.rows || [], school_schema: schoolSchema });
+    res.json({ 
+      users: result.rows || [], 
+      school_schema: schoolSchema,
+      user_count: result.rows?.length || 0
+    });
   } catch (error) {
     console.error('getUsers error:', error);
     res.status(500).json({ error: 'Failed to fetch users', users: [] });

@@ -3,7 +3,7 @@ import Joi from 'joi';
 import QRCode from 'qrcode';
 import pool from '../database.js';
 import cache from '../utils/cache.js';
-import redisService from '../utils/redis.js';
+import { queryInSchema } from '../middleware/schoolContext.js';
 
 // Validation schema for equipment data
 const equipmentSchema = Joi.object({
@@ -75,8 +75,7 @@ export const getAllEquipment = async (req, res) => {
 export const getEquipmentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn('SELECT * FROM equipment WHERE id = $1', [id]);
+    const result = await queryInSchema(req.schoolSchema, 'SELECT * FROM equipment WHERE id = $1', [id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
@@ -103,13 +102,14 @@ export const createEquipment = async (req, res) => {
       status = 'available',
       location,
       requires_approval = false,
-      quantity = 1, // Number of identical items to create
+      quantity = 1,
       stock_threshold = 2
     } = req.body;
     
     console.log('Creating equipment with quantity:', quantity);
     
     const createdEquipment = [];
+    const schema = req.schoolSchema;
     
     // Auto-generate unique serial numbers with timestamp if not provided
     const timestamp = Date.now().toString();
@@ -117,13 +117,12 @@ export const createEquipment = async (req, res) => {
     
     // Create multiple items with incremental serial numbers
     for (let i = 1; i <= parseInt(quantity); i++) {
-      const itemSerial = `${baseSerial}${i.toString().padStart(3, '0')}`; // Format: BASE001, BASE002, etc.
+      const itemSerial = `${baseSerial}${i.toString().padStart(3, '0')}`;
       
       console.log(`Creating item ${i}/${quantity} with serial: ${itemSerial}`);
       
-      const queryFn = req.dbQuery || pool.query.bind(pool);
-      // Ensure serial number uniqueness across database
-      const existingSerial = await queryFn('SELECT id FROM equipment WHERE serial_number = $1', [itemSerial]);
+      // Ensure serial number uniqueness within school schema
+      const existingSerial = await pool.query(`SELECT id FROM "${schema}".equipment WHERE serial_number = $1`, [itemSerial]);
       if (existingSerial.rows.length > 0) {
         throw new Error(`Serial number ${itemSerial} already exists`);
       }
@@ -131,26 +130,26 @@ export const createEquipment = async (req, res) => {
       // Generate QR code for mobile scanning capability
       let qrCode = null;
       try {
-        qrCode = await QRCode.toDataURL(itemSerial); // Base64 encoded PNG image
+        qrCode = await QRCode.toDataURL(itemSerial);
       } catch (qrError) {
         console.error('QR generation error:', qrError);
       }
       
-      const result = await queryFn(
-        `INSERT INTO equipment (name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, qr_code, school_id) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-        [name, type, itemSerial, condition, status, location, requires_approval, 1, stock_threshold, qrCode, req.user.school_id]
+      const result = await pool.query(
+        `INSERT INTO "${schema}".equipment (name, type, serial_number, condition_status, status, location, qr_code) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [name, type, itemSerial, condition, status, location, qrCode]
       );
       
       createdEquipment.push(result.rows[0]);
     }
 
-    console.log(`Created ${createdEquipment.length} equipment items`);
+    console.log(`Created ${createdEquipment.length} equipment items in schema ${schema}`);
     
-    // Invalidate related caches to ensure data consistency
-    cache.delete('dashboard_stats');  // Clear dashboard statistics
-    cache.delete('usage_report');     // Clear usage analytics
-    await redisService.flushAll();    // Clear all Redis cached queries
+    // Invalidate related caches
+    cache.delete('dashboard_stats');
+    cache.delete('usage_report');
+    await redisService.flushAll();
     
     res.status(201).json(createdEquipment);
   } catch (error) {
@@ -165,22 +164,19 @@ export const updateEquipment = async (req, res) => {
     const { error, value } = equipmentSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    const { name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold } = value;
-    const queryFn = req.dbQuery || pool.query.bind(pool);
+    const { name, type, serial_number, condition, status, location } = value;
     
-    const result = await queryFn(
-      `UPDATE equipment SET name = $1, type = $2, serial_number = $3, condition = $4, 
-       status = $5, location = $6, requires_approval = $7, quantity = $8, stock_threshold = $9 WHERE id = $10 RETURNING *`,
-      [name, type, serial_number, condition, status, location, requires_approval, quantity, stock_threshold, id]
+    const result = await queryInSchema(req.schoolSchema,
+      `UPDATE equipment SET name = $1, type = $2, serial_number = $3, condition_status = $4, 
+       status = $5, location = $6 WHERE id = $7 RETURNING *`,
+      [name, type, serial_number, condition, status, location, id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
     }
 
-    // Invalidate related caches
     cache.delete('dashboard_stats');
-    cache.delete('usage_report');
     
     res.json(result.rows[0]);
   } catch (error) {
@@ -197,8 +193,7 @@ export const updateEquipmentStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn(
+    const result = await queryInSchema(req.schoolSchema,
       'UPDATE equipment SET status = $1 WHERE id = $2 RETURNING *',
       [status, id]
     );
@@ -301,8 +296,8 @@ export const retireFleet = async (req, res) => {
 
 export const getEquipmentGroups = async (req, res) => {
   try {
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn(`
+    const schema = req.schoolSchema;
+    const result = await pool.query(`
       SELECT
         CASE
           WHEN RIGHT(serial_number, 3) ~ '^[0-9]{3}$'
@@ -315,9 +310,8 @@ export const getEquipmentGroups = async (req, res) => {
         COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count,
         COUNT(CASE WHEN status = 'checked_out' THEN 1 END) AS checked_out_count,
         COUNT(CASE WHEN status = 'under_repair' THEN 1 END) AS under_repair_count,
-        COALESCE(MIN(stock_threshold), 2) AS stock_threshold,
-        array_agg(json_build_object('id', id, 'serial_number', serial_number, 'status', status, 'condition', condition) ORDER BY serial_number) AS items
-      FROM equipment
+        array_agg(json_build_object('id', id, 'serial_number', serial_number, 'status', status, 'condition_status', condition_status) ORDER BY serial_number) AS items
+      FROM "${schema}".equipment
       WHERE serial_number IS NOT NULL
       GROUP BY base_serial, name, type
       ORDER BY name
@@ -333,16 +327,13 @@ export const getEquipmentGroups = async (req, res) => {
 export const deleteEquipment = async (req, res) => {
   try {
     const { id } = req.params;
-    const queryFn = req.dbQuery || pool.query.bind(pool);
-    const result = await queryFn('DELETE FROM equipment WHERE id = $1 RETURNING *', [id]);
+    const result = await queryInSchema(req.schoolSchema, 'DELETE FROM equipment WHERE id = $1 RETURNING *', [id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
     }
     
-    // Invalidate related caches
     cache.delete('dashboard_stats');
-    cache.delete('usage_report');
     
     res.json({ message: 'Equipment deleted successfully' });
   } catch (error) {

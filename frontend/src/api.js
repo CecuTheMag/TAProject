@@ -47,9 +47,9 @@ api.interceptors.request.use((config) => {
     }
   }
   
-  // Always use default school if no school code found (for login)
-  if (!schoolCode) {
-    schoolCode = 'BGVHRFDXSE'; // Default school code
+  // Only use fallback if no user is logged in (for login endpoint)
+  if (!schoolCode && !userData) {
+    schoolCode = 'BGVHRFDXSE'; // Fallback only for login
   }
   
   config.headers['X-School-Code'] = schoolCode;

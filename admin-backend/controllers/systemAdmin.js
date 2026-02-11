@@ -564,12 +564,43 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
           .map(part => part.charAt(0).toUpperCase() + part.slice(1))
           .join(' ');
 
-        // Determine user role - check if role contains any teacher subject
+        // Determine user role and assign subject if teacher
         let userRole = 'student';
+        let subjectId = null;
         const roleUpper = role.toUpperCase();
         
-        if (teacherSubjects.some(subject => roleUpper.includes(subject))) {
+        const teacherSubjects = {
+          'MATHEMATICS': 'MATH',
+          'BULGARIAN': 'ENG', // Map to English for international schools
+          'ENGLISH': 'ENG',
+          'HISTORY': 'HIST',
+          'GEOGRAPHY': 'HIST', // Map to History
+          'BIOLOGY': 'SCI',
+          'CHEMISTRY': 'SCI',
+          'PHYSICS': 'SCI',
+          'PHYSICAL_EDUCATION': 'PE',
+          'ART': 'ART',
+          'MUSIC': 'MUS',
+          'TECHNOLOGY': 'CS',
+          'COMPUTER_SCIENCE': 'CS'
+        };
+        
+        if (Object.keys(teacherSubjects).some(subject => roleUpper.includes(subject))) {
           userRole = 'teacher';
+          // Find matching subject code
+          for (const [subjectName, subjectCode] of Object.entries(teacherSubjects)) {
+            if (roleUpper.includes(subjectName)) {
+              // Get subject ID from school schema
+              const subjectResult = await getMainDBData(
+                `SELECT id FROM "${schoolSchema}".subjects WHERE code = $1`,
+                [subjectCode]
+              );
+              if (subjectResult.rows && subjectResult.rows.length > 0) {
+                subjectId = subjectResult.rows[0].id;
+              }
+              break;
+            }
+          }
         } else if (role && role.toLowerCase().includes('admin')) {
           userRole = 'admin';
         }
@@ -607,19 +638,20 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
 
         console.log(`Importing user ${i}: ${formattedName} (${username}) -> ${userRole} for school ${parsedSchoolId}`);
         
-        // Insert user into school-specific schema
+        // Insert user into school-specific schema with subject assignment
         const result = await getMainDBData(
-          `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+          `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set, subject_id) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
            ON CONFLICT (email) DO UPDATE SET 
            username = EXCLUDED.username,
            role = EXCLUDED.role,
            grade_level = EXCLUDED.grade_level,
            subject_specialization = EXCLUDED.subject_specialization,
            phone = EXCLUDED.phone,
-           password_set = EXCLUDED.password_set
+           password_set = EXCLUDED.password_set,
+           subject_id = EXCLUDED.subject_id
            RETURNING id`,
-          [username, email, hashedPassword, userRole, formattedName, role, phone, false]
+          [username, email, hashedPassword, userRole, formattedName, role, phone, false, subjectId]
         );
         
         if (result.rows && result.rows.length > 0) {
@@ -653,6 +685,92 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
   }
 };
 
+export const getSystemInfo = async (req, res) => {
+  try {
+    const os = await import('os');
+    const fs = await import('fs');
+    const { promisify } = await import('util');
+    const { exec } = await import('child_process');
+    const execAsync = promisify(exec);
+
+    // Get basic system info
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const usedMem = totalMem - freeMem;
+    const memUsagePercent = ((usedMem / totalMem) * 100).toFixed(1);
+
+    // Get CPU info
+    const cpus = os.cpus();
+    const cpuModel = cpus[0]?.model || 'Unknown';
+    const cpuCores = cpus.length;
+
+    // Get disk usage
+    let diskInfo = { total: 0, used: 0, free: 0, usagePercent: 0 };
+    try {
+      const { stdout } = await execAsync('df -h / | tail -1');
+      const parts = stdout.trim().split(/\s+/);
+      if (parts.length >= 4) {
+        diskInfo = {
+          total: parts[1],
+          used: parts[2], 
+          free: parts[3],
+          usagePercent: parts[4]
+        };
+      }
+    } catch (e) {
+      console.log('Disk info error:', e.message);
+    }
+
+    // Get database size
+    let dbSize = 'Unknown';
+    try {
+      const dbSizeResult = await pool.query(`
+        SELECT pg_size_pretty(pg_database_size(current_database())) as size
+      `);
+      dbSize = dbSizeResult.rows[0]?.size || 'Unknown';
+    } catch (e) {
+      console.log('DB size error:', e.message);
+    }
+
+    // Get system uptime
+    const uptime = os.uptime();
+    const uptimeHours = Math.floor(uptime / 3600);
+    const uptimeDays = Math.floor(uptimeHours / 24);
+
+    // Get load average
+    const loadAvg = os.loadavg();
+
+    const systemInfo = {
+      memory: {
+        total: Math.round(totalMem / 1024 / 1024 / 1024 * 100) / 100 + ' GB',
+        used: Math.round(usedMem / 1024 / 1024 / 1024 * 100) / 100 + ' GB',
+        free: Math.round(freeMem / 1024 / 1024 / 1024 * 100) / 100 + ' GB',
+        usagePercent: memUsagePercent + '%'
+      },
+      cpu: {
+        model: cpuModel,
+        cores: cpuCores,
+        loadAvg: loadAvg.map(l => l.toFixed(2))
+      },
+      disk: diskInfo,
+      database: {
+        size: dbSize
+      },
+      system: {
+        platform: os.platform(),
+        arch: os.arch(),
+        uptime: `${uptimeDays}d ${uptimeHours % 24}h`,
+        hostname: os.hostname()
+      }
+    };
+
+    res.json({ systemInfo });
+  } catch (error) {
+    console.error('getSystemInfo error:', error);
+    res.status(500).json({ error: 'Failed to fetch system info' });
+  }
+};
+
 export const getSystemStats = async (req, res) => {
   try {
     console.log('getSystemStats called');
@@ -676,12 +794,46 @@ export const getSystemStats = async (req, res) => {
     console.log('Admin DB user count:', adminUserCount.rows[0]?.count);
     console.log('System admin count:', systemAdminCount.rows[0]?.count);
 
-    // Return only admin stats - don't query main DB for users since they're in schemas
+    // Get all schools and count users in each schema
+    const schoolsResult = await pool.query('SELECT id, name, code FROM schools ORDER BY name');
+    const schools = schoolsResult.rows;
+    
+    let totalUsers = 0;
+    let totalSchoolAdmins = 0;
+    
+    // Count users in each school schema
+    for (const school of schools) {
+      try {
+        const schoolSchema = `school_${school.code}`;
+        console.log(`Counting users in schema: ${schoolSchema}`);
+        
+        const usersResult = await getMainDBData(
+          `SELECT COUNT(*) as count FROM "${schoolSchema}".users`,
+          []
+        );
+        
+        const adminUsersResult = await getMainDBData(
+          `SELECT COUNT(*) as count FROM "${schoolSchema}".users WHERE role = 'admin'`,
+          []
+        );
+        
+        const userCount = parseInt(usersResult.rows[0]?.count || 0);
+        const adminCount = parseInt(adminUsersResult.rows[0]?.count || 0);
+        
+        totalUsers += userCount;
+        totalSchoolAdmins += adminCount;
+        
+        console.log(`School ${school.name}: ${userCount} users, ${adminCount} admins`);
+      } catch (schemaError) {
+        console.log(`Error querying schema for school ${school.name}:`, schemaError.message);
+      }
+    }
+
     const combinedStats = {
       active_schools: parseInt(adminSchoolCount.rows[0]?.count || 0),
       system_admins: parseInt(systemAdminCount.rows[0]?.count || 0),
-      school_admins: 0, // Will be calculated per school
-      total_users: 0, // Will be calculated per school
+      school_admins: totalSchoolAdmins,
+      total_users: totalUsers,
       total_admin_users: parseInt(adminUserCount.rows[0]?.count || 0)
     };
     

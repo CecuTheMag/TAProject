@@ -11,6 +11,7 @@ const SystemAdminDashboard = () => {
   const user = authUser ? { ...authUser, role: 'system_admin' } : null;
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState({});
+  const [systemInfo, setSystemInfo] = useState({});
   const [schools, setSchools] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,15 +56,17 @@ const SystemAdminDashboard = () => {
     if (!user) return;
     
     try {
-      const [statsRes, schoolsRes, adminsRes] = await Promise.all([
+      const [statsRes, schoolsRes, adminsRes, systemInfoRes] = await Promise.all([
         systemAdmin.getStats(),
         systemAdmin.getSchools(),
-        systemAdmin.getAdmins()
+        systemAdmin.getAdmins(),
+        systemAdmin.getSystemInfo()
       ]);
 
       setStats(statsRes.data.stats || {});
       setSchools(schoolsRes.data.schools || []);
       setAdmins(adminsRes.data.admins || []);
+      setSystemInfo(systemInfoRes.data.systemInfo || {});
     } catch (error) {
       console.error('Failed to fetch data:', error);
       if (error.response?.status === 401) {
@@ -166,6 +169,40 @@ const SystemAdminDashboard = () => {
               <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#64748b' }}>System Admins</h3>
                 <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: '#1e40af' }}>{stats.system_admins || 0}</p>
+              </div>
+            </div>
+
+            {/* Server Info Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+              <div style={{ background: '#f0f9ff', padding: '20px', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#0369a1' }}>Memory (RAM)</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#0c4a6e' }}>{systemInfo.memory?.used || 'N/A'} / {systemInfo.memory?.total || 'N/A'}</p>
+                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>Usage: {systemInfo.memory?.usagePercent || 'N/A'}</p>
+              </div>
+              <div style={{ background: '#f0fdf4', padding: '20px', borderRadius: '8px', border: '1px solid #22c55e' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#15803d' }}>CPU Processor</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#166534' }}>{systemInfo.cpu?.cores || 'N/A'} Cores</p>
+                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>{systemInfo.cpu?.model?.substring(0, 30) || 'Unknown'}...</p>
+              </div>
+              <div style={{ background: '#fefce8', padding: '20px', borderRadius: '8px', border: '1px solid #eab308' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#a16207' }}>Storage (SSD/HDD)</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#92400e' }}>{systemInfo.disk?.used || 'N/A'} / {systemInfo.disk?.total || 'N/A'}</p>
+                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>Usage: {systemInfo.disk?.usagePercent || 'N/A'}</p>
+              </div>
+              <div style={{ background: '#fdf2f8', padding: '20px', borderRadius: '8px', border: '1px solid #ec4899' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#be185d' }}>Database (PostgreSQL)</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#9d174d' }}>{systemInfo.database?.size || 'N/A'}</p>
+                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>PostgreSQL 15</p>
+              </div>
+              <div style={{ background: '#f3e8ff', padding: '20px', borderRadius: '8px', border: '1px solid #a855f7' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#7c3aed' }}>System Uptime</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#6b21a8' }}>{systemInfo.system?.uptime || 'N/A'}</p>
+                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>{systemInfo.system?.platform || 'N/A'} {systemInfo.system?.arch || 'N/A'}</p>
+              </div>
+              <div style={{ background: '#ecfdf5', padding: '20px', borderRadius: '8px', border: '1px solid #10b981' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#047857' }}>Hostname</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#065f46' }}>{systemInfo.system?.hostname || 'N/A'}</p>
+                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>Server ID</p>
               </div>
             </div>
 

@@ -31,23 +31,39 @@ router.get('/test-school', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
+    console.log(`Dashboard stats - School: ${req.schoolCode}, Schema: ${req.schoolSchema}`);
+    
     // Get comprehensive stats from school schema
     const equipmentResult = await queryInSchema(req.schoolSchema, 'SELECT COUNT(*) as count FROM equipment');
-    const usersResult = await queryInSchema(req.schoolSchema, 'SELECT COUNT(*) as count FROM users');
-    const requestsResult = await queryInSchema(req.schoolSchema, 'SELECT COUNT(*) as count FROM requests');
     const availableResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'available'");
     const checkedOutResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'checked_out'");
     const underRepairResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'under_repair'");
+    const retiredResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM equipment WHERE status = 'retired'");
+    
+    const requestsResult = await queryInSchema(req.schoolSchema, 'SELECT COUNT(*) as count FROM requests');
     const pendingResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'pending'");
+    const approvedResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'approved'");
+    const rejectedResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'rejected'");
+    const returnedResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'returned'");
+    const earlyReturnedResult = await queryInSchema(req.schoolSchema, "SELECT COUNT(*) as count FROM requests WHERE status = 'early_returned'");
     
     res.json({
-      total_equipment: parseInt(equipmentResult.rows[0]?.count || 0),
-      total_users: parseInt(usersResult.rows[0]?.count || 0),
-      total_requests: parseInt(requestsResult.rows[0]?.count || 0),
-      available_equipment: parseInt(availableResult.rows[0]?.count || 0),
-      checked_out_equipment: parseInt(checkedOutResult.rows[0]?.count || 0),
-      under_repair: parseInt(underRepairResult.rows[0]?.count || 0),
-      pending_requests: parseInt(pendingResult.rows[0]?.count || 0)
+      equipment: {
+        total_equipment: parseInt(equipmentResult.rows[0]?.count || 0),
+        available: parseInt(availableResult.rows[0]?.count || 0),
+        checked_out: parseInt(checkedOutResult.rows[0]?.count || 0),
+        under_repair: parseInt(underRepairResult.rows[0]?.count || 0),
+        retired: parseInt(retiredResult.rows[0]?.count || 0)
+      },
+      requests: {
+        total_requests: parseInt(requestsResult.rows[0]?.count || 0),
+        pending_requests: parseInt(pendingResult.rows[0]?.count || 0),
+        approved_requests: parseInt(approvedResult.rows[0]?.count || 0),
+        rejected_requests: parseInt(rejectedResult.rows[0]?.count || 0),
+        returned_requests: parseInt(returnedResult.rows[0]?.count || 0),
+        early_returned_requests: parseInt(earlyReturnedResult.rows[0]?.count || 0),
+        total_returned_requests: parseInt(returnedResult.rows[0]?.count || 0) + parseInt(earlyReturnedResult.rows[0]?.count || 0)
+      }
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);

@@ -6,7 +6,8 @@ import cache from '../utils/cache.js';
 
 export const getUsageReport = async (req, res) => {
   try {
-    const cacheKey = 'usage_report';
+    const schema = req.schoolSchema;
+    const cacheKey = `usage_report_${schema}`;
     let report = cache.get(cacheKey);
     
     if (!report) {
@@ -17,8 +18,8 @@ export const getUsageReport = async (req, res) => {
           COUNT(r.id)::integer as total_requests,
           COUNT(CASE WHEN r.status = 'approved' THEN 1 END)::integer as approved_requests,
           COUNT(CASE WHEN r.status = 'returned' THEN 1 END)::integer as returned_items
-        FROM equipment e
-        LEFT JOIN requests r ON e.id = r.equipment_id
+        FROM "${schema}".equipment e
+        LEFT JOIN "${schema}".requests r ON e.id = r.equipment_id
         GROUP BY e.id, e.name, e.type
         ORDER BY total_requests DESC
       `);
@@ -37,15 +38,16 @@ export const getUsageReport = async (req, res) => {
 export const getHistoryReport = async (req, res) => {
   try {
     const { user_id, equipment_id } = req.query;
-    const cacheKey = `history_report_${user_id || 'all'}_${equipment_id || 'all'}`;
+    const schema = req.schoolSchema;
+    const cacheKey = `history_report_${schema}_${user_id || 'all'}_${equipment_id || 'all'}`;
     let report = cache.get(cacheKey);
     
     if (!report) {
       let query = `
         SELECT r.*, u.username, e.name as equipment_name, e.type as equipment_type
-        FROM requests r
-        JOIN users u ON r.user_id = u.id
-        JOIN equipment e ON r.equipment_id = e.id
+        FROM "${schema}".requests r
+        JOIN "${schema}".users u ON r.user_id = u.id
+        JOIN "${schema}".equipment e ON r.equipment_id = e.id
         WHERE 1=1
       `;
       const params = [];
@@ -80,7 +82,8 @@ export const getHistoryReport = async (req, res) => {
 export const exportReport = async (req, res) => {
   try {
     const { type, format = 'csv' } = req.query;
-    console.log('Export request:', { type, format });
+    const schema = req.schoolSchema;
+    console.log('Export request:', { type, format, schema });
     
     let data, filename, headers;
     
@@ -91,13 +94,13 @@ export const exportReport = async (req, res) => {
             e.name,
             e.type,
             COALESCE(e.serial_number, '') as serial_number,
-            e.condition,
+            e.condition_status as condition,
             e.status,
             COALESCE(e.location, '') as location,
-            COALESCE(e.quantity, 1) as quantity,
-            COALESCE(e.stock_threshold, 2) as stock_threshold,
+            1 as quantity,
+            2 as stock_threshold,
             e.created_at
-          FROM equipment e
+          FROM "${schema}".equipment e
           ORDER BY e.name
         `);
         data = inventoryResult.rows;
@@ -123,8 +126,8 @@ export const exportReport = async (req, res) => {
             COUNT(r.id)::integer as total_requests,
             COUNT(CASE WHEN r.status = 'approved' THEN 1 END)::integer as approved_requests,
             COUNT(CASE WHEN r.status = 'returned' THEN 1 END)::integer as returned_items
-          FROM equipment e
-          LEFT JOIN requests r ON e.id = r.equipment_id
+          FROM "${schema}".equipment e
+          LEFT JOIN "${schema}".requests r ON e.id = r.equipment_id
           GROUP BY e.id, e.name, e.type
           ORDER BY total_requests DESC
         `);
@@ -152,9 +155,9 @@ export const exportReport = async (req, res) => {
             r.status,
             COALESCE(r.return_condition, '') as return_condition,
             COALESCE(r.notes, '') as notes
-          FROM requests r
-          JOIN users u ON r.user_id = u.id
-          JOIN equipment e ON r.equipment_id = e.id
+          FROM "${schema}".requests r
+          JOIN "${schema}".users u ON r.user_id = u.id
+          JOIN "${schema}".equipment e ON r.equipment_id = e.id
           ORDER BY r.request_date DESC
         `);
         data = requestsResult.rows;
@@ -178,9 +181,9 @@ export const exportReport = async (req, res) => {
           SELECT 
             e.name as equipment_name,
             e.type,
-            e.condition,
+            e.condition_status as condition,
             e.status
-          FROM equipment e
+          FROM "${schema}".equipment e
           WHERE e.status = 'under_repair'
           ORDER BY e.name
         `);

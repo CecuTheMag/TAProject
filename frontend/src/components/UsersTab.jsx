@@ -421,7 +421,9 @@ const StudentCard = ({ student, onEditUser, onViewActivity, onDeleteUser, curren
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          fontWeight: '600'
+          fontWeight: '600',
+          aspectRatio: '1',
+          flexShrink: 0
         }}>
           {student.grade_level?.charAt(0) || student.username.charAt(0).toUpperCase()}
         </div>
@@ -486,7 +488,9 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
           justifyContent: 'center',
           color: 'white',
           fontWeight: '700',
-          fontSize: '20px'
+          fontSize: '20px',
+          aspectRatio: '1',
+          flexShrink: 0
         }}>
           {teacher.grade_level?.charAt(0) || teacher.username.charAt(0).toUpperCase()}
         </div>
@@ -628,7 +632,9 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onEditUser, onViewActiv
             justifyContent: 'center',
             color: 'white',
             fontWeight: '700',
-            fontSize: '18px'
+            fontSize: '18px',
+            aspectRatio: '1',
+            flexShrink: 0
           }}>
             {userItem.username.charAt(0).toUpperCase()}
           </div>

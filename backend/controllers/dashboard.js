@@ -3,7 +3,8 @@ import cache from '../utils/cache.js';
 
 export const getDashboardStats = async (req, res) => {
   try {
-    const cacheKey = `dashboard_stats:${req.user.school_id}`;
+    const schema = req.schoolSchema;
+    const cacheKey = `dashboard_stats:${schema}`;
     let stats = cache.get(cacheKey);
     
     if (!stats) {
@@ -14,8 +15,7 @@ export const getDashboardStats = async (req, res) => {
           COUNT(CASE WHEN status = 'checked_out' THEN 1 END) as checked_out,
           COUNT(CASE WHEN status = 'under_repair' THEN 1 END) as under_repair,
           COUNT(CASE WHEN status = 'retired' THEN 1 END) as retired
-        FROM equipment
-        WHERE school_id = $1
+        FROM "${schema}".equipment
       `;
       
       const requestsQuery = `
@@ -27,14 +27,12 @@ export const getDashboardStats = async (req, res) => {
           COUNT(CASE WHEN r.status = 'returned' THEN 1 END) as returned_requests,
           COUNT(CASE WHEN r.status = 'early_returned' THEN 1 END) as early_returned_requests,
           COUNT(CASE WHEN r.status IN ('returned', 'early_returned') THEN 1 END) as total_returned_requests
-        FROM requests r
-        JOIN users u ON r.user_id = u.id
-        WHERE u.school_id = $1
+        FROM "${schema}".requests r
       `;
       
       const [equipmentStats, requestStats] = await Promise.all([
-        pool.query(statsQuery, [req.user.school_id]),
-        pool.query(requestsQuery, [req.user.school_id])
+        pool.query(statsQuery),
+        pool.query(requestsQuery)
       ]);
 
       stats = {
@@ -54,7 +52,8 @@ export const getDashboardStats = async (req, res) => {
 
 export const getRecentActivity = async (req, res) => {
   try {
-    const cacheKey = 'recent_activity';
+    const schema = req.schoolSchema;
+    const cacheKey = `recent_activity:${schema}`;
     let activity = cache.get(cacheKey);
     
     if (!activity) {
@@ -66,9 +65,9 @@ export const getRecentActivity = async (req, res) => {
           r.request_date as date,
           u.username,
           e.name as equipment_name
-        FROM requests r
-        JOIN users u ON r.user_id = u.id
-        JOIN equipment e ON r.equipment_id = e.id
+        FROM "${schema}".requests r
+        JOIN "${schema}".users u ON r.user_id = u.id
+        JOIN "${schema}".equipment e ON r.equipment_id = e.id
         ORDER BY r.request_date DESC
         LIMIT 10
       `);
@@ -86,13 +85,14 @@ export const getRecentActivity = async (req, res) => {
 
 export const getLowStockAlerts = async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     // For now, we'll simulate low stock by checking equipment types with few available items
     const lowStockQuery = `
       SELECT 
         type,
         COUNT(*) as total_count,
         COUNT(CASE WHEN status = 'available' THEN 1 END) as available_count
-      FROM equipment
+      FROM "${schema}".equipment
       GROUP BY type
       HAVING COUNT(CASE WHEN status = 'available' THEN 1 END) <= 2
       ORDER BY available_count ASC

@@ -26,10 +26,11 @@ router.get('/curriculum-test', (req, res) => {
   res.json({ message: 'Curriculum endpoint working' });
 });
 
-// Get subjects from shared table (not school-specific)
+// Get subjects from school schema
 router.get('/subjects', async (req, res) => {
   try {
-    const result = await queryInSchema('public', 'SELECT * FROM subjects ORDER BY name');
+    const schema = req.schoolSchema;
+    const result = await pool.query(`SELECT * FROM "${schema}".subjects ORDER BY name`);
     res.json(result.rows);
   } catch (error) {
     console.error('Get subjects error:', error);
@@ -40,10 +41,11 @@ router.get('/subjects', async (req, res) => {
 // Get lesson plans from school schema
 router.get('/lesson-plans', async (req, res) => {
   try {
-    const result = await queryInSchema(req.schoolSchema, `
+    const schema = req.schoolSchema;
+    const result = await pool.query(`
       SELECT lp.*, s.name as subject_name, s.code as subject_code
-      FROM lesson_plans lp
-      LEFT JOIN subjects s ON lp.subject_id = s.id
+      FROM "${schema}".lesson_plans lp
+      LEFT JOIN "${schema}".subjects s ON lp.subject_id = s.id
       ORDER BY lp.lesson_date DESC
     `);
     res.json(result.rows);
@@ -58,9 +60,10 @@ router.put('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, async 
   try {
     const { id } = req.params;
     const { subject_id, title, description, learning_objectives, lesson_date, duration_minutes, grade_level, required_equipment, start_date, end_date } = req.body;
+    const schema = req.schoolSchema;
     
     const result = await pool.query(`
-      UPDATE lesson_plans 
+      UPDATE "${schema}".lesson_plans 
       SET subject_id = $1, title = $2, description = $3, learning_objectives = $4, 
           lesson_date = $5, duration_minutes = $6, grade_level = $7, required_equipment = $8,
           start_date = $9, end_date = $10
@@ -83,6 +86,7 @@ router.put('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, async 
 router.post('/subjects', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const { name, code, description, grade_level, room, teacher_id, equipment_fleets } = req.body;
+    const schema = req.schoolSchema;
     
     const client = await pool.connect();
     try {
@@ -90,14 +94,14 @@ router.post('/subjects', authenticateToken, requireTeacherOrAdmin, async (req, r
       
       // Create subject
       const result = await client.query(
-        'INSERT INTO subjects (name, code, description, grade_level, room, equipment_fleets) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        `INSERT INTO "${schema}".subjects (name, code, description, grade_level, room, equipment_fleets) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
         [name, code, description, grade_level, room, equipment_fleets || []]
       );
       
       // Assign teacher if provided
       if (teacher_id) {
         await client.query(
-          'UPDATE users SET subject_id = $1 WHERE id = $2 AND role = $3',
+          `UPDATE "${schema}".users SET subject_id = $1 WHERE id = $2 AND role = $3`,
           [result.rows[0].id, teacher_id, 'teacher']
         );
       }
@@ -124,6 +128,7 @@ router.put('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req
   try {
     const { id } = req.params;
     const { name, code, description, grade_level, room, teacher_id, equipment_fleets } = req.body;
+    const schema = req.schoolSchema;
     
     const client = await pool.connect();
     try {
@@ -131,7 +136,7 @@ router.put('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req
       
       // Update subject
       const result = await client.query(
-        'UPDATE subjects SET name = $1, code = $2, description = $3, grade_level = $4, room = $5, equipment_fleets = $6 WHERE id = $7 RETURNING *',
+        `UPDATE "${schema}".subjects SET name = $1, code = $2, description = $3, grade_level = $4, room = $5, equipment_fleets = $6 WHERE id = $7 RETURNING *`,
         [name, code, description, grade_level, room, Array.isArray(equipment_fleets) ? equipment_fleets : [], id]
       );
       
@@ -141,12 +146,12 @@ router.put('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req
       }
       
       // Clear previous teacher assignment
-      await client.query('UPDATE users SET subject_id = NULL WHERE subject_id = $1', [id]);
+      await client.query(`UPDATE "${schema}".users SET subject_id = NULL WHERE subject_id = $1`, [id]);
       
       // Assign new teacher if provided
       if (teacher_id) {
         await client.query(
-          'UPDATE users SET subject_id = $1 WHERE id = $2 AND role = $3',
+          `UPDATE "${schema}".users SET subject_id = $1 WHERE id = $2 AND role = $3`,
           [id, teacher_id, 'teacher']
         );
       }
@@ -172,6 +177,7 @@ router.put('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req
 router.post('/lesson-plans', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const { subject_id, title, description, learning_objectives, lesson_date, duration_minutes, grade_level, required_equipment, start_date, end_date } = req.body;
+    const schema = req.schoolSchema;
     
     // If user is a teacher, ensure they can only create lesson plans for their assigned subject
     if (req.user.role === 'teacher' && req.user.subject_id && subject_id !== req.user.subject_id) {
@@ -179,7 +185,7 @@ router.post('/lesson-plans', authenticateToken, requireTeacherOrAdmin, async (re
     }
     
     const result = await pool.query(`
-      INSERT INTO lesson_plans (teacher_id, subject_id, title, description, learning_objectives, 
+      INSERT INTO "${schema}".lesson_plans (teacher_id, subject_id, title, description, learning_objectives, 
                                required_equipment, lesson_date, duration_minutes, grade_level, start_date, end_date)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
@@ -196,14 +202,15 @@ router.post('/lesson-plans', authenticateToken, requireTeacherOrAdmin, async (re
 // Get comprehensive curriculum mapping
 router.get('/curriculum', authenticateToken, async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     // Get subjects with lesson counts, fleet information, and assigned teacher
     const subjectQuery = `
       SELECT s.*, 
              COUNT(DISTINCT lp.id) as lesson_count,
              u.username as assigned_teacher
-      FROM subjects s
-      LEFT JOIN lesson_plans lp ON s.id = lp.subject_id
-      LEFT JOIN users u ON s.id = u.subject_id AND u.role = 'teacher'
+      FROM "${schema}".subjects s
+      LEFT JOIN "${schema}".lesson_plans lp ON s.id = lp.subject_id
+      LEFT JOIN "${schema}".users u ON s.id = u.subject_id AND u.role = 'teacher'
       GROUP BY s.id, s.name, s.code, s.description, s.grade_level, s.room, s.equipment_fleets, u.username
       ORDER BY s.name
     `;
@@ -222,7 +229,7 @@ router.get('/curriculum', authenticateToken, async (req, res) => {
         type,
         COUNT(*) AS total_count,
         COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count
-      FROM equipment
+      FROM "${schema}".equipment
       WHERE serial_number IS NOT NULL
       GROUP BY base_serial, name, type
       ORDER BY name
@@ -267,10 +274,11 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
   try {
     const { id } = req.params;
     const { equipment_ids, start_date, end_date, notes } = req.body;
+    const schema = req.schoolSchema;
     
     // Verify lesson plan exists
     const lesson = await pool.query(
-      'SELECT * FROM lesson_plans WHERE id = $1',
+      `SELECT * FROM "${schema}".lesson_plans WHERE id = $1`,
       [id]
     );
     
@@ -284,7 +292,7 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
     // Create requests for each equipment item with automatic cycling
     for (const equipment_id of equipment_ids) {
       // Get the equipment to determine its fleet
-      const equipmentCheck = await pool.query('SELECT * FROM equipment WHERE id = $1', [equipment_id]);
+      const equipmentCheck = await pool.query(`SELECT * FROM "${schema}".equipment WHERE id = $1`, [equipment_id]);
       
       if (equipmentCheck.rows.length === 0) {
         skipped.push({ equipment_id, reason: 'Equipment not found' });
@@ -300,11 +308,11 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
         // Find next available item in the fleet that doesn't have conflicting requests
         const fleetItems = await pool.query(`
           SELECT e.* 
-          FROM equipment e
+          FROM "${schema}".equipment e
           WHERE e.serial_number LIKE $1 
             AND e.status = 'available'
             AND NOT EXISTS (
-              SELECT 1 FROM requests r 
+              SELECT 1 FROM "${schema}".requests r 
               WHERE r.equipment_id = e.id 
                 AND r.status IN ('pending', 'approved') 
                 AND r.start_date <= $3 
@@ -320,7 +328,7 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
       } else {
         // For non-fleet items, check if the specific item is available
         const hasConflict = await pool.query(`
-          SELECT 1 FROM requests r 
+          SELECT 1 FROM "${schema}".requests r 
           WHERE r.equipment_id = $1 
             AND r.status IN ('pending', 'approved') 
             AND r.start_date <= $3 
@@ -342,17 +350,17 @@ router.post('/lesson-plans/:id/request-equipment', authenticateToken, async (req
       
       // Create the request with the available equipment and auto-approve it
       const result = await pool.query(`
-        INSERT INTO requests (user_id, equipment_id, start_date, end_date, notes, status, approved_by, approved_at, due_date)
+        INSERT INTO "${schema}".requests (user_id, equipment_id, start_date, end_date, notes, status, approved_by, approved_at, due_date)
         VALUES ($1, $2, $3, $4, $5, 'approved', $1, CURRENT_TIMESTAMP, $4)
         RETURNING *
       `, [req.user.id, equipmentToRequest.id, start_date, end_date, notes || `Equipment for lesson: ${lesson.rows[0].title}`]);
       
       // Update equipment status to checked_out
-      await pool.query('UPDATE equipment SET status = $1 WHERE id = $2', ['checked_out', equipmentToRequest.id]);
+      await pool.query(`UPDATE "${schema}".equipment SET status = $1 WHERE id = $2`, ['checked_out', equipmentToRequest.id]);
       
       // Get equipment details for response
       const equipmentDetails = await pool.query(
-        'SELECT * FROM equipment WHERE id = $1',
+        `SELECT * FROM "${schema}".equipment WHERE id = $1`,
         [equipmentToRequest.id]
       );
       
@@ -387,13 +395,14 @@ router.get('/equipment/fleet/:baseSerial/next-available', authenticateToken, asy
   try {
     const { baseSerial } = req.params;
     const { start_date, end_date } = req.query;
+    const schema = req.schoolSchema;
     
     // Find next available item in fleet
     const availableItems = await pool.query(`
       SELECT e.*, 
              CASE WHEN r.id IS NOT NULL THEN true ELSE false END as has_pending_request
-      FROM equipment e
-      LEFT JOIN requests r ON e.id = r.equipment_id 
+      FROM "${schema}".equipment e
+      LEFT JOIN "${schema}".requests r ON e.id = r.equipment_id 
         AND r.status IN ('pending', 'approved') 
         AND r.start_date <= $2 
         AND r.end_date >= $1
@@ -422,6 +431,7 @@ router.get('/equipment/fleet/:baseSerial/next-available', authenticateToken, asy
 router.get('/curriculum/:subjectCode/recommendations', authenticateToken, async (req, res) => {
   try {
     const { subjectCode } = req.params;
+    const schema = req.schoolSchema;
     
     // Equipment type mapping
     const equipmentTypeMapping = {
@@ -440,7 +450,7 @@ router.get('/curriculum/:subjectCode/recommendations', authenticateToken, async 
     // Get current equipment
     const currentEquipment = await pool.query(`
       SELECT type, COUNT(*) as count, AVG(COALESCE(learning_impact_score, 4.2)) as avg_score
-      FROM equipment
+      FROM "${schema}".equipment
       WHERE type = ANY($1)
       GROUP BY type
       ORDER BY avg_score DESC
@@ -449,7 +459,7 @@ router.get('/curriculum/:subjectCode/recommendations', authenticateToken, async 
     // Get recommended additions (equipment types not currently mapped)
     const allTypes = await pool.query(`
       SELECT DISTINCT type, AVG(COALESCE(learning_impact_score, 4.2)) as avg_score, COUNT(*) as usage_count
-      FROM equipment
+      FROM "${schema}".equipment
       WHERE type != ALL($1)
       GROUP BY type
       ORDER BY avg_score DESC
@@ -478,11 +488,12 @@ router.get('/curriculum/:subjectCode/recommendations', authenticateToken, async 
 router.get('/lesson-plans/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const schema = req.schoolSchema;
     
     const result = await pool.query(`
       SELECT lp.*, s.name as subject_name, s.code as subject_code
-      FROM lesson_plans lp
-      LEFT JOIN subjects s ON lp.subject_id = s.id
+      FROM "${schema}".lesson_plans lp
+      LEFT JOIN "${schema}".subjects s ON lp.subject_id = s.id
       WHERE lp.id = $1 AND lp.teacher_id = $2
     `, [id, req.user.id]);
     
@@ -501,9 +512,10 @@ router.get('/lesson-plans/:id', authenticateToken, async (req, res) => {
 router.delete('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const schema = req.schoolSchema;
     
     const result = await pool.query(
-      'DELETE FROM lesson_plans WHERE id = $1 AND teacher_id = $2 RETURNING *',
+      `DELETE FROM "${schema}".lesson_plans WHERE id = $1 AND teacher_id = $2 RETURNING *`,
       [id, req.user.id]
     );
     
@@ -521,20 +533,21 @@ router.delete('/lesson-plans/:id', authenticateToken, requireTeacherOrAdmin, asy
 // Get teacher's lesson plan statistics
 router.get('/teacher/stats', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
+    const schema = req.schoolSchema;
     const stats = await pool.query(`
       SELECT 
         COUNT(*) as total_plans,
         COUNT(CASE WHEN lesson_date >= CURRENT_DATE THEN 1 END) as upcoming_plans,
         COUNT(CASE WHEN lesson_date < CURRENT_DATE THEN 1 END) as completed_plans,
         COUNT(DISTINCT subject_id) as subjects_taught
-      FROM lesson_plans 
+      FROM "${schema}".lesson_plans 
       WHERE teacher_id = $1
     `, [req.user.id]);
     
     const recentPlans = await pool.query(`
       SELECT lp.*, s.name as subject_name
-      FROM lesson_plans lp
-      LEFT JOIN subjects s ON lp.subject_id = s.id
+      FROM "${schema}".lesson_plans lp
+      LEFT JOIN "${schema}".subjects s ON lp.subject_id = s.id
       WHERE lp.teacher_id = $1
       ORDER BY lp.lesson_date DESC
       LIMIT 5
@@ -554,10 +567,11 @@ router.get('/teacher/stats', authenticateToken, requireTeacherOrAdmin, async (re
 router.delete('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const schema = req.schoolSchema;
     
     // Check if subject has associated lesson plans
     const lessonCheck = await pool.query(
-      'SELECT COUNT(*) as count FROM lesson_plans WHERE subject_id = $1',
+      `SELECT COUNT(*) as count FROM "${schema}".lesson_plans WHERE subject_id = $1`,
       [id]
     );
     
@@ -568,7 +582,7 @@ router.delete('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (
     }
     
     const result = await pool.query(
-      'DELETE FROM subjects WHERE id = $1 RETURNING *',
+      `DELETE FROM "${schema}".subjects WHERE id = $1 RETURNING *`,
       [id]
     );
     
@@ -587,6 +601,7 @@ router.delete('/subjects/:id', authenticateToken, requireTeacherOrAdmin, async (
 router.post('/lesson-plans/bulk', authenticateToken, requireTeacherOrAdmin, async (req, res) => {
   try {
     const { plans } = req.body;
+    const schema = req.schoolSchema;
     
     if (!Array.isArray(plans) || plans.length === 0) {
       return res.status(400).json({ error: 'Plans array is required' });
@@ -598,7 +613,7 @@ router.post('/lesson-plans/bulk', authenticateToken, requireTeacherOrAdmin, asyn
       const { subject_id, title, description, learning_objectives, lesson_date, duration_minutes, grade_level, required_equipment } = plan;
       
       const result = await pool.query(`
-        INSERT INTO lesson_plans (teacher_id, subject_id, title, description, learning_objectives, 
+        INSERT INTO "${schema}".lesson_plans (teacher_id, subject_id, title, description, learning_objectives, 
                                  required_equipment, lesson_date, duration_minutes, grade_level)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *

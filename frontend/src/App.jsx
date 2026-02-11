@@ -39,9 +39,10 @@ const AdminViewRoute = () => {
 
       hasRequested.current = true;
       try {
-        const response = await axios.get(`${API_BASE_URL}/auth/school-admin/${schoolId}`);
+        const response = await axios.get(`${API_BASE_URL}/api/auth/school-admin/${schoolId}`);
         login(response.data.user, response.data.token);
-        setLoading(false);
+        // Force a small delay to ensure state is updated
+        setTimeout(() => setLoading(false), 100);
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to load school admin');
         setLoading(false);

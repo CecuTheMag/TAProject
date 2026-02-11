@@ -135,12 +135,12 @@ const EquipmentFleetSection = ({ equipmentFleets, isMobile, onDelete }) => {
                         </span>
                         <span style={{
                           padding: '2px 6px',
-                          backgroundColor: getConditionColor(item.condition),
+                          backgroundColor: getConditionColor(item.condition_status || item.condition),
                           color: 'white',
                           borderRadius: '4px',
                           fontSize: '10px'
                         }}>
-                          {t(item.condition)}
+                          {t(item.condition_status || item.condition || 'unknown')}
                         </span>
                       </div>
                     </div>
