@@ -235,7 +235,11 @@ export const createSchoolAdmin = async (req, res) => {
       console.log('Schema creation response:', schemaResponse.data);
     } catch (schoolSyncError) {
       console.error('Error syncing school to main database:', schoolSyncError.message);
-      return res.status(500).json({ error: 'Failed to sync school data' });
+      // Don't fail if schema already exists, just continue
+      if (!schoolSyncError.message.includes('already exists')) {
+        return res.status(500).json({ error: 'Failed to sync school data' });
+      }
+      console.log('Schema may already exist, continuing...');
     }
 
     const tempPassword = 'temp';

@@ -30,7 +30,6 @@ const SystemAdminDashboard = () => {
   const [newAdmin, setNewAdmin] = useState({
     username: '',
     email: '',
-    password: '',
     school_id: ''
   });
 
@@ -92,7 +91,7 @@ const SystemAdminDashboard = () => {
     e.preventDefault();
     try {
       await systemAdmin.createAdmin(newAdmin);
-      setNewAdmin({ username: '', email: '', password: '', school_id: '' });
+      setNewAdmin({ username: '', email: '', school_id: '' });
       fetchData();
     } catch (error) {
       alert(error.response?.data?.error || 'Failed to create admin');
@@ -422,14 +421,6 @@ const SystemAdminDashboard = () => {
                   placeholder="Email"
                   value={newAdmin.email}
                   onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
-                  required
-                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={newAdmin.password}
-                  onChange={(e) => setNewAdmin({...newAdmin, password: e.target.value})}
                   required
                   style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                 />
