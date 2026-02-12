@@ -46,8 +46,13 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
       case 'good': return '#3b82f6';
       case 'fair': return '#f59e0b';
       case 'poor': return '#ef4444';
-      default: return '#6b7280';
+      default: return '#94a3b8';
     }
+  };
+
+  const formatCondition = (condition) => {
+    if (!condition) return 'N/A';
+    return condition.charAt(0).toUpperCase() + condition.slice(1);
   };
 
   return (
@@ -114,7 +119,7 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
                 fontWeight: '600',
                 textTransform: 'capitalize'
               }}>
-                {equipment.condition}
+                {formatCondition(equipment.condition)}
               </span>
             </div>
           </div>

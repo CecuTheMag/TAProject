@@ -171,11 +171,65 @@ const QRScanner = ({ onClose, onEquipmentFound }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#f8fafc'
+              backgroundColor: '#f8fafc',
+              position: 'relative',
+              overflow: 'hidden'
             }}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="#94a3b8">
-                <path d="M3,11H5V13H3V11M11,5H13V9H11V5M9,11H13V15H9V11M15,11H17V13H15V11M19,11H21V13H19V11M5,7H9V11H5V7M3,5H5V7H3V5M3,13H5V15H3V13M7,5H9V7H7V5M3,19H5V21H3V19M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19M19,19H21V21H19V19M15,5H17V7H15V5M19,5H21V7H19V5M15,7H17V9H15V7M19,7H21V9H19V7M15,13H17V15H15V13M19,13H21V15H19V13M15,15H17V17H15V15M19,15H21V17H19V15M15,17H17V19H15V17M19,17H21V19H19V17Z"/>
-              </svg>
+              {/* QR Code Pattern Background */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '140px',
+                height: '140px',
+                background: 'white',
+                border: '3px solid #1e293b',
+                borderRadius: '8px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                gridTemplateRows: 'repeat(7, 1fr)',
+                gap: '1px',
+                padding: '4px'
+              }}>
+                {/* Top-left corner marker */}
+                <div style={{ background: '#1e293b', gridColumn: '1/3', gridRow: '1/3', borderRadius: '2px' }}></div>
+                <div style={{ background: 'white', gridColumn: '3/4', gridRow: '1/2' }}></div>
+                <div style={{ background: 'white', gridColumn: '1/2', gridRow: '3/4' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '2/4', gridRow: '2/4', borderRadius: '2px' }}></div>
+                
+                {/* Top-right corner marker */}
+                <div style={{ background: '#1e293b', gridColumn: '6/8', gridRow: '1/3', borderRadius: '2px' }}></div>
+                <div style={{ background: 'white', gridColumn: '5/6', gridRow: '1/2' }}></div>
+                <div style={{ background: 'white', gridColumn: '7/8', gridRow: '2/3' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '5/7', gridRow: '2/4', borderRadius: '2px' }}></div>
+                
+                {/* Bottom-left corner marker */}
+                <div style={{ background: '#1e293b', gridColumn: '1/3', gridRow: '6/8', borderRadius: '2px' }}></div>
+                <div style={{ background: 'white', gridColumn: '2/4', gridRow: '5/7', borderRadius: '2px' }}></div>
+                <div style={{ background: 'white', gridColumn: '3/4', gridRow: '7/8' }}></div>
+                <div style={{ background: 'white', gridColumn: '1/2', gridRow: '5/6' }}></div>
+                
+                {/* Data cells (sample pattern) */}
+                <div style={{ background: '#1e293b' }}></div>
+                <div style={{ background: 'white' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '4/6' }}></div>
+                <div style={{ background: 'white', gridColumn: '7/8', gridRow: '4/5' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '5/6', gridRow: '5/6' }}></div>
+                <div style={{ background: 'white', gridColumn: '6/7', gridRow: '5/6' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '4/5', gridRow: '6/7' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '6/7', gridRow: '6/7' }}></div>
+                <div style={{ background: 'white', gridColumn: '4/5', gridRow: '7/8' }}></div>
+                <div style={{ background: 'white', gridColumn: '6/8', gridRow: '7/8' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '4/5' }}></div>
+                <div style={{ background: 'white', gridColumn: '5/6' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '5/7', gridRow: '4/5' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '4/5', gridRow: '5/6' }}></div>
+                <div style={{ background: 'white', gridColumn: '6/7', gridRow: '6/7' }}></div>
+                <div style={{ background: '#1e293b', gridColumn: '4/6', gridRow: '7/8' }}></div>
+                <div style={{ background: 'white', gridColumn: '6/7' }}></div>
+                <div style={{ background: '#1e293b' }}></div>
+              </div>
             </div>
             
             <p style={{

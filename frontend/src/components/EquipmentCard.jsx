@@ -51,7 +51,7 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
       case 'good': return '#3b82f6';         // Blue - good working order
       case 'fair': return '#f59e0b';         // Amber - some wear
       case 'poor': return '#ef4444';         // Red - needs attention
-      default: return '#6b7280';             // Default gray
+      default: return '#94a3b8';             // Gray for unknown/unset
     }
   };
 
