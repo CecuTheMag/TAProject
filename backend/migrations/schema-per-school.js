@@ -162,7 +162,7 @@ const createSchoolSchema = async (schoolCode) => {
     console.log(`✅ Schema created for school: ${schoolCode}`);
     
     // Create sample curriculum for the school
-    await createSampleCurriculum(schoolCode, client);
+    await createSchoolSampleData(schoolCode, client);
     
     // Create sample equipment and users
     await createSchoolSampleData(schoolCode);

@@ -20,22 +20,47 @@ router.post('/create-school-schema', validateAPIKey, async (req, res) => {
       return res.status(400).json({ error: 'School code is required' });
     }
     
-    console.log(`Creating schema for school: ${schoolCode}`);
+    // Normalize school code
+    const normalizedCode = schoolCode.toUpperCase();
+    
+    console.log(`📦 Creating schema for school: ${normalizedCode}`);
     
     // Ensure school exists in main database first
-    const schoolCheck = await pool.query('SELECT id, name FROM schools WHERE code = $1', [schoolCode]);
+    const schoolCheck = await pool.query('SELECT id, name FROM schools WHERE UPPER(code) = $1', [normalizedCode]);
     if (schoolCheck.rows.length === 0) {
+      console.log(`❌ School ${normalizedCode} not found in main database`);
       return res.status(404).json({ error: 'School not found in main database' });
     }
     
-    const success = await createSchoolSchema(schoolCode);
+    const school = schoolCheck.rows[0];
+    
+    // Check if schema already exists
+    const schemaExists = await pool.query(
+      `SELECT schema_name FROM information_schema.schemata WHERE schema_name = $1`,
+      [`school_${normalizedCode}`]
+    );
+    
+    if (schemaExists.rows.length > 0) {
+      console.log(`ℹ️ Schema for school ${normalizedCode} already exists`);
+      return res.json({ 
+        message: `Schema already exists for school: ${normalizedCode}`,
+        school,
+        already_existed: true
+      });
+    }
+    
+    // Create the schema
+    console.log(`🔧 Creating schema and tables for ${normalizedCode}...`);
+    const success = await createSchoolSchema(normalizedCode);
     
     if (success) {
+      console.log(`✅ Schema created successfully for school: ${normalizedCode}`);
       res.json({ 
-        message: `Schema created successfully for school: ${schoolCode}`,
-        school: schoolCheck.rows[0]
+        message: `Schema created successfully for school: ${normalizedCode}`,
+        school
       });
     } else {
+      console.error(`❌ Failed to create schema for ${normalizedCode}`);
       res.status(500).json({ error: 'Failed to create school schema' });
     }
   } catch (error) {

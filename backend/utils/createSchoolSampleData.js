@@ -2,8 +2,12 @@ import pool from '../database.js';
 import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
 
-export const createSchoolSampleData = async (schoolCode) => {
-  const client = await pool.connect();
+export const createSchoolSampleData = async (schoolCode, client = null) => {
+  const shouldReleaseClient = !client;
+  if (!client) {
+    client = await pool.connect();
+  }
+  
   try {
     const schemaName = `school_${schoolCode.toLowerCase()}`;
     
@@ -71,11 +75,10 @@ export const createSchoolSampleData = async (schoolCode) => {
 
       console.log(`✅ Sample student created for ${schoolCode}: student@${schoolCode.toLowerCase()}.school / student123`);
     }
-
-  } catch (error) {
-    console.error(`❌ Error creating sample data for ${schoolCode}:`, error);
-    throw error;
   } finally {
-    client.release();
+    if (shouldReleaseClient) {
+      client.release();
+    }
   }
 };
+

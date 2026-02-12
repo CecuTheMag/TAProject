@@ -12,6 +12,75 @@ const execAsync = promisify(exec);
 const queryCache = new Map();
 const CACHE_TTL = 5000; // 5 seconds
 
+/**
+ * Retry function with exponential backoff for network operations
+ */
+const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      // Only retry on connection errors
+      const isConnectionError = 
+        error.code === 'ECONNREFUSED' || 
+        error.code === 'ENOTFOUND' ||
+        error.code === 'ETIMEDOUT' ||
+        error.message.includes('socket hang up') ||
+        error.message.includes('connect ECONNREFUSED');
+      
+      if (!isConnectionError || attempt === maxRetries) {
+        throw error;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`Retry attempt ${attempt}/${maxRetries} after ${delay}ms delay...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    
+    throw lastError;
+  }
+};
+
+/**
+ * Get the main API URL with fallback options
+ */
+const getMainApiUrl = () => {
+  // Try environment variable first
+  if (process.env.MAIN_API_URL) {
+    return process.env.MAIN_API_URL;
+  }
+  
+  // In docker-compose-secure, backend is on internal_api network
+  // Try service name first, then localhost as fallback
+  return 'http://backend:5000';
+};
+
+/**
+ * Make a request to the main backend API with retry logic
+ */
+const mainApiRequest = async (endpoint, data, timeout = 15000) => {
+  const baseUrl = getMainApiUrl();
+  const url = `${baseUrl}${endpoint}`;
+  
+  console.log(`Making request to: ${url}`);
+  
+  return retryWithBackoff(async () => {
+    const response = await axios.post(url, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
+      },
+      timeout: timeout
+    });
+    
+    return response;
+  }, 3, 1000);
+};
+
 const getMainDBData = async (query, params = []) => {
   const cacheKey = JSON.stringify({ query, params });
   const cached = queryCache.get(cacheKey);
@@ -21,26 +90,17 @@ const getMainDBData = async (query, params = []) => {
   }
   
   try {
-    const response = await axios.post(
-      `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/query`,
-      { query, params },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
-        },
-        timeout: 10000
-      }
-    );
+    const response = await mainApiRequest('/api/internal/query', { query, params }, 10000);
+    const data = response.data;
     
-    queryCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    queryCache.set(cacheKey, { data, timestamp: Date.now() });
     
     if (queryCache.size > 100) {
       const firstKey = queryCache.keys().next().value;
       queryCache.delete(firstKey);
     }
     
-    return response.data;
+    return data;
   } catch (error) {
     console.error('Main DB query error:', error.message);
     throw error;
@@ -92,23 +152,29 @@ export const createSchool = async (req, res) => {
       
       // Create dedicated schema for the new school
       console.log('Creating school schema...');
-      const schemaResponse = await axios.post(
-        `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/create-school-schema`,
+      const schemaResponse = await mainApiRequest(
+        '/api/internal/create-school-schema',
         { schoolCode: code },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
-          },
-          timeout: 30000
-        }
+        30000
       );
+      
       console.log('Schema creation response:', schemaResponse.data);
       
     } catch (mainDbError) {
       console.error('Main DB school creation failed:', mainDbError.message);
-      // Don't fail the entire operation, but log the error
-      console.warn('School created in admin DB but main DB sync failed. Manual sync may be required.');
+      
+      // Check if it's a connection error
+      const isConnectionError = 
+        mainDbError.code === 'ECONNREFUSED' || 
+        mainDbError.code === 'ETIMEDOUT' ||
+        mainDbError.message.includes('connect ECONNREFUSED');
+      
+      if (isConnectionError) {
+        console.error('Cannot connect to main backend. Make sure backend service is running.');
+        console.warn('School created in admin DB but main DB sync failed. Manual sync may be required.');
+      } else if (!mainDbError.message.includes('already exists')) {
+        console.warn('School created in admin DB but main DB sync failed. Manual sync may be required.');
+      }
     }
     
     res.status(201).json({
@@ -209,7 +275,6 @@ export const createSchoolAdmin = async (req, res) => {
       const mainSchoolCheck = await getMainDBData('SELECT id FROM schools WHERE id = $1', [school_id]);
       if (!mainSchoolCheck.rows || mainSchoolCheck.rows.length === 0) {
         console.log('School not found in main database, creating it...');
-        // Create school in main database
         const schoolName = school.name || `School ${school.id}`;
         const schoolCode = school.code || `SCH${school.id}`;
         await getMainDBData(
@@ -219,27 +284,43 @@ export const createSchoolAdmin = async (req, res) => {
         console.log('School created in main database');
       }
       
-      // Create school schema
       console.log('Creating school schema...');
-      const schemaResponse = await axios.post(
-        `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/create-school-schema`,
+      const schemaResponse = await mainApiRequest(
+        '/api/internal/create-school-schema',
         { schoolCode: school.code },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
-          },
-          timeout: 15000
-        }
+        30000
       );
+      
       console.log('Schema creation response:', schemaResponse.data);
+      
+      if (schemaResponse.status !== 200) {
+        throw new Error('Schema creation failed');
+      }
     } catch (schoolSyncError) {
       console.error('Error syncing school to main database:', schoolSyncError.message);
-      // Don't fail if schema already exists, just continue
-      if (!schoolSyncError.message.includes('already exists')) {
-        return res.status(500).json({ error: 'Failed to sync school data' });
+      
+      // Check if it's a connection error
+      const isConnectionError = 
+        schoolSyncError.code === 'ECONNREFUSED' || 
+        schoolSyncError.code === 'ETIMEDOUT' ||
+        schoolSyncError.message.includes('connect ECONNREFUSED');
+      
+      if (isConnectionError) {
+        console.error('Cannot connect to main backend. Make sure backend service is running on internal network.');
+        return res.status(503).json({ 
+          error: 'Main backend service unavailable. Please try again in a few moments.',
+          code: 'SERVICE_UNAVAILABLE',
+          details: 'Connection to backend service failed. The service may still be starting up.'
+        });
       }
-      console.log('Schema may already exist, continuing...');
+      
+      // Check if schema already exists (not an error)
+      if (schoolSyncError.message.includes('already exists') || 
+          schoolSyncError.response?.data?.message?.includes('already')) {
+        console.log('Schema already exists, continuing...');
+      } else {
+        return res.status(500).json({ error: 'Failed to create school schema: ' + schoolSyncError.message });
+      }
     }
 
     const tempPassword = 'temp';
