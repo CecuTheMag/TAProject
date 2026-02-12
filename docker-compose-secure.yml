@@ -14,6 +14,11 @@ services:
       - "5432:5432"
     networks:
       - user_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d SIMS"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   # ISOLATED ADMIN DATABASE
@@ -29,6 +34,11 @@ services:
       - "5433:5432"
     networks:
       - admin_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin_user -d SIMS_ADMIN"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   redis:
@@ -40,6 +50,11 @@ services:
     networks:
       - user_network
       - admin_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   # Main user-facing backend

@@ -144,8 +144,8 @@ const SystemAdminDashboard = () => {
         width: isMobile ? '100%' : 'calc(100% - var(--sidebar-width, 300px))',
         boxSizing: 'border-box',
         overflowX: 'hidden',
-        display: isMobile ? 'flex' : 'block',
-        flexDirection: isMobile ? 'column' : 'initial'
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         {activeTab === 'dashboard' && (
           <div style={{ padding: isMobile ? '20px' : '40px', flex: 1 }}>

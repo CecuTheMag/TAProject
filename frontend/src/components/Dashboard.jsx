@@ -336,11 +336,11 @@ const Dashboard = ({ schoolUser }) => {
         width: isMobile ? '100%' : 'calc(100% - var(--sidebar-width, 300px))',
         boxSizing: 'border-box',
         overflowX: 'hidden',
-        display: isMobile ? 'flex' : 'block',
-        flexDirection: isMobile ? 'column' : 'initial'
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         {activeTab === 'dashboard' ? (
-          <>
+          <div style={{ flex: 1 }}>
             {/* Header */}
             <div style={{
           background: 'rgba(255, 255, 255, 0.95)',
@@ -738,7 +738,7 @@ const Dashboard = ({ schoolUser }) => {
           )}
         </div>
         <Footer isMobile={isMobile} />
-          </>
+          </div>
         ) : activeTab === 'equipment' ? (
           <>
             <EquipmentTab />

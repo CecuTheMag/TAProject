@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 const Footer = ({ isMobile }) => {
-  // Always render footer, but adjust styling based on screen size
+  // Footer that stays at bottom of content, not fixed to screen bottom
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -24,11 +24,7 @@ const Footer = ({ isMobile }) => {
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 10
+        marginTop: 'auto'
       }}
     >
       <div style={{
