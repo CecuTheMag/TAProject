@@ -4,13 +4,23 @@ import { auth } from '../api';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from '../translations';
 import logoImage from '../assets/logotp.png';
-import VerificationPage from './VerificationPage';
 
 const AuthPage = () => {
   const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [showVerification, setShowVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationStep, setVerificationStep] = useState(1); // 1: send codes, 2: verify and set password
+  const [verificationFormData, setVerificationFormData] = useState({
+    emailCode: '',
+    smsCode: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [codesSent, setCodesSent] = useState(false);
+  const [hasPhone, setHasPhone] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -48,16 +58,10 @@ const AuthPage = () => {
         
         login(response.data.user, response.data.token);
       } else {
-        // Signup flow - only email required
-        const response = await auth.login({ email: formData.email, password: 'temp' });
-        
-        if (response.data.requiresSetup) {
-          setVerificationEmail(formData.email);
-          setShowVerification(true);
-          return;
-        }
-        
-        setError('Account already exists and is activated. Please use login.');
+        // Signup flow - show verification to set up account
+        setVerificationEmail(formData.email);
+        setShowVerification(true);
+        return;
       }
     } catch (err) {
       if (!isLogin && err.response?.status === 401) {
@@ -74,18 +78,55 @@ const AuthPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Show verification page if needed
-  if (showVerification) {
-    return (
-      <VerificationPage 
-        email={verificationEmail} 
-        onBack={() => {
-          setShowVerification(false);
-          setVerificationEmail('');
-        }} 
-      />
-    );
-  }
+  const sendCodes = async () => {
+    setVerificationLoading(true);
+    setVerificationError('');
+
+    try {
+      const response = await auth.sendVerificationCodes({ email: verificationEmail });
+      setCodesSent(true);
+      setHasPhone(response.data.hasPhone);
+      setVerificationStep(2);
+    } catch (err) {
+      setVerificationError(err.response?.data?.error || 'Failed to send verification codes');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const setupPassword = async (e) => {
+    e.preventDefault();
+    setVerificationLoading(true);
+    setVerificationError('');
+
+    if (verificationFormData.password !== verificationFormData.confirmPassword) {
+      setVerificationError('Passwords do not match');
+      setVerificationLoading(false);
+      return;
+    }
+
+    try {
+      const response = await auth.setupPassword({
+        email: verificationEmail,
+        password: verificationFormData.password,
+        confirmPassword: verificationFormData.confirmPassword,
+        emailCode: verificationFormData.emailCode,
+        smsCode: verificationFormData.smsCode
+      });
+
+      login(response.data.user, response.data.token);
+    } catch (err) {
+      setVerificationError(err.response?.data?.error || 'Password setup failed');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleVerificationChange = (e) => {
+    setVerificationFormData({ ...verificationFormData, [e.target.name]: e.target.value });
+  };
+
+
 
   return (
     <div style={{
@@ -206,81 +247,328 @@ const AuthPage = () => {
           flexDirection: 'column',
           justifyContent: 'center'
         }}>
-          <motion.div
-            key={isLogin ? 'login' : 'signup'}
-            initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <h2 style={{
-              fontSize: isMobile ? '24px' : '32px',
-              fontWeight: '800',
-              color: '#0f172a',
-              margin: '0 0 8px 0'
-            }}>
-              {isLogin ? t('welcomeBack') : 'Get Started'}
-            </h2>
-            
-            <p style={{
-              color: '#64748b',
-              fontSize: '16px',
-              margin: '0 0 32px 0'
-            }}>
-              {isLogin ? 'Sign in to your account' : 'Enter your school email to begin'}
-            </p>
+          {showVerification ? (
+            <motion.div
+              key="verification"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <h2 style={{
+                fontSize: isMobile ? '24px' : '32px',
+                fontWeight: '800',
+                color: '#0f172a',
+                margin: '0 0 8px 0'
+              }}>
+                First-Time Setup
+              </h2>
 
-            <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <label htmlFor="email-input" style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  color: '#374151',
-                  marginBottom: '8px'
-                }}>
-                  {t('emailAddress')}
-                </label>
-                <input
-                  id="email-input"
-                  type="email"
-                  name="email"
-                  placeholder={t('enterEmail')}
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '16px',
-                    border: '2px solid #e5e7eb',
+              <p style={{
+                color: '#64748b',
+                fontSize: '16px',
+                margin: '0 0 32px 0'
+              }}>
+                {verificationStep === 1 ? 'Verify your identity to set up your account' : 'Enter verification codes and create your password'}
+              </p>
+
+              {verificationStep === 1 ? (
+                // Step 1: Send verification codes
+                <div>
+                  <div style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     borderRadius: '12px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                />
-              </div>
+                    padding: '20px',
+                    marginBottom: '24px'
+                  }}>
+                    <h3 style={{ margin: '0 0 12px 0', color: '#374151' }}>Account Found</h3>
+                    <p style={{ margin: '0', color: '#64748b', fontSize: '14px' }}>
+                      Email: <strong>{verificationEmail}</strong>
+                    </p>
+                    <p style={{ margin: '8px 0 0 0', color: '#64748b', fontSize: '14px' }}>
+                      We'll send verification codes to your registered email and phone number.
+                    </p>
+                  </div>
 
-              {isLogin && (
-                <div style={{ marginBottom: '24px' }}>
-                  <label htmlFor="password-input" style={{
+                  {verificationError && (
+                    <div style={{
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#dc2626',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      marginBottom: '20px',
+                      fontSize: '14px'
+                    }}>
+                      {verificationError}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={sendCodes}
+                    disabled={verificationLoading}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      background: verificationLoading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: verificationLoading ? 'not-allowed' : 'pointer',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    {verificationLoading ? 'Sending Codes...' : 'Send Verification Codes'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowVerification(false);
+                      setVerificationEmail('');
+                      setVerificationStep(1);
+                      setCodesSent(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      background: 'transparent',
+                      color: '#64748b',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Back to Login
+                  </button>
+                </div>
+              ) : (
+                // Step 2: Verify codes and set password
+                <form onSubmit={setupPassword}>
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      Email Verification Code
+                    </label>
+                    <input
+                      type="text"
+                      name="emailCode"
+                      placeholder="Enter 6-digit code from email"
+                      value={verificationFormData.emailCode}
+                      onChange={handleVerificationChange}
+                      maxLength="6"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '12px',
+                        fontSize: '18px',
+                        textAlign: 'center',
+                        letterSpacing: '2px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {hasPhone && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#374151',
+                        marginBottom: '8px'
+                      }}>
+                        SMS Verification Code
+                      </label>
+                      <input
+                        type="text"
+                        name="smsCode"
+                        placeholder="Enter 6-digit code from SMS"
+                        value={verificationFormData.smsCode}
+                        onChange={handleVerificationChange}
+                        maxLength="6"
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '16px',
+                          border: '2px solid #e5e7eb',
+                          borderRadius: '12px',
+                          fontSize: '18px',
+                          textAlign: 'center',
+                          letterSpacing: '2px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Create a secure password"
+                      value={verificationFormData.password}
+                      onChange={handleVerificationChange}
+                      minLength="6"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      placeholder="Confirm your password"
+                      value={verificationFormData.confirmPassword}
+                      onChange={handleVerificationChange}
+                      minLength="6"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {verificationError && (
+                    <div style={{
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#dc2626',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      marginBottom: '20px',
+                      fontSize: '14px'
+                    }}>
+                      {verificationError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={verificationLoading}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      background: verificationLoading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: verificationLoading ? 'not-allowed' : 'pointer',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    {verificationLoading ? 'Setting Up Account...' : 'Complete Setup'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setVerificationStep(1)}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      background: 'transparent',
+                      color: '#64748b',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Resend Codes
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key={isLogin ? 'login' : 'signup'}
+              initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <h2 style={{
+                fontSize: isMobile ? '24px' : '32px',
+                fontWeight: '800',
+                color: '#0f172a',
+                margin: '0 0 8px 0'
+              }}>
+                {isLogin ? t('welcomeBack') : 'Get Started'}
+              </h2>
+
+              <p style={{
+                color: '#64748b',
+                fontSize: '16px',
+                margin: '0 0 32px 0'
+              }}>
+                {isLogin ? 'Sign in to your account' : 'Enter your school email to begin'}
+              </p>
+
+              <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <label htmlFor="email-input" style={{
                     display: 'block',
                     fontSize: '14px',
                     fontWeight: '600',
                     color: '#374151',
                     marginBottom: '8px'
                   }}>
-                    {t('password')}
+                    {t('emailAddress')}
                   </label>
                   <input
-                    id="password-input"
-                    type="password"
-                    name="password"
-                    placeholder={t('enterPassword')}
-                    value={formData.password}
+                    id="email-input"
+                    type="email"
+                    name="email"
+                    placeholder={t('enterEmail')}
+                    value={formData.email}
                     onChange={handleChange}
                     required
                     style={{
@@ -297,89 +585,124 @@ const AuthPage = () => {
                     onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                   />
                 </div>
-              )}
 
-              
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                {isLogin && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <label htmlFor="password-input" style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '8px'
+                    }}>
+                      {t('password')}
+                    </label>
+                    <input
+                      id="password-input"
+                      type="password"
+                      name="password"
+                      placeholder={t('enterPassword')}
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '16px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '12px',
+                        fontSize: '16px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                        boxSizing: 'border-box'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                      onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+                )}
+
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#dc2626',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      marginBottom: '20px',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+
+                <button
+                  type="submit"
+                  disabled={loading}
                   style={{
-                    backgroundColor: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    color: '#dc2626',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    marginBottom: '20px',
+                    width: '100%',
+                    padding: '16px',
+                    background: loading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    marginBottom: '24px'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 10px 25px rgba(59, 130, 246, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  {loading
+                    ? (isLogin ? t('loggingIn') : 'Checking Account...')
+                    : (isLogin ? t('login') : 'Continue')
+                  }
+                </button>
+              </form>
+
+              <div style={{
+                textAlign: 'center',
+                fontSize: '14px',
+                color: '#64748b'
+              }}>
+                {isLogin ? 'New to AssetFlow?' : 'Already have an account?'}
+                {' '}
+                <button
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError('');
+                    setFormData({ username: '', email: '', password: '', confirmPassword: '', role: 'student' });
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#3b82f6',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
                     fontSize: '14px'
                   }}
                 >
-                  {error}
-                </motion.div>
-              )}
-
-              
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '16px',
-                  background: loading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  marginBottom: '24px'
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 10px 25px rgba(59, 130, 246, 0.3)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
-                }}
-              >
-                {loading 
-                  ? (isLogin ? t('loggingIn') : 'Checking Account...')
-                  : (isLogin ? t('login') : 'Continue')
-                }
-              </button>
-            </form>
-            
-            <div style={{
-              textAlign: 'center',
-              fontSize: '14px',
-              color: '#64748b'
-            }}>
-              {isLogin ? 'New to AssetFlow?' : 'Already have an account?'}
-              {' '}
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError('');
-                  setFormData({ username: '', email: '', password: '', confirmPassword: '', role: 'student' });
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#3b82f6',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  fontSize: '14px'
-                }}
-              >
-                {isLogin ? 'Get Started' : t('loginHere')}
-              </button>
-            </div>
-          </motion.div>
+                  {isLogin ? 'Get Started' : t('loginHere')}
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
       

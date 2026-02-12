@@ -148,327 +148,185 @@ const SystemAdminDashboard = () => {
         flexDirection: isMobile ? 'column' : 'initial'
       }}>
         {activeTab === 'dashboard' && (
-          <div style={{ padding: '40px' }}>
-            <h1 style={{ marginBottom: '30px', color: '#1e40af', fontSize: '32px', fontWeight: '800' }}>System Administration</h1>
+          <div style={{ padding: isMobile ? '20px' : '40px', flex: 1 }}>
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: isMobile ? '20px' : '30px', color: '#1e40af', fontSize: isMobile ? '24px' : '32px', fontWeight: '800', fontFamily: '"SF Pro Display", sans-serif' }}>System Administration</motion.h1>
             
-            {/* Stats Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#64748b' }}>Active Schools</h3>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: '#1e40af' }}>{stats.active_schools || 0}</p>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#64748b' }}>School Admins</h3>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: '#1e40af' }}>{stats.school_admins || 0}</p>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#64748b' }}>Total Users</h3>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: '#1e40af' }}>{stats.total_users || 0}</p>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#64748b' }}>System Admins</h3>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, color: '#1e40af' }}>{stats.system_admins || 0}</p>
-              </div>
+            {/* Stats Cards - Mobile: 2 cols, Desktop: 4 cols */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '20px' : '30px' }}>
+              {[{ title: 'Active Schools', value: stats.active_schools || 0, delay: 0 }, { title: 'School Admins', value: stats.school_admins || 0, delay: 0.1 }, { title: 'Total Users', value: stats.total_users || 0, delay: 0.2 }, { title: 'System Admins', value: stats.system_admins || 0, delay: 0.3 }].map((stat) => (
+                <motion.div key={stat.title} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: stat.delay }} style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(30, 64, 175, 0.05) 100%)', backdropFilter: 'blur(20px)', padding: isMobile ? '16px' : '24px', borderRadius: isMobile ? '14px' : '20px', boxShadow: '0 4px 20px rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.15)', textAlign: 'center', minHeight: isMobile ? '90px' : 'auto' }}>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: isMobile ? '10px' : '13px', fontWeight: '500', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.title}</h3>
+                  <p style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '800', margin: 0, color: '#1e40af', fontFamily: '"SF Pro Display", sans-serif' }}>{stat.value}</p>
+                </motion.div>
+              ))}
             </div>
 
             {/* Server Info Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ background: '#f0f9ff', padding: '20px', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#0369a1' }}>Memory (RAM)</h3>
-                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#0c4a6e' }}>{systemInfo.memory?.used || 'N/A'} / {systemInfo.memory?.total || 'N/A'}</p>
-                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>Usage: {systemInfo.memory?.usagePercent || 'N/A'}</p>
-              </div>
-              <div style={{ background: '#f0fdf4', padding: '20px', borderRadius: '8px', border: '1px solid #22c55e' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#15803d' }}>CPU Processor</h3>
-                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#166534' }}>{systemInfo.cpu?.cores || 'N/A'} Cores</p>
-                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>{systemInfo.cpu?.model?.substring(0, 30) || 'Unknown'}...</p>
-              </div>
-              <div style={{ background: '#fefce8', padding: '20px', borderRadius: '8px', border: '1px solid #eab308' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#a16207' }}>Storage (SSD/HDD)</h3>
-                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#92400e' }}>{systemInfo.disk?.used || 'N/A'} / {systemInfo.disk?.total || 'N/A'}</p>
-                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>Usage: {systemInfo.disk?.usagePercent || 'N/A'}</p>
-              </div>
-              <div style={{ background: '#fdf2f8', padding: '20px', borderRadius: '8px', border: '1px solid #ec4899' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#be185d' }}>Database (PostgreSQL)</h3>
-                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#9d174d' }}>{systemInfo.database?.size || 'N/A'}</p>
-                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>PostgreSQL 15</p>
-              </div>
-              <div style={{ background: '#f3e8ff', padding: '20px', borderRadius: '8px', border: '1px solid #a855f7' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#7c3aed' }}>System Uptime</h3>
-                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#6b21a8' }}>{systemInfo.system?.uptime || 'N/A'}</p>
-                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>{systemInfo.system?.platform || 'N/A'} {systemInfo.system?.arch || 'N/A'}</p>
-              </div>
-              <div style={{ background: '#ecfdf5', padding: '20px', borderRadius: '8px', border: '1px solid #10b981' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#047857' }}>Hostname</h3>
-                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#065f46' }}>{systemInfo.system?.hostname || 'N/A'}</p>
-                <p style={{ fontSize: '14px', margin: 0, color: '#64748b' }}>Server ID</p>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(260px, 1fr))', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '20px' : '30px' }}>
+              {[{ title: 'Memory (RAM)', value: `${systemInfo.memory?.used || 'N/A'} / ${systemInfo.memory?.total || 'N/A'}`, sub: `Usage: ${systemInfo.memory?.usagePercent || 'N/A'}`, color: '#0ea5e9' }, { title: 'CPU Cores', value: `${systemInfo.cpu?.cores || 'N/A'}`, sub: (systemInfo.cpu?.model || 'Unknown').substring(0, 25) + '...', color: '#22c55e' }, { title: 'Storage', value: `${systemInfo.disk?.used || 'N/A'} / ${systemInfo.disk?.total || 'N/A'}`, sub: `Usage: ${systemInfo.disk?.usagePercent || 'N/A'}`, color: '#eab308' }, { title: 'Database', value: systemInfo.database?.size || 'N/A', sub: 'PostgreSQL 15', color: '#ec4899' }, { title: 'Uptime', value: systemInfo.system?.uptime || 'N/A', sub: `${systemInfo.system?.platform || 'N/A'} ${systemInfo.system?.arch || 'N/A'}`, color: '#a855f7' }, { title: 'Hostname', value: systemInfo.system?.hostname || 'N/A', sub: 'Server ID', color: '#10b981' }, { title: 'Network', value: systemInfo.network?.usage || 'N/A', sub: `RX: ${systemInfo.network?.rx || 'N/A'} TX: ${systemInfo.network?.tx || 'N/A'}`, color: '#f59e0b' }, { title: 'Load Average', value: systemInfo.system?.loadAverage || 'N/A', sub: '1min, 5min, 15min', color: '#8b5cf6' }].map((info, i) => (
+                <motion.div key={info.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '16px' : '24px', borderRadius: isMobile ? '14px' : '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)', border: `1px solid ${info.color}30` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: isMobile ? '36px' : '44px', height: isMobile ? '36px' : '44px', borderRadius: '10px', background: `${info.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: info.color }}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3Z"/></svg></div>
+                    <h3 style={{ margin: 0, fontSize: isMobile ? '13px' : '15px', fontWeight: '600', color: info.color }}>{info.title}</h3>
+                  </div>
+                  <p style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '700', margin: '8px 0', color: '#0f172a', fontFamily: '"SF Pro Display", sans-serif', overflow: 'hidden', textOverflow: 'ellipsis' }}>{info.value}</p>
+                  <p style={{ fontSize: isMobile ? '12px' : '14px', margin: 0, color: '#64748b' }}>{info.sub}</p>
+                </motion.div>
+              ))}
             </div>
 
-            <div style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
-              <h2 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>System Overview</h2>
-              <p style={{ color: '#64748b', lineHeight: '1.6' }}>Welcome to the AssetFlow System Administration panel. Use the sidebar to manage schools, administrators, and monitor system-wide activity.</p>
-            </div>
+            {/* Welcome Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '20px' : '30px', borderRadius: isMobile ? '16px' : '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
+              <h2 style={{ margin: '0 0 12px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>System Overview</h2>
+              <p style={{ margin: 0, color: '#64748b', lineHeight: '1.6', fontSize: isMobile ? '14px' : '16px' }}>Welcome to the AssetFlow System Administration panel. Use the sidebar to manage schools, administrators, and monitor system-wide activity.</p>
+            </motion.div>
           </div>
         )}
 
         {activeTab === 'schools' && (
-          <div style={{ padding: '40px' }}>
-            <h1 style={{ marginBottom: '30px', color: '#1e40af', fontSize: '32px', fontWeight: '800' }}>School Management</h1>
+          <div style={{ padding: isMobile ? '20px' : '40px', flex: 1 }}>
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: isMobile ? '20px' : '30px', color: '#1e40af', fontSize: isMobile ? '24px' : '32px', fontWeight: '800', fontFamily: '"SF Pro Display", sans-serif' }}>School Management</motion.h1>
             
             {selectedSchool ? (
-              <div>
-                <button 
-                  onClick={() => setSelectedSchool(null)}
-                  style={{ 
-                    padding: '10px 20px', 
-                    background: '#64748b', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '6px', 
-                    cursor: 'pointer',
-                    marginBottom: '20px',
-                    fontWeight: '600'
-                  }}
-                >
-                  ← Back to Schools
-                </button>
-                <iframe
-                  src={`http://localhost:3000/admin-view?school_id=${selectedSchool.id}`}
-                  style={{
-                    width: '100%',
-                    height: 'calc(100vh - 200px)',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    background: 'white'
-                  }}
-                  title={`${selectedSchool.name} Admin Dashboard`}
-                />
-              </div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <button onClick={() => setSelectedSchool(null)} style={{ padding: '12px 20px', background: '#64748b', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', marginBottom: '20px', minHeight: '44px' }}>Back to Schools</button>
+                <iframe src={`http://localhost:3000/admin-view?school_id=${selectedSchool.id}`} style={{ width: '100%', height: 'calc(100vh - 200px)', border: '1px solid #e2e8f0', borderRadius: '12px', background: 'white' }} title={`${selectedSchool.name} Admin Dashboard`} />
+              </motion.div>
             ) : (
               <>
                 {/* Create School Form */}
-                <div style={{ background: 'white', padding: '30px', borderRadius: '12px', marginBottom: '30px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
-                  <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Create New School</h3>
-                  <form onSubmit={createSchool} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-                    <input
-                      type="text"
-                      placeholder="School Name"
-                      value={newSchool.name}
-                      onChange={(e) => setNewSchool({...newSchool, name: e.target.value})}
-                      required
-                      style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="School Code (e.g. TECH01)"
-                      value={newSchool.code}
-                      onChange={(e) => setNewSchool({...newSchool, code: e.target.value.toUpperCase()})}
-                      required
-                      style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Address"
-                      value={newSchool.address}
-                      onChange={(e) => setNewSchool({...newSchool, address: e.target.value})}
-                      style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                    />
-                    <input
-                      type="tel"
-                      placeholder="Phone"
-                      value={newSchool.phone}
-                      onChange={(e) => setNewSchool({...newSchool, phone: e.target.value})}
-                      style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                    />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={newSchool.email}
-                      onChange={(e) => setNewSchool({...newSchool, email: e.target.value})}
-                      style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Domain"
-                      value={newSchool.domain}
-                      onChange={(e) => setNewSchool({...newSchool, domain: e.target.value})}
-                      style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                    />
-                    <button type="submit" style={{ padding: '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', gridColumn: 'span 2' }}>
-                      Create School
-                    </button>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '20px' : '30px', borderRadius: isMobile ? '16px' : '20px', marginBottom: isMobile ? '20px' : '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+                  <h3 style={{ margin: '0 0 20px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>Create New School</h3>
+                  <form onSubmit={createSchool} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '16px' }}>
+                    <input type="text" placeholder="School Name" value={newSchool.name} onChange={(e) => setNewSchool({...newSchool, name: e.target.value})} required style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                    <input type="text" placeholder="School Code (e.g. TECH01)" value={newSchool.code} onChange={(e) => setNewSchool({...newSchool, code: e.target.value.toUpperCase()})} required style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                    <input type="text" placeholder="Address" value={newSchool.address} onChange={(e) => setNewSchool({...newSchool, address: e.target.value})} style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                    <input type="tel" placeholder="Phone" value={newSchool.phone} onChange={(e) => setNewSchool({...newSchool, phone: e.target.value})} style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                    <input type="email" placeholder="Email" value={newSchool.email} onChange={(e) => setNewSchool({...newSchool, email: e.target.value})} style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                    <input type="text" placeholder="Domain" value={newSchool.domain} onChange={(e) => setNewSchool({...newSchool, domain: e.target.value})} style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                    <button type="submit" style={{ gridColumn: isMobile ? 'span 1' : 'span 2', padding: isMobile ? '14px' : '12px 24px', background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>Create School</button>
                   </form>
-                </div>
+                </motion.div>
 
                 {/* Schools List */}
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
-                  <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
-                    <h3 style={{ margin: 0, color: '#0f172a' }}>Schools</h3>
-                  </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: '#f8fafc' }}>
-                        <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Name</th>
-                        <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Code</th>
-                        <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Users</th>
-                        <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Status</th>
-                        <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {schools.map(school => (
-                        <tr key={school.id}>
-                          <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>{school.name}</td>
-                          <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>{school.code}</td>
-                          <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>{school.user_count || 0}</td>
-                          <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                            <span style={{ 
-                              padding: '4px 12px', 
-                              borderRadius: '20px', 
-                              background: '#dcfce7',
-                              color: '#166534',
-                              fontSize: '12px',
-                              fontWeight: '600'
-                            }}>
-                              active
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                            <button
-                              onClick={() => setSelectedSchool(school)}
-                              style={{
-                                padding: '6px 16px',
-                                background: '#1e40af',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600'
-                              }}
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', borderRadius: isMobile ? '16px' : '20px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+                  {isMobile ? (
+                    <div style={{ padding: '16px' }}>
+                      {schools.map((school, i) => (
+                        <motion.div key={school.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '14px', padding: '16px', marginBottom: '12px', boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                            <div><h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{school.name}</h4><span style={{ display: 'inline-block', padding: '4px 10px', background: '#f1f5f9', borderRadius: '6px', fontSize: '12px', fontWeight: '600', color: '#64748b' }}>{school.code}</span></div>
+                            <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: '600', borderRadius: '20px' }}>Active</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '13px', color: '#64748b' }}><strong style={{ color: '#1e40af' }}>{school.user_count || 0}</strong> users</span>
+                            <button onClick={() => setSelectedSchool(school)} style={{ padding: '10px 16px', background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', minHeight: '44px', minWidth: '100px' }}>Manage</button>
+                          </div>
+                        </motion.div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}><h3 style={{ margin: 0, color: '#0f172a', fontSize: '16px', fontWeight: '700' }}>Schools</h3></div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead><tr style={{ background: '#f8fafc' }}><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Name</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Code</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Users</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Status</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Actions</th></tr></thead>
+                          <tbody>
+                            {schools.map((school) => (
+                              <tr key={school.id} style={{ transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                                <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', fontWeight: '600', color: '#0f172a' }}>{school.name}</td>
+                                <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9' }}><span style={{ padding: '4px 10px', background: '#f1f5f9', borderRadius: '6px', fontSize: '13px', fontWeight: '600' }}>{school.code}</span></td>
+                                <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{school.user_count || 0}</td>
+                                <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9' }}><span style={{ padding: '4px 12px', borderRadius: '20px', background: '#dcfce7', color: '#166534', fontSize: '12px', fontWeight: '600' }}>active</span></td>
+                                <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9' }}><button onClick={() => setSelectedSchool(school)} style={{ padding: '8px 16px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', minHeight: '40px' }}>Manage</button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </motion.div>
               </>
             )}
           </div>
         )}
 
         {activeTab === 'database' && (
-          <div style={{ padding: '40px' }}>
-            <h1 style={{ marginBottom: '30px', color: '#1e40af', fontSize: '32px', fontWeight: '800' }}>Database Management</h1>
-            
-            <div style={{ display: 'grid', gap: '20px' }}>
-              <div style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
-                <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Database Statistics</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                  <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px' }}>
-                    <div style={{ color: '#64748b', fontSize: '14px', marginBottom: '5px' }}>Total Users</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>{stats.total_users || 0}</div>
-                  </div>
-                  <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px' }}>
-                    <div style={{ color: '#64748b', fontSize: '14px', marginBottom: '5px' }}>Active Schools</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>{stats.active_schools || 0}</div>
-                  </div>
-                  <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px' }}>
-                    <div style={{ color: '#64748b', fontSize: '14px', marginBottom: '5px' }}>School Admins</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>{stats.school_admins || 0}</div>
-                  </div>
+          <div style={{ padding: isMobile ? '20px' : '40px', flex: 1 }}>
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: isMobile ? '20px' : '30px', color: '#1e40af', fontSize: isMobile ? '24px' : '32px', fontWeight: '800', fontFamily: '"SF Pro Display", sans-serif' }}>Database Management</motion.h1>
+            <div style={{ display: 'grid', gap: isMobile ? '16px' : '20px' }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '20px' : '30px', borderRadius: isMobile ? '16px' : '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+                <h3 style={{ margin: '0 0 20px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>Database Statistics</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: isMobile ? '12px' : '15px' }}>
+                  {[{ label: 'Total Users', value: stats.total_users || 0 }, { label: 'Active Schools', value: stats.active_schools || 0 }, { label: 'School Admins', value: stats.school_admins || 0 }, { label: 'Database Connections', value: systemInfo.database?.connections || 'N/A' }, { label: 'Database Tables', value: systemInfo.database?.tables || 'N/A' }].map((stat) => (
+                    <div key={stat.label} style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px' }}><div style={{ color: '#64748b', fontSize: '14px', marginBottom: '5px' }}>{stat.label}</div><div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af' }}>{stat.value}</div></div>
+                  ))}
                 </div>
-              </div>
-
-              <div style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
-                <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Database Operations</h3>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '20px' : '30px', borderRadius: isMobile ? '16px' : '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+                <h3 style={{ margin: '0 0 20px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>Database Operations</h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button 
-                    onClick={() => setShowImportModal(true)}
-                    style={{ padding: '12px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
-                  >
-                    Import .accdb File
-                  </button>
-                  <button style={{ padding: '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Export Database</button>
-                  <button style={{ padding: '12px 24px', background: '#64748b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Optimize Tables</button>
+                  <button onClick={() => setShowImportModal(true)} style={{ padding: isMobile ? '14px 20px' : '12px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontSize: isMobile ? '14px' : '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>Import .accdb File</button>
+                  <button style={{ padding: isMobile ? '14px 20px' : '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '8px', fontSize: isMobile ? '14px' : '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>Export Database</button>
+                  <button style={{ padding: isMobile ? '14px 20px' : '12px 24px', background: '#64748b', color: 'white', border: 'none', borderRadius: '8px', fontSize: isMobile ? '14px' : '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>Optimize Tables</button>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         )}
         {activeTab === 'admins' && (
-          <div style={{ padding: '40px' }}>
-            <h1 style={{ marginBottom: '30px', color: '#1e40af', fontSize: '32px', fontWeight: '800' }}>Admin Management</h1>
+          <div style={{ padding: isMobile ? '20px' : '40px', flex: 1 }}>
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: isMobile ? '20px' : '30px', color: '#1e40af', fontSize: isMobile ? '24px' : '32px', fontWeight: '800', fontFamily: '"SF Pro Display", sans-serif' }}>Admin Management</motion.h1>
             
             {/* Create Admin Form */}
-            <div style={{ background: 'white', padding: '30px', borderRadius: '12px', marginBottom: '30px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
-              <h3 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>Create School Admin</h3>
-              <form onSubmit={createAdmin} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                <input
-                  type="text"
-                  placeholder="Username"
-                  value={newAdmin.username}
-                  onChange={(e) => setNewAdmin({...newAdmin, username: e.target.value})}
-                  required
-                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={newAdmin.email}
-                  onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
-                  required
-                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                />
-                <select
-                  value={newAdmin.school_id}
-                  onChange={(e) => setNewAdmin({...newAdmin, school_id: e.target.value})}
-                  required
-                  style={{ padding: '12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-                >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '20px' : '30px', borderRadius: isMobile ? '16px' : '20px', marginBottom: isMobile ? '20px' : '30px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+              <h3 style={{ margin: '0 0 20px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>Create School Admin</h3>
+              <form onSubmit={createAdmin} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <input type="text" placeholder="Username" value={newAdmin.username} onChange={(e) => setNewAdmin({...newAdmin, username: e.target.value})} required style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                <input type="email" placeholder="Email" value={newAdmin.email} onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})} required style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px' }} />
+                <select value={newAdmin.school_id} onChange={(e) => setNewAdmin({...newAdmin, school_id: e.target.value})} required style={{ padding: isMobile ? '14px' : '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', minHeight: '48px', background: 'white' }}>
                   <option value="">Select School</option>
-                  {schools.map(school => (
-                    <option key={school.id} value={school.id}>{school.name}</option>
-                  ))}
+                  {schools.map((school) => <option key={school.id} value={school.id}>{school.name}</option>)}
                 </select>
-                <button type="submit" style={{ padding: '12px 24px', background: '#1e40af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>
-                  Create Admin
-                </button>
+                <button type="submit" style={{ padding: isMobile ? '14px' : '12px 24px', background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>Create Admin</button>
               </form>
-            </div>
+            </motion.div>
 
             {/* Admins List */}
-            <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
-              <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: 0, color: '#0f172a' }}>School Administrators</h3>
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Username</th>
-                    <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Email</th>
-                    <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>School</th>
-                    <th style={{ padding: '12px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600' }}>Created</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {admins.map(admin => (
-                    <tr key={admin.id}>
-                      <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>{admin.username}</td>
-                      <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>{admin.email}</td>
-                      <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>{admin.school_name}</td>
-                      <td style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9' }}>
-                        {new Date(admin.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', borderRadius: isMobile ? '16px' : '20px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)' }}>
+              {isMobile ? (
+                <div style={{ padding: '16px' }}>
+                  {admins.map((admin, i) => (
+                    <motion.div key={admin.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '14px', padding: '16px', marginBottom: '12px', boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                        <div><h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{admin.username}</h4><p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>{admin.email}</p></div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span style={{ fontSize: '13px', color: '#64748b' }}><strong style={{ color: '#1e40af' }}>{admin.school_name}</strong></span><span style={{ padding: '4px 10px', background: '#f1f5f9', borderRadius: '6px', fontSize: '12px', color: '#64748b' }}>{new Date(admin.created_at).toLocaleDateString()}</span></div>
+                    </motion.div>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}><h3 style={{ margin: 0, color: '#0f172a', fontSize: '16px', fontWeight: '700' }}>School Administrators</h3></div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead><tr style={{ background: '#f8fafc' }}><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Username</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Email</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>School</th><th style={{ padding: '14px 20px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', fontWeight: '600', fontSize: '13px', color: '#64748b' }}>Created</th></tr></thead>
+                      <tbody>
+                        {admins.map((admin) => (
+                          <tr key={admin.id} style={{ transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', fontWeight: '600', color: '#0f172a' }}>{admin.username}</td>
+                            <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{admin.email}</td>
+                            <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{admin.school_name}</td>
+                            <td style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', color: '#64748b' }}>{new Date(admin.created_at).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </motion.div>
           </div>
         )}
 
