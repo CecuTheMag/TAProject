@@ -1,6 +1,6 @@
 -- Migration: 003_multi_tenant_system
 -- Description: Add multi-tenant support with system admin and schools
--- Created: 2025-01-15
+-- Created: 2026-01-15
 
 -- Schools table for multi-tenancy
 CREATE TABLE IF NOT EXISTS schools (

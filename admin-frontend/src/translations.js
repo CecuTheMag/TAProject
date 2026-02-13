@@ -471,7 +471,7 @@ export const translations = {
     joinLeadingEducationalInstitutions: 'Join leading educational institutions using SchoolSync for secure, scalable asset management.',
     scheduleDemo: 'Schedule a Demo',
     enterpriseAssetManagementForEducationalInstitutions: 'Enterprise asset management for educational institutions',
-    allRightsReserved: '© 2025 SchoolSync. All rights reserved.',
+    allRightsReserved: '© 2026 SchoolSync. All rights reserved.',
     schoolSync: 'SchoolSync',
     
     // Security Section
@@ -979,7 +979,7 @@ export const translations = {
     joinLeadingEducationalInstitutions: 'Присъединете се към водещите образователни институции, които използват SchoolSync за сигурно, мащабируемо управление на активи.',
     scheduleDemo: 'Планирай демо',
     enterpriseAssetManagementForEducationalInstitutions: 'Корпоративно управление на активи за образователни институции',
-    allRightsReserved: '© 2025 SchoolSync. Всички права запазени.',
+    allRightsReserved: '© 2026 SchoolSync. Всички права запазени.',
     schoolSync: 'SchoolSync',
     
     // Security Section

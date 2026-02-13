@@ -1,0 +1,14 @@
+# ENTERPRISE - Admin Frontend with Let's Encrypt SSL on port 445
+admin.assetflow.bg {
+    tls kironotificatora@gmail.com
+    
+    handle_path /admin-api/* {
+        reverse_proxy admin-backend:5005 {
+            health_uri /health
+        }
+    }
+    
+    handle {
+        reverse_proxy admin-frontend:80
+    }
+}

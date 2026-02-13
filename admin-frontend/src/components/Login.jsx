@@ -200,7 +200,7 @@ const Login = () => {
           style={styles.footer}
         >
           <p style={styles.footerText}>Enterprise Asset Management System</p>
-          <p style={styles.copyright}>© 2025 AssetFlow. All rights reserved.</p>
+          <p style={styles.copyright}>© 2026 AssetFlow. All rights reserved.</p>
         </motion.div>
       </motion.div>
     </div>

@@ -51,7 +51,7 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
   };
 
   const formatCondition = (condition) => {
-    if (!condition) return 'N/A';
+    if (!condition) return 'Good';
     return condition.charAt(0).toUpperCase() + condition.slice(1);
   };
 
@@ -111,15 +111,15 @@ const EquipmentDetailsModal = ({ equipment, onClose }) => {
                 {equipment.status.replace('_', ' ')}
               </span>
               <span style={{
-                backgroundColor: getConditionColor(equipment.condition) + '20',
-                color: getConditionColor(equipment.condition),
+                backgroundColor: getConditionColor(equipment.condition_status) + '20',
+                color: getConditionColor(equipment.condition_status),
                 padding: '6px 12px',
                 borderRadius: '20px',
                 fontSize: '12px',
                 fontWeight: '600',
                 textTransform: 'capitalize'
               }}>
-                {formatCondition(equipment.condition)}
+                {formatCondition(equipment.condition_status)}
               </span>
             </div>
           </div>

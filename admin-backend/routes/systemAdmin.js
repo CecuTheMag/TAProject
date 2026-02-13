@@ -15,7 +15,7 @@ const getMainDBData = async (query, params = []) => {
       {
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2025'
+          'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2026'
         },
         timeout: 15000
       }

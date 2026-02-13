@@ -13,7 +13,7 @@ const setupSystemAdmin = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN DEFAULT false');
     
     // Create or update admin@assetflow.bg as system admin
-    const hashedPassword = await bcrypt.hash('assetflow2025', 12);
+    const hashedPassword = await bcrypt.hash('assetflow2026', 12);
     
     const result = await pool.query(`
       INSERT INTO users (username, email, password, role, is_system_admin) 

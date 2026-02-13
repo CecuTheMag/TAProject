@@ -123,7 +123,7 @@ const initDB = async () => {
 
     const adminCheck = await client.query('SELECT * FROM admin_users WHERE email = $1', ['admin@assetflow.bg']);
     if (adminCheck.rows.length === 0) {
-      const hashedPassword = await bcrypt.hash('assetflow2025', 12);
+      const hashedPassword = await bcrypt.hash('assetflow2026', 12);
       await client.query(
         'INSERT INTO admin_users (username, email, password, is_system_admin) VALUES ($1, $2, $3, $4)',
         ['admin', 'admin@assetflow.bg', hashedPassword, true]

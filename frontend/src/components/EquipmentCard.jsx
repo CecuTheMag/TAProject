@@ -145,12 +145,12 @@ const EquipmentCard = ({ item, onViewDetails, onRequest, onEarlyReturn, user, is
           <div>
             <span style={{ color: '#64748b', fontSize: '14px', fontWeight: '500' }}>{t('condition')}: </span>
             <span style={{
-              color: getConditionColor(item.condition),
+              color: getConditionColor(item.condition_status),
               fontSize: '14px',
               fontWeight: '600',
               textTransform: 'capitalize'
             }}>
-              {t(item.condition)}
+              {t(item.condition_status || 'good')}
             </span>
           </div>
         </div>

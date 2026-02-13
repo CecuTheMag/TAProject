@@ -1,6 +1,6 @@
 -- Create admin database and user
 CREATE DATABASE "SIMS_ADMIN";
-CREATE USER admin_user WITH PASSWORD 'admin_secure_pass_2025';
+CREATE USER admin_user WITH PASSWORD 'admin_secure_pass_2026';
 GRANT ALL PRIVILEGES ON DATABASE "SIMS_ADMIN" TO admin_user;
 
 -- Connect to admin database

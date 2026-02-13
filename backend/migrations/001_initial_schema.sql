@@ -1,6 +1,6 @@
 -- Migration: 001_initial_schema
 -- Description: Create shared tables and schema function for SIMS
--- Created: 2025-01-01
+-- Created: 2026-01-01
 
 -- Subjects table (shared across all schools)
 CREATE TABLE IF NOT EXISTS subjects (

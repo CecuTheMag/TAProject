@@ -121,14 +121,14 @@ const RepairManagement = ({ equipmentGroup, onRepairComplete }) => {
                     fontSize: '12px',
                     padding: '2px 6px',
                     borderRadius: '12px',
-                    backgroundColor: item.condition === 'excellent' ? '#dcfce7' : 
-                                   item.condition === 'good' ? '#dbeafe' :
-                                   item.condition === 'fair' ? '#fef3c7' : '#fee2e2',
-                    color: item.condition === 'excellent' ? '#166534' : 
-                           item.condition === 'good' ? '#1e40af' :
-                           item.condition === 'fair' ? '#92400e' : '#991b1b'
+                    backgroundColor: item.condition_status === 'excellent' ? '#dcfce7' : 
+                                   item.condition_status === 'good' ? '#dbeafe' :
+                                   item.condition_status === 'fair' ? '#fef3c7' : '#fee2e2',
+                    color: item.condition_status === 'excellent' ? '#166534' : 
+                           item.condition_status === 'good' ? '#1e40af' :
+                           item.condition_status === 'fair' ? '#92400e' : '#991b1b'
                   }}>
-                    {item.condition}
+                    {item.condition_status || 'good'}
                   </span>
                 </label>
               ))}

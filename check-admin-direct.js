@@ -6,7 +6,7 @@ const adminPool = new Pool({
   port: 5433,
   database: 'SIMS_ADMIN',
   user: 'admin_user',
-  password: 'admin_secure_pass_2025'
+  password: 'admin_secure_pass_2026'
 });
 
 async function checkAdminDB() {

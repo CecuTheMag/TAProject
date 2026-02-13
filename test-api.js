@@ -30,7 +30,7 @@ async function testInternalAPI() {
     }, {
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': 'internal_api_key_secure_2025'
+        'X-API-Key': 'internal_api_key_secure_2026'
       }
     });
     

@@ -85,7 +85,7 @@ services:
     build: ./admin-frontend
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://localhost:5005/api
+      - VITE_API_URL=/admin-api
     depends_on:
       - admin-backend
     restart: unless-stopped
@@ -189,21 +189,35 @@ services:
       - VITE_API_URL=/api
     restart: unless-stopped
 
-  # Load Balancer with automatic SSL
-  caddy:
+  # Main Load Balancer with HTTPS on port 443
+  caddy-main:
     image: caddy:alpine
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
     volumes:
-      - ./Caddyfile.production:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./Caddyfile.enterprise:/etc/caddy/Caddyfile
+      - caddy_main_data:/data
+      - caddy_main_config:/config
     depends_on:
       - backend-1
       - backend-2
       - backend-3
       - frontend
+    restart: unless-stopped
+
+  # Admin Load Balancer with HTTPS on port 445
+  caddy-admin:
+    image: caddy:alpine
+    ports:
+      - "0.0.0.0:445:443"
+    volumes:
+      - ./Caddyfile.enterprise-admin:/etc/caddy/Caddyfile
+      - caddy_admin_data:/data
+      - caddy_admin_config:/config
+    depends_on:
+      - admin-backend
+      - admin-frontend
     restart: unless-stopped
 
   # Monitoring Stack
@@ -241,5 +255,7 @@ volumes:
   redis_data:
   grafana_data:
   prometheus_data:
-  caddy_data:
-  caddy_config:
+  caddy_main_data:
+  caddy_main_config:
+  caddy_admin_data:
+  caddy_admin_config:

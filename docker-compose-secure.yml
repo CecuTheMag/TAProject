@@ -27,7 +27,7 @@ services:
     environment:
       POSTGRES_DB: SIMS_ADMIN
       POSTGRES_USER: admin_user
-      POSTGRES_PASSWORD: "admin_secure_pass_2025"
+      POSTGRES_PASSWORD: "admin_secure_pass_2026"
     volumes:
       - postgres_admin_data:/var/lib/postgresql/data
     ports:
@@ -72,7 +72,7 @@ services:
       - DB_PASSWORD=1337
       - JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
       - REDIS_URL=redis://redis:6379
-      - ADMIN_API_KEY=internal_api_key_secure_2025
+      - ADMIN_API_KEY=internal_api_key_secure_2026
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -105,11 +105,11 @@ services:
       - DB_PORT=5432
       - DB_NAME=SIMS_ADMIN
       - DB_USER=admin_user
-      - DB_PASSWORD=admin_secure_pass_2025
+      - DB_PASSWORD=admin_secure_pass_2026
       - JWT_SECRET=admin_jwt_secret_different_from_user
       - REDIS_URL=redis://redis:6379
       - MAIN_API_URL=http://backend:5000
-      - MAIN_API_KEY=internal_api_key_secure_2025
+      - MAIN_API_KEY=internal_api_key_secure_2026
       - ALLOWED_IPS=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     volumes:
       - ./admin-backend:/app

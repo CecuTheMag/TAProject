@@ -1,6 +1,6 @@
 -- Migration: 006_system_admin_proper
 -- Description: Add system admin functionality properly
--- Created: 2025-01-15
+-- Created: 2026-01-15
 
 -- First, add the new columns if they don't exist
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN DEFAULT false;

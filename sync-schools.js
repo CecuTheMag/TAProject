@@ -8,7 +8,7 @@ dotenv.config();
 
 const ADMIN_API_URL = process.env.ADMIN_API_URL || 'http://admin-backend:3001';
 const MAIN_API_URL = process.env.MAIN_API_URL || 'http://backend:5000';
-const API_KEY = process.env.MAIN_API_KEY || 'internal_api_key_secure_2025';
+const API_KEY = process.env.MAIN_API_KEY || 'internal_api_key_secure_2026';
 
 async function syncSchools() {
   try {

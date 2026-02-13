@@ -131,11 +131,10 @@ export const createEquipment = async (req, res) => {
         throw new Error(`Serial number ${itemSerial} already exists`);
       }
       
-      // Generate QR code for mobile scanning capability (limit to 200 chars)
+      // Generate QR code for mobile scanning capability
       let qrCode = null;
       try {
-        const qrData = await QRCode.toDataURL(itemSerial);
-        qrCode = qrData.length > 200 ? qrData.substring(0, 200) : qrData;
+        qrCode = await QRCode.toDataURL(itemSerial);
       } catch (qrError) {
         console.error('QR generation error:', qrError);
       }

@@ -1,6 +1,6 @@
 -- Migration: 002_add_subject_id_to_users
 -- Description: Add subject_id column to users table for teacher subject assignment
--- Created: 2025-01-01
+-- Created: 2026-01-01
 
 -- Add subject_id column to users table if it doesn't exist
 DO $$ 
