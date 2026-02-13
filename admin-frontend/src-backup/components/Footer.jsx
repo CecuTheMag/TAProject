@@ -21,7 +21,7 @@ const Footer = ({ isMobile }) => {
         fontFamily: '"SF Pro Text", -apple-system, sans-serif',
         marginBottom: '8px'
       }}>
-        AssetFlow - Inventory Management System
+        SchoolSync - Inventory Management System
       </div>
       <div style={{
         color: 'rgba(255, 255, 255, 0.7)',

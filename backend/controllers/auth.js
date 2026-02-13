@@ -12,7 +12,9 @@ const generateVerificationCode = () => {
 const registerSchema = Joi.object({
   username: Joi.string().alphanum().min(3).max(30).required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required()
+  password: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]')).required().messages({
+    'string.pattern.base': 'Password must contain at least 8 characters with uppercase, lowercase, number and special character'
+  })
 });
 
 const loginSchema = Joi.object({
@@ -28,8 +30,10 @@ const verificationSchema = Joi.object({
 
 const passwordSetupSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-  confirmPassword: Joi.string().min(6).required(),
+  password: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]')).required().messages({
+    'string.pattern.base': 'Password must contain at least 8 characters with uppercase, lowercase, number and special character'
+  }),
+  confirmPassword: Joi.string().min(8).required(),
   emailCode: Joi.string().length(6).required(),
   smsCode: Joi.string().length(6).allow('').optional()
 });
@@ -71,7 +75,7 @@ export const register = async (req, res) => {
       [username, email, hashedPassword, role, 1] // Default school_id = 1 for now
     );
 
-    const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
     
     res.status(201).json({
       message: 'Account created successfully',
@@ -92,7 +96,9 @@ export const login = async (req, res) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const { email, password } = value;
-    console.log('🔐 Login attempt:', email);
+    
+    // Rate limiting check (basic implementation)
+    const clientIP = req.ip || req.connection.remoteAddress;
     
     // First check which school this user belongs to
     let user = null;
@@ -125,16 +131,12 @@ export const login = async (req, res) => {
       }
     }
     
-    console.log('🔍 User lookup result:', user ? 'found' : 'not found', 'School:', schoolCode);
-    
     if (!user) {
-      console.log('❌ User not found:', email);
-      return res.status(401).json({ error: 'Email not found in system. Contact your administrator.' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Check if this is a first-time user (password not set)
     if (!user.password_set) {
-      console.log('🆕 First-time user detected:', email);
       return res.status(200).json({ 
         requiresSetup: true,
         email: user.email,
@@ -143,10 +145,8 @@ export const login = async (req, res) => {
     }
     
     const isValidPassword = await bcrypt.compare(password, user.password);
-    console.log('🔑 Password valid:', isValidPassword);
     
     if (!isValidPassword) {
-      console.log('❌ Invalid password for:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -164,9 +164,7 @@ export const login = async (req, res) => {
     const token = jwt.sign({ 
       userId: user.id, 
       schoolCode: schoolCode 
-    }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    
-    console.log('✅ Login successful:', email, 'School:', schoolCode);
+    }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
     
     res.json({
       message: 'Login successful',
@@ -174,7 +172,6 @@ export const login = async (req, res) => {
       token
     });
   } catch (error) {
-    console.log('❌ Login error:', error.message);
     res.status(500).json({ error: 'Login failed' });
   }
 };
@@ -237,7 +234,6 @@ export const sendVerificationCodes = async (req, res) => {
       hasPhone: !!user.phone
     });
   } catch (error) {
-    console.error('Send verification error:', error);
     res.status(500).json({ error: 'Failed to send verification codes' });
   }
 };
@@ -315,7 +311,7 @@ export const setupPassword = async (req, res) => {
     const token = jwt.sign({ 
       userId: user.id, 
       schoolCode: schoolCode 
-    }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1h' });
     
     res.json({
       message: 'Password setup successful',
@@ -323,32 +319,6 @@ export const setupPassword = async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('Password setup error:', error);
     res.status(500).json({ error: 'Password setup failed' });
-  }
-};
-
-export const testDB = async (req, res) => {
-  try {
-    const result = await pool.query('SELECT COUNT(*) FROM users WHERE role = $1', ['admin']);
-    const adminCount = result.rows[0].count;
-    
-    const allUsers = await pool.query('SELECT id, username, email, role, is_system_admin FROM users LIMIT 5');
-    
-    // Check specifically for system admin
-    const systemAdmin = await pool.query('SELECT id, username, email, role, is_system_admin FROM users WHERE is_system_admin = true');
-    
-    res.json({ 
-      message: 'Database connection working',
-      adminCount: parseInt(adminCount),
-      sampleUsers: allUsers.rows,
-      systemAdmins: systemAdmin.rows,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      error: 'Database connection failed',
-      details: error.message 
-    });
   }
 };

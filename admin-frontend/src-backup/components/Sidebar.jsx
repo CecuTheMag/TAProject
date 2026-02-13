@@ -173,13 +173,13 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
               justifyContent: 'center',
               overflow: 'hidden'
             }}>
-              <img src={logoImage} alt="AssetFlow Logo" style={{
+              <img src={logoImage} alt="SchoolSync Logo" style={{
                 width: '40px',
                 height: '40px',
                 objectFit: 'contain'
               }} />
             </div>
-            <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', margin: 0 }}>AssetFlow</h1>
+            <h1 style={{ color: 'white', fontSize: '24px', fontWeight: '800', margin: 0 }}>SchoolSync</h1>
           </div>
           
           <button
@@ -293,7 +293,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           marginBottom: '16px',
           overflow: 'hidden'
         }}>
-          <img src={logoImage} alt="AssetFlow Logo" style={{
+          <img src={logoImage} alt="SchoolSync Logo" style={{
             width: '80px',
             height: '80px',
             objectFit: 'contain'
@@ -308,7 +308,7 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           fontFamily: '"SF Pro Display", -apple-system, sans-serif',
           textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
         }}>
-          AssetFlow
+          SchoolSync
         </h1>
         <p style={{
           color: 'rgba(255, 255, 255, 0.7)',

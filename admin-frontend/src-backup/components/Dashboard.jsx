@@ -306,7 +306,7 @@ const Dashboard = ({ schoolUser }) => {
           transition={{ delay: 0.2 }}
           style={{ textAlign: 'center' }}
         >
-          <h2 style={{ color: '#0f172a', fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0' }}>Loading AssetFlow</h2>
+          <h2 style={{ color: '#0f172a', fontSize: '24px', fontWeight: '700', margin: '0 0 8px 0' }}>Loading SchoolSync</h2>
           <p style={{ color: '#64748b', fontSize: '16px', fontWeight: '500', margin: 0 }}>Preparing your dashboard...</p>
         </motion.div>
       </motion.div>

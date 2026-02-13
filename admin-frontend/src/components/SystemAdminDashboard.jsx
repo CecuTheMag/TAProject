@@ -178,7 +178,7 @@ const SystemAdminDashboard = () => {
             {/* Welcome Card */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', padding: isMobile ? '20px' : '30px', borderRadius: isMobile ? '16px' : '20px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)', border: '1px solid rgba(226, 232, 240, 0.6)' }}>
               <h2 style={{ margin: '0 0 12px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>System Overview</h2>
-              <p style={{ margin: 0, color: '#64748b', lineHeight: '1.6', fontSize: isMobile ? '14px' : '16px' }}>Welcome to the AssetFlow System Administration panel. Use the sidebar to manage schools, administrators, and monitor system-wide activity.</p>
+              <p style={{ margin: 0, color: '#64748b', lineHeight: '1.6', fontSize: isMobile ? '14px' : '16px' }}>Welcome to the SchoolSync System Administration panel. Use the sidebar to manage schools, administrators, and monitor system-wide activity.</p>
             </motion.div>
           </div>
         )}

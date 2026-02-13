@@ -22,10 +22,10 @@ export const sendEmailVerification = async (email, code, name) => {
     const mailOptions = {
       from: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
       to: email,
-      subject: 'AssetFlow - Account Verification Code',
+      subject: 'SchoolSync - Account Verification Code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Welcome to AssetFlow, ${name}!</h2>
+          <h2>Welcome to SchoolSync, ${name}!</h2>
           <p>Your account has been created. To complete your registration, please use the verification code below:</p>
           <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
             <h1 style="color: #2563eb; font-size: 32px; margin: 0;">${code}</h1>
@@ -49,7 +49,7 @@ export const sendEmailVerification = async (email, code, name) => {
 export const sendSMSVerification = async (phone, code, name) => {
   try {
     // Mock SMS sending - in production, integrate with SMS provider like Twilio
-    console.log(`SMS to ${phone}: AssetFlow verification code: ${code}`);
+    console.log(`SMS to ${phone}: SchoolSync verification code: ${code}`);
     
     // Simulate SMS sending delay
     await new Promise(resolve => setTimeout(resolve, 1000));

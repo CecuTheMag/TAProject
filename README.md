@@ -1,11 +1,11 @@
-# AssetFlow - Professional Inventory Management System
+# SchoolSync - Professional Inventory Management System
 
 <div align="center">
-  <img src="frontend/src/assets/logotp.png" alt="AssetFlow Logo" width="200"/>
+  <img src="frontend/src/assets/logotp.png" alt="SchoolSync Logo" width="200"/>
   
   **Enterprise-Grade Full-Stack Inventory Management Solution**
   
-  [![Professional](https://img.shields.io/badge/Professional-Solution-blue)](https://assetflow.bg)
+  [![Professional](https://img.shields.io/badge/Professional-Solution-blue)](https://school-sync.org)
   [![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org)
   [![React](https://img.shields.io/badge/React-18+-blue)](https://reactjs.org)
   [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)](https://postgresql.org)
@@ -17,7 +17,7 @@
 
 ## Executive Summary
 
-AssetFlow is a production-ready, enterprise-grade inventory management system engineered for educational institutions and organizations. The platform delivers comprehensive equipment tracking, automated workflow management, and advanced analytics through a modern microservices architecture with horizontal scalability.
+SchoolSync is a production-ready, enterprise-grade inventory management system engineered for educational institutions and organizations. The platform delivers comprehensive equipment tracking, automated workflow management, and advanced analytics through a modern microservices architecture with horizontal scalability.
 
 **Key Metrics:**
 - 10,000+ concurrent users supported
@@ -246,8 +246,8 @@ GET    /api/dashboard/stats   # Real-time metrics
 
 ```
 Administrator Access:
-Email: admin@assetflow.bg
-Password: assetflow2026
+Email: admin@school-sync.org
+Password: schoolsync2026
 
 Student Access:
 Email: student@test.com

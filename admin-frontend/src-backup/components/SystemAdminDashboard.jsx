@@ -283,7 +283,7 @@ const SystemAdminDashboard = () => {
 
             <div style={{ background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)' }}>
               <h2 style={{ margin: '0 0 20px 0', color: '#0f172a' }}>System Overview</h2>
-              <p style={{ color: '#64748b', lineHeight: '1.6' }}>Welcome to the AssetFlow System Administration panel. Use the sidebar to manage schools, administrators, and monitor system-wide activity.</p>
+              <p style={{ color: '#64748b', lineHeight: '1.6' }}>Welcome to the SchoolSync System Administration panel. Use the sidebar to manage schools, administrators, and monitor system-wide activity.</p>
             </div>
           </div>
         )}

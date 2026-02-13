@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# AssetFlow Enterprise Deployment Script
+# SchoolSync Enterprise Deployment Script
 # Deploys both main and admin frontends with HTTPS certificates
 
-echo "🚀 Starting AssetFlow Enterprise Deployment..."
+echo "🚀 Starting SchoolSync Enterprise Deployment..."
 echo "📋 Main Frontend: https://school-sync.org (Port 443)"
-echo "🔧 Admin Frontend: https://192.168.88.220:445 (Port 445)"
+echo "🔧 Admin Frontend: https://schoolsyncadmin.duckdns.org:445 (Port 445)"
 echo ""
 
 # Check if Docker and Docker Compose are available
@@ -36,11 +36,11 @@ echo "🔍 Checking service health..."
 docker-compose -f docker-compose-enterprise.yml ps
 
 echo ""
-echo "✅ Enterprise deployment complete!"
+echo "✅ SchoolSync deployment complete!"
 echo ""
 echo "📱 Access Points:"
 echo "   Main App:  https://school-sync.org"
-echo "   Admin App: https://192.168.88.220:445"
+echo "   Admin App: https://schoolsyncadmin.duckdns.org:445"
 echo "   Grafana:   http://localhost:3001 (admin/admin123)"
 echo "   Prometheus: http://localhost:9090"
 echo ""

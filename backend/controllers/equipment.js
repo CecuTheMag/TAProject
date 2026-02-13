@@ -41,6 +41,11 @@ export const getAllEquipment = async (req, res) => {
     const { search, type, status, condition } = req.query;
     const schema = req.schoolSchema;
     
+    // Validate schema name to prevent injection
+    if (!schema || !/^[a-zA-Z0-9_]+$/.test(schema)) {
+      return res.status(400).json({ error: 'Invalid schema' });
+    }
+    
     let query = `SELECT * FROM "${schema}".equipment WHERE 1=1`;
     const params = [];
     let paramCount = 0;

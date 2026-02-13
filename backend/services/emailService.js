@@ -91,7 +91,7 @@ class EmailService {
             <strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}
           </div>
           <p>Please return the equipment as soon as possible to avoid any penalties.</p>
-          <p>Thank you,<br>AssetFlow Team</p>
+          <p>Thank you,<br>SchoolSync Team</p>
         </div>
       `
     };
@@ -119,7 +119,7 @@ class EmailService {
             <strong>Approved by:</strong> ${approvedBy}
           </div>
           <p>You can now collect your equipment. Please return it by the due date.</p>
-          <p>Thank you,<br>AssetFlow Team</p>
+          <p>Thank you,<br>SchoolSync Team</p>
         </div>
       `
     };
@@ -148,7 +148,7 @@ class EmailService {
             <strong>Threshold:</strong> ${threshold}
           </div>
           <p>Please consider restocking this equipment soon.</p>
-          <p>Best regards,<br>AssetFlow System</p>
+          <p>Best regards,<br>SchoolSync System</p>
         </div>
       `
     };
@@ -165,17 +165,17 @@ class EmailService {
     const mailOptions = {
       from: 'kironotificatora@gmail.com',
       to: userEmail,
-      subject: 'AssetFlow - Account Verification Code',
+      subject: 'SchoolSync - Account Verification Code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #3b82f6;">Welcome to AssetFlow, ${userName}!</h2>
+          <h2 style="color: #3b82f6;">Welcome to SchoolSync, ${userName}!</h2>
           <p>Your account has been created. To complete your registration, please use the verification code below:</p>
           <div style="background: #f8fafc; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
             <h1 style="color: #1d4ed8; font-size: 32px; margin: 0; letter-spacing: 4px;">${code}</h1>
           </div>
           <p>This code will expire in 15 minutes.</p>
           <p>If you didn't request this, please ignore this email.</p>
-          <p>Thank you,<br>AssetFlow Team</p>
+          <p>Thank you,<br>SchoolSync Team</p>
         </div>
       `
     };

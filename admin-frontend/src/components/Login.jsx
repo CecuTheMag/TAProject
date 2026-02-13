@@ -69,7 +69,7 @@ const Login = () => {
             transition={{ delay: 0.3 }}
             style={styles.title}
           >
-            AssetFlow
+            SchoolSync
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -200,7 +200,7 @@ const Login = () => {
           style={styles.footer}
         >
           <p style={styles.footerText}>Enterprise Asset Management System</p>
-          <p style={styles.copyright}>© 2026 AssetFlow. All rights reserved.</p>
+          <p style={styles.copyright}>© 2026 SchoolSync. All rights reserved.</p>
         </motion.div>
       </motion.div>
     </div>

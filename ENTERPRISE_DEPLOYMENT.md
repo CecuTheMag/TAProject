@@ -1,18 +1,18 @@
-# AssetFlow Enterprise Deployment
+# SchoolSync Enterprise Deployment
 
 ## Overview
-The enterprise deployment provides HTTPS-secured access to both the main application and admin interface on separate ports with automatic SSL certificate management.
+The enterprise deployment provides HTTPS-secured access to both the main SchoolSync application and admin interface on separate ports with automatic SSL certificate management.
 
 ## Architecture
 
 ### Main Frontend (Port 443)
-- **URL**: https://assetflow.bg
+- **URL**: https://SchoolSync.bg
 - **Purpose**: Student and teacher access
 - **Backend**: Load-balanced across 3 backend instances
 - **SSL**: Automatic Let's Encrypt certificates
 
 ### Admin Frontend (Port 445)
-- **URL**: https://admin.assetflow.bg:445
+- **URL**: https://admin.SchoolSync.bg:445
 - **Purpose**: System administration and school management
 - **Backend**: Dedicated admin backend with isolated database
 - **SSL**: Automatic Let's Encrypt certificates
@@ -117,8 +117,8 @@ docker-compose -f docker-compose-enterprise.yml logs -f frontend
 
 ## Access Points
 
-- **Main Application**: https://assetflow.bg
-- **Admin Interface**: https://admin.assetflow.bg:445
+- **Main Application**: https://school-sync.org
+- **Admin Interface**: https://schoolsyncadmin.duckdns.org:445
 - **Monitoring**: http://localhost:3001 (admin/admin123)
 - **Metrics**: http://localhost:9090
 

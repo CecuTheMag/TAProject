@@ -105,7 +105,7 @@ const VerificationPage = ({ email, onBack }) => {
             }}>
               <img 
                 src={logoImage} 
-                alt="AssetFlow Logo" 
+                alt="SchoolSync Logo" 
                 style={{
                   width: '50px',
                   height: '50px',

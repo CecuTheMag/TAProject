@@ -237,7 +237,7 @@ export const exportReport = async (req, res) => {
       doc.pipe(res);
       
       // Title
-      doc.fontSize(16).text(`AssetFlow - ${reportTitle}`, { align: 'center' });
+      doc.fontSize(16).text(`SchoolSync - ${reportTitle}`, { align: 'center' });
       doc.fontSize(10).text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' });
       doc.moveDown(2);
       

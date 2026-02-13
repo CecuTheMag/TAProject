@@ -1,4 +1,4 @@
-// AssetFlow Database Configuration and Initialization
+// SchoolSync Database Configuration and Initialization
 // Handles PostgreSQL connection, table creation, and sample data setup
 
 import pkg from 'pg';

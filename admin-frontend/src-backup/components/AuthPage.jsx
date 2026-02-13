@@ -111,7 +111,7 @@ const AuthPage = () => {
             }}>
               <img 
                 src={logoImage} 
-                alt="AssetFlow Logo" 
+                alt="SchoolSync Logo" 
                 style={{
                   width: isMobile ? '50px' : '70px',
                   height: isMobile ? '50px' : '70px',
@@ -133,7 +133,7 @@ const AuthPage = () => {
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
             }}>
-              AssetFlow
+              SchoolSync
             </h1>
             
             <div style={{

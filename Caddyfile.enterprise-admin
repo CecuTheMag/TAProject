@@ -1,6 +1,6 @@
-# ENTERPRISE - Admin Frontend with SSL on port 445
-:443 {
-    tls internal
+# ENTERPRISE - Admin Frontend with Let's Encrypt SSL on port 445
+schoolsyncadmin.duckdns.org {
+    tls kironotificatora@gmail.com
     
     handle_path /admin-api/* {
         reverse_proxy admin-backend:5005 {

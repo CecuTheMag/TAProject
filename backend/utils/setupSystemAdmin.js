@@ -12,8 +12,8 @@ const setupSystemAdmin = async () => {
     // Add is_system_admin column if it doesn't exist
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN DEFAULT false');
     
-    // Create or update admin@assetflow.bg as system admin
-    const hashedPassword = await bcrypt.hash('assetflow2026', 12);
+    // Create or update admin@schoolsync.bg as system admin
+    const hashedPassword = await bcrypt.hash('schoolsync2026', 12);
     
     const result = await pool.query(`
       INSERT INTO users (username, email, password, role, is_system_admin) 
@@ -22,7 +22,7 @@ const setupSystemAdmin = async () => {
         is_system_admin = true,
         role = 'admin'
       RETURNING id, username, email, role, is_system_admin
-    `, ['admin', 'admin@assetflow.bg', hashedPassword, 'admin', true]);
+    `, ['admin', 'admin@schoolsync.bg', hashedPassword, 'admin', true]);
     
     console.log('✓ System admin created/updated:', result.rows[0]);
     

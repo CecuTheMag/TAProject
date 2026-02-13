@@ -17,7 +17,7 @@ export const setSchoolContext = async (req, res, next) => {
       console.log(`School context from header: ${schoolCode}`);
     }
     
-    // Method 3: From subdomain (e.g., hbhs.assetflow.bg)
+    // Method 3: From subdomain (e.g., hbhs.schoolsync.bg)
     if (!schoolCode && req.headers.host) {
       const host = req.headers.host.split(':')[0]; // Remove port
       const subdomain = host.split('.')[0];

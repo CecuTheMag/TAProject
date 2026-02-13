@@ -40,7 +40,7 @@ END $$;
 INSERT INTO users (username, email, password, role, is_system_admin, created_at) 
 VALUES (
   'system_admin', 
-  'system@assetflow.bg', 
+  'system@schoolsync.bg', 
   '$2b$12$LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3.', -- password: systemadmin123
   'system_admin', 
   true, 

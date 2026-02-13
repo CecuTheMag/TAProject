@@ -36,7 +36,7 @@ const runSimpleMigration = async () => {
       ON CONFLICT (email) DO NOTHING
     `, [
       'system_admin',
-      'system@assetflow.bg', 
+      'system@schoolsync.bg', 
       '$2b$12$LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3.',
       'system_admin',
       true

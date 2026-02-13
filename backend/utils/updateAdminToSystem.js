@@ -7,11 +7,11 @@ const updateExistingAdmin = async () => {
     // Add is_system_admin column if it doesn't exist
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_system_admin BOOLEAN DEFAULT false');
     
-    // Update existing admin@assetflow.bg to be system admin
+    // Update existing admin@schoolsync.bg to be system admin
     const result = await pool.query(`
       UPDATE users 
       SET is_system_admin = true 
-      WHERE email = 'admin@assetflow.bg'
+      WHERE email = 'admin@schoolsync.bg'
       RETURNING id, username, email, role, is_system_admin
     `);
     
