@@ -4,8 +4,8 @@
 # Deploys both main and admin frontends with HTTPS certificates
 
 echo "🚀 Starting AssetFlow Enterprise Deployment..."
-echo "📋 Main Frontend: https://assetflow.bg (Port 443)"
-echo "🔧 Admin Frontend: https://admin.assetflow.bg (Port 445)"
+echo "📋 Main Frontend: https://school-sync.org (Port 443)"
+echo "🔧 Admin Frontend: https://192.168.88.220:445 (Port 445)"
 echo ""
 
 # Check if Docker and Docker Compose are available
@@ -39,8 +39,8 @@ echo ""
 echo "✅ Enterprise deployment complete!"
 echo ""
 echo "📱 Access Points:"
-echo "   Main App:  https://assetflow.bg"
-echo "   Admin App: https://admin.assetflow.bg:445"
+echo "   Main App:  https://school-sync.org"
+echo "   Admin App: https://192.168.88.220:445"
 echo "   Grafana:   http://localhost:3001 (admin/admin123)"
 echo "   Prometheus: http://localhost:9090"
 echo ""
