@@ -197,11 +197,15 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+              boxShadow: '0 2px 10px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              padding: '4px'
             }}>
               <img src={logoImage} alt="SchoolSync Logo" style={{
-                width: '40px',
-                height: '40px',
+                width: '32px',
+                height: '32px',
                 objectFit: 'contain'
               }} />
             </div>
@@ -317,11 +321,15 @@ const Sidebar = ({ activeTab, setActiveTab, user }) => {
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '16px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+          boxShadow: '0 4px 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          border: '1px solid rgba(255, 255, 255, 0.5)',
+          padding: '8px'
         }}>
           <img src={logoImage} alt="SchoolSync Logo" style={{
-            width: '80px',
-            height: '80px',
+            width: '64px',
+            height: '64px',
             objectFit: 'contain'
           }} />
         </div>

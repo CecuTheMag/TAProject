@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { useTranslation } from '../translations';
+import logoImage from '../assets/logotp.png';
 
 const ThemeContext = createContext();
 
@@ -112,24 +113,30 @@ const HomePage = ({ onGetStarted }) => {
             style={{
               width: '80px',
               height: '80px',
-              background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
               borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 32px auto',
-              boxShadow: '0 8px 32px rgba(59, 130, 246, 0.2)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              boxShadow: '0 8px 32px rgba(255, 255, 255, 0.3), 0 0 60px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              padding: '8px'
             }}
           >
-            <div style={{
-              fontSize: '32px',
-              fontWeight: '800',
-              color: 'white',
-              fontFamily: 'Inter, -apple-system, sans-serif'
-            }}>
-              SS
-            </div>
+            <img 
+              src={logoImage} 
+              alt="SchoolSync Logo" 
+              style={{
+                width: '64px',
+                height: '64px',
+                objectFit: 'contain'
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.innerHTML = '<div style="font-size: 32px; font-weight: 800; color: #1e40af; font-family: Inter, -apple-system, sans-serif;">SS</div>';
+              }}
+            />
           </motion.div>
 
           {/* Main Title */}
@@ -898,16 +905,29 @@ const Footer = () => {
           <div style={{
             width: '32px',
             height: '32px',
-            background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '16px',
-            fontWeight: '800',
-            color: 'white'
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            padding: '2px'
           }}>
-            SS
+            <img 
+              src={logoImage} 
+              alt="SchoolSync Logo" 
+              style={{
+                width: '28px',
+                height: '28px',
+                objectFit: 'contain'
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.innerHTML = '<span style="font-size: 16px; font-weight: 800; color: #1e40af;">SS</span>';
+              }}
+            />
           </div>
           <span style={{
             fontSize: '24px',
@@ -985,19 +1005,31 @@ const Navbar = ({ onLogin, onSignup, isMobile }) => {
           gap: '12px'
         }}>
           <div style={{
-            width: '28px',
-            height: '28px',
-            background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+            width: '32px',
+            height: '32px',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '14px',
-            fontWeight: '800',
-            color: 'white',
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            padding: '2px'
           }}>
-            SS
+            <img 
+              src={logoImage} 
+              alt="SchoolSync Logo" 
+              style={{
+                width: '28px',
+                height: '28px',
+                objectFit: 'contain'
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.innerHTML = '<span style="font-size: 14px; font-weight: 800; color: #1e40af;">SS</span>';
+              }}
+            />
           </div>
           <span style={{
             fontSize: '20px',

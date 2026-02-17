@@ -174,26 +174,28 @@ const AuthPage = () => {
             <div style={{
               width: isMobile ? '80px' : '120px',
               height: isMobile ? '80px' : '120px',
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
               borderRadius: '24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '24px',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              margin: '0 auto 24px auto'
+              border: '2px solid rgba(255, 255, 255, 0.5)',
+              margin: '0 auto 24px auto',
+              boxShadow: '0 8px 32px rgba(255, 255, 255, 0.3), 0 0 60px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              padding: '12px'
             }}>
               <img 
                 src={logoImage} 
                 alt="SchoolSync Logo" 
                 style={{
-                  width: isMobile ? '50px' : '70px',
-                  height: isMobile ? '50px' : '70px',
+                  width: isMobile ? '56px' : '96px',
+                  height: isMobile ? '56px' : '96px',
                   objectFit: 'contain'
                 }}
                 onError={(e) => {
                   e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML = '<div style="font-size: 32px; font-weight: 800; color: white;">AF</div>';
+                  e.target.parentElement.innerHTML = '<div style="font-size: 32px; font-weight: 800; color: #1e40af;">AF</div>';
                 }}
               />
             </div>

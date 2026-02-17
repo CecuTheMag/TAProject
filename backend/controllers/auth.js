@@ -322,3 +322,12 @@ export const setupPassword = async (req, res) => {
     res.status(500).json({ error: 'Password setup failed' });
   }
 };
+
+export const testDB = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({ message: 'Database connection successful', timestamp: result.rows[0].now });
+  } catch (error) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
