@@ -1,7 +1,8 @@
 # Environment variables
 .env.local
 .env.production
-backend/.env
+backend/
+.env
 
 # Email credentials
 **/EMAIL_USER*
