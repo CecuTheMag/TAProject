@@ -43,14 +43,14 @@ export const createSampleData = async () => {
     const existingUser = await pool.query('SELECT COUNT(*) FROM users WHERE username = $1', ['testuser']);
     
     if (parseInt(existingUser.rows[0].count) === 0) {
-      const hashedPassword = await bcrypt.hash('password123', 12);
+      const hashedPassword = await bcrypt.hash(process.env.SAMPLE_USER_PASSWORD, 12);
       
       await pool.query(
         'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4)',
-        ['testuser', 'test@school.edu', hashedPassword, 'student']
+        [process.env.SAMPLE_USER_USERNAME, process.env.SAMPLE_USER_EMAIL, hashedPassword, process.env.SAMPLE_USER_ROLE]
       );
 
-      console.log('✅ Sample user created: test@school.edu / password123');
+      console.log(`✅ Sample user created: ${process.env.SAMPLE_USER_EMAIL} / ${process.env.SAMPLE_USER_PASSWORD}`);
     }
 
   } catch (error) {

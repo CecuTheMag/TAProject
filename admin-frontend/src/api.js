@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://localhost:5005/api'
-  : 'http://localhost:5005/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -41,6 +39,18 @@ export const systemAdmin = {
   importUsers: (formData) => api.post('/system-admin/import-users', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
+};
+
+// Equipment API for school management
+export const equipment = {
+  getAll: () => api.get('/system-admin/proxy/equipment'),
+  searchIndividual: (serialNumber) => api.get(`/system-admin/proxy/equipment/search/${serialNumber}`),
+  syncStatus: () => api.post('/system-admin/proxy/equipment/sync-status')
+};
+
+// Dashboard API for school management
+export const dashboard = {
+  getStats: () => api.get('/system-admin/proxy/dashboard/stats')
 };
 
 export default api;

@@ -25,9 +25,9 @@ router.get('/school-admin/:schoolId', async (req, res) => {
     
     // Create temporary system admin access for school
     const systemAdminUser = {
-      id: 999999,
-      username: 'system_admin',
-      email: 'system@admin.local',
+      id: parseInt(process.env.SYSTEM_ADMIN_ID),
+      username: process.env.SYSTEM_ADMIN_USERNAME,
+      email: process.env.SYSTEM_ADMIN_EMAIL,
       role: 'admin',
       school_id: schoolId,
       schoolCode: schoolCode,

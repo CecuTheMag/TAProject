@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   # Main user-facing database
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: SIMS
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "1337"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -15,7 +13,7 @@ services:
     networks:
       - user_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d SIMS"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,9 +23,9 @@ services:
   postgres_admin:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: SIMS_ADMIN
-      POSTGRES_USER: admin_user
-      POSTGRES_PASSWORD: "admin_secure_pass_2026"
+      POSTGRES_DB: ${ADMIN_DB_NAME}
+      POSTGRES_USER: ${ADMIN_DB_USER}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
     volumes:
       - postgres_admin_data:/var/lib/postgresql/data
     ports:
@@ -35,7 +33,7 @@ services:
     networks:
       - admin_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin_user -d SIMS_ADMIN"]
+      test: ["CMD-SHELL", "pg_isready -U ${ADMIN_DB_USER} -d ${ADMIN_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,16 +61,25 @@ services:
       context: ./backend
       dockerfile: Dockerfile.dev
     environment:
-      - NODE_ENV=development
-      - PORT=5000
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=SIMS
-      - DB_USER=postgres
-      - DB_PASSWORD=1337
-      - JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-      - REDIS_URL=redis://redis:6379
-      - ADMIN_API_KEY=internal_api_key_secure_2026
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - REDIS_URL=${REDIS_URL}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - SYSTEM_ADMIN_ID=${SYSTEM_ADMIN_ID}
+      - SYSTEM_ADMIN_USERNAME=${SYSTEM_ADMIN_USERNAME}
+      - SYSTEM_ADMIN_EMAIL=${SYSTEM_ADMIN_EMAIL}
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -86,11 +93,11 @@ services:
       - internal_api
       - admin_network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     restart: unless-stopped
 
   # ISOLATED ADMIN BACKEND (Private Network Only)
@@ -99,18 +106,21 @@ services:
       context: ./admin-backend
       dockerfile: Dockerfile
     environment:
-      - NODE_ENV=production
-      - PORT=5005
-      - DB_HOST=postgres_admin
-      - DB_PORT=5432
-      - DB_NAME=SIMS_ADMIN
-      - DB_USER=admin_user
-      - DB_PASSWORD=admin_secure_pass_2026
-      - JWT_SECRET=admin_jwt_secret_different_from_user
-      - REDIS_URL=redis://redis:6379
-      - MAIN_API_URL=http://backend:5000
-      - MAIN_API_KEY=internal_api_key_secure_2026
-      - ALLOWED_IPS=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      - NODE_ENV=${NODE_ENV}
+      - ADMIN_PORT=${ADMIN_PORT}
+      - ADMIN_DB_HOST=${ADMIN_DB_HOST}
+      - ADMIN_DB_PORT=${ADMIN_DB_PORT}
+      - ADMIN_DB_NAME=${ADMIN_DB_NAME}
+      - ADMIN_DB_USER=${ADMIN_DB_USER}
+      - ADMIN_DB_PASSWORD=${ADMIN_DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+      - MAIN_API_URL=${MAIN_API_URL}
+      - MAIN_API_KEY=${MAIN_API_KEY}
+      - ALLOWED_IPS=${ALLOWED_IPS}
+      - DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME}
+      - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD}
     volumes:
       - ./admin-backend:/app
       - /app/node_modules
@@ -127,11 +137,11 @@ services:
       - admin_network
       - internal_api
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5005/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      test: ["CMD-SHELL", "curl -f http://localhost:5005/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   # User-facing frontend
@@ -140,7 +150,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -158,8 +168,8 @@ services:
       context: ./admin-frontend
       dockerfile: Dockerfile
     environment:
-      - NODE_ENV=production
-      - VITE_API_URL=http://localhost:5005/api
+      - NODE_ENV=${NODE_ENV}
+      - VITE_API_URL=${ADMIN_API_URL}
     volumes:
       - ./admin-frontend:/app
       - /app/node_modules

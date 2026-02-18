@@ -42,7 +42,7 @@ dotenv.config();
 
 // Initialize Express application
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 // ===== MIDDLEWARE CONFIGURATION =====
 
@@ -54,20 +54,49 @@ app.use(helmet({
 // Performance middleware - compresses responses to reduce bandwidth
 app.use(compression());
 
+// Manual CORS headers middleware - MUST come before cors() to ensure headers are set
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+  
+  // Check if origin is allowed
+  const isAllowed = !origin || allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.some(allowed => {
+    if (typeof allowed === 'string') {
+      return allowed === origin;
+    }
+    return allowed.test(origin);
+  });
+  
+  if (isAllowed) {
+    res.header('Access-Control-Allow-Origin', origin || process.env.FRONTEND_URL);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  }
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 // CORS middleware - enables cross-origin requests from frontend
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3002', 
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3002',
-      /^http:\/\/.*:3000$/,  // Any hostname on port 3000
-      /^http:\/\/.*:3002$/   // Any hostname on port 3002
-    ];
+    const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+    
+    // If wildcard is set, allow all origins
+    if (allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    
+    // If no allowed origins configured, allow all (for development)
+    if (allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
     
     const isAllowed = allowedOrigins.some(allowed => {
       if (typeof allowed === 'string') {
@@ -89,19 +118,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   optionsSuccessStatus: 200
 }));
-
-// Manual CORS headers for problematic requests
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:3000');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
 
 // Body parsing middleware - handles JSON and URL-encoded data (10MB limit for file uploads)
 app.use(express.json({ limit: '10mb' }));
@@ -189,7 +205,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    instance: process.env.INSTANCE_ID || 'unknown',
+    instance: process.env.INSTANCE_ID,
     uptime: process.uptime()
   });
 });
@@ -198,7 +214,7 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'School Inventory Management System API',
     version: '1.0.0',
-    instance: process.env.INSTANCE_ID || 'unknown',
+    instance: process.env.INSTANCE_ID,
     endpoints: {
       auth: '/auth (register, login, logout)',
       equipment: '/equipment (CRUD operations)',

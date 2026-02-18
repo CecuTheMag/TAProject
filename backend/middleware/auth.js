@@ -10,17 +10,17 @@ export const authenticateToken = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Handle system admin tokens (ID 999999)
-    if (decoded.userId === 999999) {
+    // Handle system admin tokens
+    if (decoded.userId === parseInt(process.env.SYSTEM_ADMIN_ID)) {
       req.user = {
-        id: 999999,
-        username: 'system_admin',
-        email: 'system@admin.local',
+        id: parseInt(process.env.SYSTEM_ADMIN_ID),
+        username: process.env.SYSTEM_ADMIN_USERNAME,
+        email: process.env.SYSTEM_ADMIN_EMAIL,
         role: 'admin',
         is_system_admin: true,
-        school_code: null
+        school_code: decoded.schoolCode || null  // Extract schoolCode from token
       };
       return next();
     }

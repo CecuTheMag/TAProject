@@ -3,15 +3,37 @@ import pool from '../database.js';
 
 class EmailService {
   constructor() {
+    this.transporter = null;
+    this.initialized = false;
+  }
+
+  initialize() {
+    if (this.initialized) return;
+    
+    console.log('📧 Initializing EmailService...');
+    console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Not set');
+    console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
+    
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('❌ Email credentials not configured!');
+      return;
+    }
+    
     this.transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
       secure: false,
       auth: {
-        user: 'kironotificatora@gmail.com',
-        pass: 'eieo fqhh rfcc tgsa'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
+    
+    this.initialized = true;
+    console.log('✅ Email transporter initialized');
   }
 
   async checkAndSendOverdueReminders() {
@@ -78,7 +100,7 @@ class EmailService {
 
   async sendOverdueReminder(userEmail, equipmentName, dueDate) {
     const mailOptions = {
-      from: 'kironotificatora@gmail.com',
+      from: process.env.EMAIL_USER,
       to: userEmail,
       subject: `Equipment Return Reminder - ${equipmentName}`,
       html: `
@@ -106,7 +128,7 @@ class EmailService {
 
   async sendRequestApprovalNotification(userEmail, equipmentName, approvedBy) {
     const mailOptions = {
-      from: 'kironotificatora@gmail.com',
+      from: process.env.EMAIL_USER,
       to: userEmail,
       subject: `Request Approved - ${equipmentName}`,
       html: `
@@ -134,7 +156,7 @@ class EmailService {
 
   async sendLowStockAlert(adminEmail, equipmentName, currentStock, threshold) {
     const mailOptions = {
-      from: 'kironotificatora@gmail.com',
+      from: process.env.EMAIL_USER,
       to: adminEmail,
       subject: `Low Stock Alert - ${equipmentName}`,
       html: `
@@ -162,8 +184,17 @@ class EmailService {
   }
 
   async sendVerificationCode(userEmail, code, userName) {
+    this.initialize();
+    
+    if (!this.transporter) {
+      console.error('❌ Email transporter not initialized');
+      return false;
+    }
+    
+    console.log(`📧 Attempting to send verification code to ${userEmail}`);
+    
     const mailOptions = {
-      from: 'kironotificatora@gmail.com',
+      from: process.env.EMAIL_USER,
       to: userEmail,
       subject: 'SchoolSync - Account Verification Code',
       html: `
@@ -181,11 +212,11 @@ class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
-      console.log(`Verification code sent to ${userEmail}`);
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Verification code sent successfully:', result.messageId);
       return true;
     } catch (error) {
-      console.error('Failed to send verification email:', error);
+      console.error('❌ Failed to send verification email:', error.message);
       return false;
     }
   }

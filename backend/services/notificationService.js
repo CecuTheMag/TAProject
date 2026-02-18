@@ -2,12 +2,12 @@ import nodemailer from 'nodemailer';
 
 // Email transporter configuration
 const emailTransporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: process.env.EMAIL_PORT || 587,
+  host: process.env.EMAIL_HOST,
+  port: parseInt(process.env.EMAIL_PORT),
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
-    pass: process.env.EMAIL_PASS || 'eieo fqhh rfcc tgsa'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
@@ -20,7 +20,7 @@ export const generateVerificationCode = () => {
 export const sendEmailVerification = async (email, code, name) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USER || 'kironotificatora@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'SchoolSync - Account Verification Code',
       html: `

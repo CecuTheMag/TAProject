@@ -56,27 +56,42 @@ const getMainApiUrl = () => {
   
   // In docker-compose-secure, backend is on internal_api network
   // Try service name first, then localhost as fallback
-  return 'http://backend:5000';
+  return process.env.MAIN_API_URL;
 };
 
 /**
- * Make a request to the main backend API with retry logic
+ * Make a request to the main backend API with retry logic and proper authentication
  */
-const mainApiRequest = async (endpoint, data, timeout = 15000) => {
+const mainApiRequest = async (endpoint, data, timeout = 15000, method = 'POST', authToken = null) => {
   const baseUrl = getMainApiUrl();
   const url = `${baseUrl}${endpoint}`;
   
-  console.log(`Making request to: ${url}`);
+  console.log(`Making ${method} request to: ${url}`);
   
   return retryWithBackoff(async () => {
-    const response = await axios.post(url, data, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': process.env.MAIN_API_KEY || 'internal_api_key_secure_2026'
-      },
-      timeout: timeout
-    });
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-API-Key': process.env.MAIN_API_KEY
+    };
     
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    const config = {
+      method,
+      url,
+      headers,
+      timeout: timeout
+    };
+    
+    if (data && (method === 'POST' || method === 'PUT')) {
+      config.data = data;
+    } else if (data && method === 'GET') {
+      config.params = data;
+    }
+    
+    const response = await axios(config);
     return response;
   }, 3, 1000);
 };
@@ -979,5 +994,42 @@ export const getSystemStats = async (req, res) => {
         total_admin_users: 0
       }
     });
+  }
+};
+
+// Proxy endpoints for school management
+export const proxyEquipmentRequest = async (req, res) => {
+  try {
+    // Create a JWT token for the main backend
+    const jwt = await import('jsonwebtoken');
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: 'ADMIN' }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/equipment', null, 15000, 'GET', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy equipment request error:', error);
+    res.status(500).json({ error: 'Failed to fetch equipment data' });
+  }
+};
+
+export const proxyDashboardStats = async (req, res) => {
+  try {
+    // Create a JWT token for the main backend
+    const jwt = await import('jsonwebtoken');
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: 'ADMIN' }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/dashboard/stats', null, 15000, 'GET', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy dashboard stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard stats' });
   }
 };

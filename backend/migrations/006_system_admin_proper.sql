@@ -36,12 +36,12 @@ BEGIN
     END IF;
 END $$;
 
--- Insert system admin if it doesn't exist
+-- Insert system admin if it doesn't exist (password must be set via application)
 INSERT INTO users (username, email, password, role, is_system_admin, created_at) 
 VALUES (
   'system_admin', 
   'system@schoolsync.bg', 
-  '$2b$12$LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3.', -- password: systemadmin123
+  'MUST_BE_SET_BY_APPLICATION', -- Placeholder - use environment variable in app code
   'system_admin', 
   true, 
   CURRENT_TIMESTAMP

@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
-import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, getSystemInfo, parseAccdbFile, importAccdbData } from '../controllers/systemAdmin.js';
+import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, getSystemInfo, parseAccdbFile, importAccdbData, proxyEquipmentRequest, proxyDashboardStats } from '../controllers/systemAdmin.js';
 import pool from '../database.js';
 import bcrypt from 'bcryptjs';
 import XLSX from 'xlsx';
@@ -189,5 +189,9 @@ router.post('/import-users', upload.single('file'), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Proxy routes for school management
+router.get('/proxy/equipment', proxyEquipmentRequest);
+router.get('/proxy/dashboard/stats', proxyDashboardStats);
 
 export default router;

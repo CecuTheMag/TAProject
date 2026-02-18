@@ -11,9 +11,9 @@ const updateExistingAdmin = async () => {
     const result = await pool.query(`
       UPDATE users 
       SET is_system_admin = true 
-      WHERE email = 'admin@schoolsync.bg'
+      WHERE email = $1
       RETURNING id, username, email, role, is_system_admin
-    `);
+    `, [process.env.DEFAULT_ADMIN_EMAIL]);
     
     if (result.rows.length > 0) {
       console.log('✓ Updated admin account:', result.rows[0]);

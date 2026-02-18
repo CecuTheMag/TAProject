@@ -10,11 +10,11 @@ const assignTeacherToSubject = async () => {
       
       // Create a teacher user
       const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.default.hash('teacher123', 12);
+      const hashedPassword = await bcrypt.default.hash(process.env.SAMPLE_TEACHER_PASSWORD, 12);
       
       const newTeacher = await pool.query(
         'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username',
-        ['teacher1', 'teacher@test.com', hashedPassword, 'teacher']
+        [process.env.SAMPLE_TEACHER_USERNAME, process.env.SAMPLE_TEACHER_EMAIL, hashedPassword, 'teacher']
       );
       
       console.log('Created teacher:', newTeacher.rows[0]);

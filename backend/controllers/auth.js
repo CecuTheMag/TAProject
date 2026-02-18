@@ -184,6 +184,7 @@ export const logout = (req, res) => {
 export const sendVerificationCodes = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log(`🔐 Sending verification codes for: ${email}`);
     
     // Find user in school schemas
     let user = null;
@@ -197,6 +198,7 @@ export const sendVerificationCodes = async (req, res) => {
         if (result.rows.length > 0) {
           user = result.rows[0];
           schoolCode = school.code;
+          console.log(`✅ User found in school: ${schoolCode}`);
           break;
         }
       } catch (schemaError) {
@@ -205,10 +207,12 @@ export const sendVerificationCodes = async (req, res) => {
     }
     
     if (!user) {
+      console.log(`❌ User not found: ${email}`);
       return res.status(404).json({ error: 'User not found' });
     }
     
     if (user.password_set) {
+      console.log(`❌ Account already activated: ${email}`);
       return res.status(400).json({ error: 'Account already activated' });
     }
     
@@ -217,15 +221,22 @@ export const sendVerificationCodes = async (req, res) => {
     const smsCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     
+    console.log(`📧 Generated codes - Email: ${emailCode}, SMS: ${smsCode}`);
+    
     // Update user with verification codes
     await pool.query(
       `UPDATE "school_${schoolCode}".users SET email_verification_code = $1, sms_verification_code = $2, verification_expires_at = $3, verification_attempts = 0 WHERE email = $4`,
       [emailCode, smsCode, expiresAt, email]
     );
     
+    console.log(`✅ Verification codes stored in database`);
+    
     // Send codes
+    console.log(`📧 Calling emailService.sendVerificationCode...`);
     const emailSent = await emailService.sendVerificationCode(user.email, emailCode, user.username);
     const smsSent = false; // SMS not implemented
+    
+    console.log(`📧 Email sent result: ${emailSent}`);
     
     res.json({ 
       message: 'Verification codes sent',
@@ -234,6 +245,7 @@ export const sendVerificationCodes = async (req, res) => {
       hasPhone: !!user.phone
     });
   } catch (error) {
+    console.error('❌ Error in sendVerificationCodes:', error);
     res.status(500).json({ error: 'Failed to send verification codes' });
   }
 };

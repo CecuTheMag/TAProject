@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   # Admin Database - Separate from main system
   postgres_admin:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: SIMS_ADMIN
-      POSTGRES_USER: admin_user
-      POSTGRES_PASSWORD: "admin_secure_pass_2026"
+      POSTGRES_DB: ${ADMIN_DB_NAME}
+      POSTGRES_USER: ${ADMIN_DB_USER}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_admin_data:/var/lib/postgresql/data
@@ -24,9 +22,9 @@ services:
   postgres-primary:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: SIMS
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "1337"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_primary_data:/var/lib/postgresql/data
@@ -58,34 +56,35 @@ services:
   admin-backend:
     build: ./admin-backend
     environment:
-      - NODE_ENV=production
-      - PORT=5005
-      - DB_HOST=postgres_admin
-      - DB_PORT=5432
-      - DB_USER=admin_user
-      - DB_PASSWORD=admin_secure_pass_2026
-      - DB_NAME=SIMS_ADMIN
-      - JWT_SECRET=admin_jwt_secret_key_2026_secure
-      - MAIN_API_URL=http://backend-1:5000
-      - MAIN_API_KEY=internal_api_key_secure_2026
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${ADMIN_PORT}
+      - DB_HOST=${ADMIN_DB_HOST}
+      - DB_PORT=${ADMIN_DB_PORT}
+      - DB_USER=${ADMIN_DB_USER}
+      - DB_PASSWORD=${ADMIN_DB_PASSWORD}
+      - DB_NAME=${ADMIN_DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - MAIN_API_URL=${MAIN_API_URL}
+      - MAIN_API_KEY=${MAIN_API_KEY}
     depends_on:
       postgres_admin:
         condition: service_healthy
       backend-1:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5005/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "curl -f http://localhost:5005/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   # Admin Frontend Service
   admin-frontend:
     build: ./admin-frontend
     environment:
-      - NODE_ENV=production
-      - VITE_API_URL=/admin-api
+      - NODE_ENV=${NODE_ENV}
+      - VITE_API_URL=${ADMIN_API_URL}
     depends_on:
       - admin-backend
     restart: unless-stopped
@@ -94,20 +93,20 @@ services:
   backend-1:
     build: ./backend
     environment:
-      - NODE_ENV=production
-      - PORT=5000
-      - DB_HOST=postgres-primary
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=1337
-      - DB_NAME=SIMS
-      - JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-      - JWT_EXPIRES_IN=7d
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=587
-      - EMAIL_USER=kironotificatora@gmail.com
-      - EMAIL_PASS=eieo fqhh rfcc tgsa
-      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - REDIS_URL=${REDIS_URL}
       - INSTANCE_ID=backend-1
     depends_on:
       postgres-primary:
@@ -115,29 +114,30 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   backend-2:
     build: ./backend
     environment:
-      - NODE_ENV=production
-      - PORT=5000
-      - DB_HOST=postgres-primary
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=1337
-      - DB_NAME=SIMS
-      - JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-      - JWT_EXPIRES_IN=7d
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=587
-      - EMAIL_USER=kironotificatora@gmail.com
-      - EMAIL_PASS=eieo fqhh rfcc tgsa
-      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - REDIS_URL=${REDIS_URL}
       - INSTANCE_ID=backend-2
     depends_on:
       postgres-primary:
@@ -145,29 +145,30 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   backend-3:
     build: ./backend
     environment:
-      - NODE_ENV=production
-      - PORT=5000
-      - DB_HOST=postgres-primary
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=1337
-      - DB_NAME=SIMS
-      - JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-      - JWT_EXPIRES_IN=7d
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=587
-      - EMAIL_USER=kironotificatora@gmail.com
-      - EMAIL_PASS=eieo fqhh rfcc tgsa
-      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - REDIS_URL=${REDIS_URL}
       - INSTANCE_ID=backend-3
     depends_on:
       postgres-primary:
@@ -175,18 +176,19 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     restart: unless-stopped
 
   # Frontend with Production Build
   frontend:
     build: ./frontend
     environment:
-      - NODE_ENV=production
-      - VITE_API_URL=/api
+      - NODE_ENV=${NODE_ENV}
+      - VITE_API_URL=${FRONTEND_URL}
     restart: unless-stopped
 
   # Main Load Balancer with HTTPS on port 443
@@ -242,8 +244,8 @@ services:
     ports:
       - "0.0.0.0:3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana

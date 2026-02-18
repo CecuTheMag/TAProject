@@ -29,7 +29,7 @@ const runSimpleMigration = async () => {
       )
     `);
     
-    // Insert system admin
+    // Insert system admin (password must be set via application)
     await pool.query(`
       INSERT INTO users (username, email, password, role, is_system_admin) 
       VALUES ($1, $2, $3, $4, $5) 
@@ -37,7 +37,7 @@ const runSimpleMigration = async () => {
     `, [
       'system_admin',
       'system@schoolsync.bg', 
-      '$2b$12$LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3.',
+      'MUST_BE_SET_BY_APPLICATION', // Placeholder - use environment variable in app code
       'system_admin',
       true
     ]);

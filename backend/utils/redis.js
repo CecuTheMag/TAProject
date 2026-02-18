@@ -10,7 +10,7 @@ class RedisService {
   async connect() {
     try {
       this.client = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: process.env.REDIS_URL,
         socket: {
           connectTimeout: 5000,
           lazyConnect: true

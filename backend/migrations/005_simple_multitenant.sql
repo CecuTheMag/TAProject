@@ -25,12 +25,12 @@ CREATE TABLE IF NOT EXISTS schools (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default system admin
+-- Insert default system admin (password must be set via application)
 INSERT INTO users (username, email, password, role, is_system_admin) 
 VALUES (
   'system_admin', 
   'system@schoolsync.bg', 
-  '$2b$12$LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3.', 
+  'MUST_BE_SET_BY_APPLICATION', -- Placeholder - use environment variable in app code
   'system_admin', 
   true
 ) ON CONFLICT (email) DO NOTHING;

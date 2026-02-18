@@ -9,21 +9,14 @@ import systemAdminRoutes from './routes/systemAdmin.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5005;
+const PORT = process.env.ADMIN_PORT;
 
 // Enhanced CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = [
-      'http://localhost:3002',
-      'http://localhost:3000',
-      'http://127.0.0.1:3002',
-      'http://127.0.0.1:3000',
-      /^http:\/\/.*:3002$/,
-      /^http:\/\/.*:3000$/
-    ];
+    const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
     
     const isAllowed = allowedOrigins.some(allowed => {
       if (typeof allowed === 'string') {
@@ -121,14 +114,14 @@ const initDB = async () => {
       )
     `);
 
-    const adminCheck = await client.query('SELECT * FROM admin_users WHERE email = $1', ['admin@schoolsync.bg']);
+    const adminCheck = await client.query('SELECT * FROM admin_users WHERE email = $1', [process.env.DEFAULT_ADMIN_EMAIL]);
     if (adminCheck.rows.length === 0) {
-      const hashedPassword = await bcrypt.hash('schoolsync2026', 12);
+      const hashedPassword = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD, 12);
       await client.query(
         'INSERT INTO admin_users (username, email, password, is_system_admin) VALUES ($1, $2, $3, $4)',
-        ['admin', 'admin@schoolsync.bg', hashedPassword, true]
+        [process.env.DEFAULT_ADMIN_USERNAME, process.env.DEFAULT_ADMIN_EMAIL, hashedPassword, true]
       );
-      console.log('✅ System admin created: admin@schoolsync.bg');
+      console.log(`✅ System admin created: ${process.env.DEFAULT_ADMIN_EMAIL}`);
     }
 
     console.log('✅ Admin database initialized');

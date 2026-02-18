@@ -96,15 +96,22 @@ const Dashboard = ({ schoolUser }) => {
     const fetchData = async () => {
       try {
         setError(null);
-        // Sync equipment statuses first, then fetch data
-        await equipment.syncStatus().catch(() => {}); // Non-blocking sync
-        // Parallel API calls for better performance
-        const [equipmentResponse, statsResponse] = await Promise.all([
-          equipment.getAll(),
-          dashboard.getStats().catch(() => ({ data: null })) // Non-blocking stats failure
-        ]);
-        setEquipmentList(equipmentResponse.data);
-        setDashboardStats(statsResponse.data);
+        
+        // Skip equipment loading if this is a school user (admin panel context)
+        if (user?.is_system_admin === false) {
+          console.log('Skipping equipment fetch for school management view');
+          setEquipmentList([]);
+          setDashboardStats({
+            equipment: {
+              total_equipment: 0,
+              available: 0,
+              checked_out: 0,
+              under_repair: 0
+            }
+          });
+          setLoading(false);
+          return;
+        }
       } catch (error) {
         console.error('Failed to fetch data:', error);
         setError('Failed to load dashboard data');
@@ -127,6 +134,8 @@ const Dashboard = ({ schoolUser }) => {
 
     // Listen for equipment status changes
     const handleEquipmentStatusChange = (event) => {
+      if (user?.is_system_admin === false) return; // Skip for school management
+      
       if (event.detail && event.detail.immediate) {
         // Immediate update for specific equipment
         setEquipmentList(prevList => 
@@ -180,6 +189,8 @@ const Dashboard = ({ schoolUser }) => {
    */
   useEffect(() => {
     const searchIndividualItem = async () => {
+      if (user?.is_system_admin === false) return; // Skip for school management
+      
       if (searchTerm.length > 3) {
         try {
           // Search for exact serial number matches (QR code scanning)
@@ -267,6 +278,9 @@ const Dashboard = ({ schoolUser }) => {
   };
 
   const handleModalSuccess = () => {
+    // Skip refresh for school management mode
+    if (user?.is_system_admin === false) return;
+    
     // Refresh data after successful action
     const fetchData = async () => {
       try {

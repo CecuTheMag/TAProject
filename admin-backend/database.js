@@ -2,11 +2,11 @@ import pg from 'pg';
 const { Pool } = pg;
 
 const pool = new Pool({
-  host: process.env.DB_HOST || 'postgres_admin',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'SIMS_ADMIN',
-  user: process.env.DB_USER || 'admin_user',
-  password: process.env.DB_PASSWORD || 'admin_secure_pass_2026',
+  host: process.env.ADMIN_DB_HOST,
+  port: process.env.ADMIN_DB_PORT,
+  database: process.env.ADMIN_DB_NAME,
+  user: process.env.ADMIN_DB_USER,
+  password: process.env.ADMIN_DB_PASSWORD,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

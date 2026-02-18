@@ -72,12 +72,12 @@ BEGIN
     CREATE INDEX IF NOT EXISTS idx_schools_code ON schools(code);
 END $$;
 
--- Insert default system admin
+-- Insert default system admin (password must be set via application)
 INSERT INTO users (username, email, password, role, is_system_admin, created_at) 
 VALUES (
   'system_admin', 
   'system@school-sync.org', 
-  '$2b$12$LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3.', -- password: systemadmin123
+  'MUST_BE_SET_BY_APPLICATION', -- Placeholder - use environment variable in app code
   'system_admin', 
   true, 
   CURRENT_TIMESTAMP
