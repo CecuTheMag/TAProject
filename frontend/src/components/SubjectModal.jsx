@@ -13,17 +13,14 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
     description: '',
     grade_level: '',
     room: '',
-    teacher_id: '',
     equipment_fleets: []
   });
   const [equipmentFleets, setEquipmentFleets] = useState([]);
-  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const isEdit = !!subject;
 
   useEffect(() => {
     fetchEquipmentFleets();
-    fetchTeachers();
   }, []);
 
   useEffect(() => {
@@ -34,20 +31,10 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
         description: subject.description || '',
         grade_level: subject.grade_level || '',
         room: subject.room || '',
-        teacher_id: subject.teacher_id || '',
         equipment_fleets: subject.equipment_fleets || []
       });
     }
   }, [subject]);
-
-  useEffect(() => {
-    if (subject && teachers.length > 0) {
-      const assignedTeacher = teachers.find(t => t.subject_id === subject.id);
-      if (assignedTeacher) {
-        setFormData(prev => ({ ...prev, teacher_id: assignedTeacher.id }));
-      }
-    }
-  }, [teachers, subject]);
 
   const fetchEquipmentFleets = async () => {
     try {
@@ -55,20 +42,6 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
       setEquipmentFleets(response.data || []);
     } catch (error) {
       console.error('Failed to fetch equipment fleets:', error);
-    }
-  };
-
-  const fetchTeachers = async () => {
-    try {
-      const response = await axios.get('/users', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      const users = Array.isArray(response.data) ? response.data : [];
-      const teacherUsers = users.filter(user => user.role === 'teacher');
-      setTeachers(teacherUsers);
-    } catch (error) {
-      console.error('Failed to fetch teachers:', error);
-      setTeachers([]);
     }
   };
 
@@ -224,33 +197,6 @@ const SubjectModal = ({ subject, onClose, onSuccess }) => {
               }}
             />
           </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>
-              {t('assignedTeacher')}
-            </label>
-            <select
-              value={formData.teacher_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, teacher_id: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-            >
-              <option value="">{t('noTeacherAssigned')}</option>
-              {teachers.map(teacher => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.username} ({teacher.email})
-                </option>
-              ))}
-            </select>
-          </div>
-
-
 
           <div>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>

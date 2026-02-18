@@ -44,12 +44,23 @@ router.get('/subjects', async (req, res) => {
 router.get('/lesson-plans', async (req, res) => {
   try {
     const schema = req.schoolSchema;
-    const result = await pool.query(`
-      SELECT lp.*, s.name as subject_name, s.code as subject_code
+    let query = `
+      SELECT lp.*, s.name as subject_name, s.code as subject_code, u.username as teacher_name
       FROM "${schema}".lesson_plans lp
       LEFT JOIN "${schema}".subjects s ON lp.subject_id = s.id
-      ORDER BY lp.lesson_date DESC
-    `);
+      LEFT JOIN "${schema}".users u ON lp.teacher_id = u.id
+    `;
+    let params = [];
+    
+    // If user is a teacher, only show their lesson plans
+    if (req.user.role === 'teacher') {
+      query += ` WHERE lp.teacher_id = $1`;
+      params = [req.user.id];
+    }
+    
+    query += ` ORDER BY lp.lesson_date DESC`;
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Lesson plans error:', error);
@@ -87,35 +98,15 @@ router.put('/lesson-plans/:id', requireTeacherOrAdmin, async (req, res) => {
 // Create subject
 router.post('/subjects', requireTeacherOrAdmin, async (req, res) => {
   try {
-    const { name, code, description, grade_level, room, teacher_id, equipment_fleets } = req.body;
+    const { name, code, description, grade_level, room, equipment_fleets } = req.body;
     const schema = req.schoolSchema;
     
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      
-      // Create subject
-      const result = await client.query(
-        `INSERT INTO "${schema}".subjects (name, code, description, grade_level, room, equipment_fleets) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [name, code, description, grade_level, room, equipment_fleets || []]
-      );
-      
-      // Assign teacher if provided
-      if (teacher_id) {
-        await client.query(
-          `UPDATE "${schema}".users SET subject_id = $1 WHERE id = $2 AND role = $3`,
-          [result.rows[0].id, teacher_id, 'teacher']
-        );
-      }
-      
-      await client.query('COMMIT');
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    const result = await pool.query(
+      `INSERT INTO "${schema}".subjects (name, code, description, grade_level, room, equipment_fleets) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, code, description, grade_level, room, equipment_fleets || []]
+    );
+    
+    res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: 'Subject code already exists' });
@@ -129,43 +120,19 @@ router.post('/subjects', requireTeacherOrAdmin, async (req, res) => {
 router.put('/subjects/:id', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, code, description, grade_level, room, teacher_id, equipment_fleets } = req.body;
+    const { name, code, description, grade_level, room, equipment_fleets } = req.body;
     const schema = req.schoolSchema;
     
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      
-      // Update subject
-      const result = await client.query(
-        `UPDATE "${schema}".subjects SET name = $1, code = $2, description = $3, grade_level = $4, room = $5, equipment_fleets = $6 WHERE id = $7 RETURNING *`,
-        [name, code, description, grade_level, room, Array.isArray(equipment_fleets) ? equipment_fleets : [], id]
-      );
-      
-      if (result.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return res.status(404).json({ error: 'Subject not found' });
-      }
-      
-      // Clear previous teacher assignment
-      await client.query(`UPDATE "${schema}".users SET subject_id = NULL WHERE subject_id = $1`, [id]);
-      
-      // Assign new teacher if provided
-      if (teacher_id) {
-        await client.query(
-          `UPDATE "${schema}".users SET subject_id = $1 WHERE id = $2 AND role = $3`,
-          [id, teacher_id, 'teacher']
-        );
-      }
-      
-      await client.query('COMMIT');
-      res.json(result.rows[0]);
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    const result = await pool.query(
+      `UPDATE "${schema}".subjects SET name = $1, code = $2, description = $3, grade_level = $4, room = $5, equipment_fleets = $6 WHERE id = $7 RETURNING *`,
+      [name, code, description, grade_level, room, Array.isArray(equipment_fleets) ? equipment_fleets : [], id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Subject not found' });
     }
+    
+    res.json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') {
       return res.status(400).json({ error: 'Subject code already exists' });

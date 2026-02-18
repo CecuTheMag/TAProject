@@ -53,4 +53,14 @@ export const dashboard = {
   getStats: () => api.get('/system-admin/proxy/dashboard/stats')
 };
 
+// Education API for school management
+export const education = {
+  getSubjects: () => api.get('/system-admin/proxy/education/subjects'),
+  getLessonPlans: () => api.get('/system-admin/proxy/education/lesson-plans'),
+  getCurriculum: () => api.get('/system-admin/proxy/education/curriculum'),
+  getCurriculumRecommendations: (subjectCode) => api.get(`/system-admin/proxy/education/curriculum/${subjectCode}/recommendations`),
+  createLessonPlan: (data) => api.post('/system-admin/proxy/education/lesson-plans', data),
+  createSubject: (data) => api.post('/system-admin/proxy/education/subjects', data)
+};
+
 export default api;

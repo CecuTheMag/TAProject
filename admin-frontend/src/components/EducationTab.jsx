@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { education } from '../api';
+import { education, systemAdmin } from '../api';
 import { useAuth } from '../AuthContext';
 import CreateLessonPlanModal from './CreateLessonPlanModal';
 import AutoEquipmentRequestModal from './AutoEquipmentRequestModal';
@@ -17,6 +17,8 @@ const EducationTab = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
+  const [schools, setSchools] = useState([]);
+  const [selectedSchool, setSelectedSchool] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -27,11 +29,36 @@ const EducationTab = () => {
   }, []);
 
   useEffect(() => {
-    fetchEducationData();
+    fetchSchools();
   }, []);
 
-  const fetchEducationData = async () => {
+  useEffect(() => {
+    if (selectedSchool) {
+      fetchEducationData();
+    }
+  }, [selectedSchool]);
+
+  const fetchSchools = async () => {
     try {
+      const response = await systemAdmin.getSchools();
+      setSchools(response.data.schools || []);
+      // Auto-select first school if available
+      if (response.data.schools && response.data.schools.length > 0) {
+        setSelectedSchool(response.data.schools[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching schools:', error);
+    }
+  };
+
+  const fetchEducationData = async () => {
+    if (!selectedSchool) {
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      // Add school context to API calls
       const [lessonResponse, subjectsResponse, curriculumResponse] = await Promise.all([
         education.getLessonPlans().catch(() => ({ data: [] })),
         education.getSubjects().catch(() => ({ data: [] })),
@@ -633,6 +660,78 @@ const EducationTab = () => {
     );
   }
 
+  if (!selectedSchool) {
+    return (
+      <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          padding: isMobile ? '16px' : '32px',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          margin: '0',
+          borderRadius: '0',
+          textAlign: isMobile ? 'center' : 'left',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          <h1 style={{
+            fontSize: isMobile ? '24px' : '32px',
+            fontWeight: '800',
+            color: '#0f172a',
+            margin: '0 0 8px 0',
+            fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+          }}>
+            {t('educationalPlatform')}
+          </h1>
+          <p style={{
+            color: '#64748b',
+            fontSize: isMobile ? '14px' : '16px',
+            fontWeight: '500',
+            margin: 0
+          }}>
+            {t('smartCurriculumIntegration')}
+          </p>
+        </div>
+        
+        {/* No School Selected */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '400px',
+          flexDirection: 'column',
+          gap: '24px',
+          padding: '40px'
+        }}>
+          <div style={{
+            fontSize: '64px',
+            marginBottom: '16px'
+          }}>🏫</div>
+          <h3 style={{ 
+            margin: '0 0 8px 0', 
+            fontSize: isMobile ? '18px' : '20px', 
+            color: '#0f172a', 
+            fontWeight: '600',
+            textAlign: 'center'
+          }}>
+            No Schools Available
+          </h3>
+          <p style={{ 
+            margin: 0, 
+            fontSize: isMobile ? '14px' : '16px',
+            color: '#64748b',
+            textAlign: 'center',
+            maxWidth: '400px'
+          }}>
+            Create a school first to view curriculum and lesson plans.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
       {/* Header */}
@@ -648,23 +747,85 @@ const EducationTab = () => {
         width: '100%',
         boxSizing: 'border-box'
       }}>
-        <h1 style={{
-          fontSize: isMobile ? '24px' : '32px',
-          fontWeight: '800',
-          color: '#0f172a',
-          margin: '0 0 8px 0',
-          fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '16px' : '0',
+          marginBottom: '16px'
         }}>
-          {t('educationalPlatform')}
-        </h1>
-        <p style={{
-          color: '#64748b',
-          fontSize: isMobile ? '14px' : '16px',
-          fontWeight: '500',
-          margin: 0
-        }}>
-          {t('smartCurriculumIntegration')}
-        </p>
+          <div>
+            <h1 style={{
+              fontSize: isMobile ? '24px' : '32px',
+              fontWeight: '800',
+              color: '#0f172a',
+              margin: '0 0 8px 0',
+              fontFamily: '"SF Pro Display", -apple-system, sans-serif'
+            }}>
+              {t('educationalPlatform')}
+            </h1>
+            <p style={{
+              color: '#64748b',
+              fontSize: isMobile ? '14px' : '16px',
+              fontWeight: '500',
+              margin: 0
+            }}>
+              {t('smartCurriculumIntegration')}
+            </p>
+          </div>
+          
+          {/* School Selector */}
+          {schools.length > 1 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <label style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#374151'
+              }}>
+                School:
+              </label>
+              <select
+                value={selectedSchool?.id || ''}
+                onChange={(e) => {
+                  const school = schools.find(s => s.id === parseInt(e.target.value));
+                  setSelectedSchool(school);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  backgroundColor: 'white',
+                  minWidth: '200px'
+                }}
+              >
+                {schools.map(school => (
+                  <option key={school.id} value={school.id}>
+                    {school.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+        
+        {selectedSchool && (
+          <div style={{
+            padding: '12px 16px',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+              Viewing curriculum for: <strong style={{ color: '#0f172a' }}>{selectedSchool.name}</strong>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}

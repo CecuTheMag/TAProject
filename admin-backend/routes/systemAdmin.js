@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
-import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, getSystemInfo, parseAccdbFile, importAccdbData, proxyEquipmentRequest, proxyDashboardStats } from '../controllers/systemAdmin.js';
+import { createSchool, getSchools, createSchoolAdmin, getSchoolAdmins, getSystemStats, getSystemInfo, parseAccdbFile, importAccdbData, proxyEquipmentRequest, proxyDashboardStats, proxyEducationSubjects, proxyEducationLessonPlans, proxyEducationCurriculum, proxyEducationRecommendations, proxyCreateLessonPlan, proxyCreateSubject } from '../controllers/systemAdmin.js';
 import pool from '../database.js';
 import bcrypt from 'bcryptjs';
 import XLSX from 'xlsx';
@@ -141,7 +141,14 @@ router.post('/import-users', upload.single('file'), async (req, res) => {
       const phone = row[phoneCol] || '';
       const roleSubject = row[roleCol] || '';
       
-      const isTeacher = ['MATHEMATICS', 'BULGARIAN', 'ENGLISH', 'HISTORY', 'GEOGRAPHY', 'BIOLOGY', 'CHEMISTRY', 'PHYSICS', 'PHYSICAL_EDUCATION', 'ART', 'MUSIC', 'TECHNOLOGY', 'COMPUTER_SCIENCE', 'GERMAN', 'FRENCH', 'PHILOSOPHY', 'PSYCHOLOGY', 'ADMINISTRATOR'].includes(roleSubject.toUpperCase());
+      const teacherSubjects = {
+        'MATHEMATICS': true, 'BULGARIAN': true, 'ENGLISH': true, 'HISTORY': true, 
+        'GEOGRAPHY': true, 'BIOLOGY': true, 'CHEMISTRY': true, 'PHYSICS': true, 
+        'PHYSICAL_EDUCATION': true, 'ART': true, 'MUSIC': true, 'TECHNOLOGY': true, 
+        'COMPUTER_SCIENCE': true, 'GERMAN': true, 'FRENCH': true, 'PHILOSOPHY': true, 
+        'PSYCHOLOGY': true, 'ADMINISTRATOR': true
+      };
+      const isTeacher = teacherSubjects[roleSubject.toUpperCase()];
       const role = roleSubject.toUpperCase() === 'ADMINISTRATOR' ? 'admin' : (isTeacher ? 'teacher' : 'student');
       
       try {
@@ -193,5 +200,13 @@ router.post('/import-users', upload.single('file'), async (req, res) => {
 // Proxy routes for school management
 router.get('/proxy/equipment', proxyEquipmentRequest);
 router.get('/proxy/dashboard/stats', proxyDashboardStats);
+
+// Education proxy routes
+router.get('/proxy/education/subjects', proxyEducationSubjects);
+router.get('/proxy/education/lesson-plans', proxyEducationLessonPlans);
+router.get('/proxy/education/curriculum', proxyEducationCurriculum);
+router.get('/proxy/education/curriculum/:subjectCode/recommendations', proxyEducationRecommendations);
+router.post('/proxy/education/lesson-plans', proxyCreateLessonPlan);
+router.post('/proxy/education/subjects', proxyCreateSubject);
 
 export default router;

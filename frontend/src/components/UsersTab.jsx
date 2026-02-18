@@ -858,13 +858,23 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [subjects, setSubjects] = useState([]);
   
   const validation = useFormValidation(
-    { username: '', email: '', role: 'student' },
+    { 
+      username: '', 
+      email: '', 
+      role: 'student',
+      grade_level: '',
+      subject_specialization: '',
+      phone: '',
+      subject_id: ''
+    },
     {
       username: [validationRules.required, validationRules.minLength(3)],
       email: [validationRules.required, validationRules.email],
-      role: [validationRules.required]
+      role: [validationRules.required],
+      grade_level: [validationRules.required]
     }
   );
 
@@ -873,6 +883,27 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Fetch subjects for teacher assignment
+    const fetchSubjects = async () => {
+      try {
+        const response = await fetch('/api/education/subjects', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'X-School-Code': JSON.parse(localStorage.getItem('user') || '{}').schoolCode || 'TEST001'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSubjects(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch subjects:', error);
+      }
+    };
+    fetchSubjects();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -886,7 +917,11 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
     setLoading(true);
     
     try {
-      await users.create(validation.values);
+      const userData = {
+        ...validation.values,
+        subject_id: validation.values.subject_id || null
+      };
+      await users.create(userData);
       toast.success('User created successfully');
       onSuccess();
     } catch (error) {
@@ -933,8 +968,10 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
           background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
           borderRadius: '20px',
           padding: '0',
-          width: isMobile ? '100%' : '400px',
+          width: isMobile ? '100%' : '500px',
           maxWidth: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -950,81 +987,178 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
           <h2 id="modal-title" style={{ margin: 0, fontSize: isMobile ? '20px' : '24px', fontWeight: '700' }}>{t('createNewUser')}</h2>
         </div>
         
-        <form onSubmit={handleSubmit} style={{ padding: isMobile ? '0 20px 20px' : '0 32px 32px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <label htmlFor="username" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              {t('username')}
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={validation.values.username}
-              onChange={(e) => validation.handleChange('username', e.target.value)}
-              onBlur={() => validation.handleBlur('username')}
-              aria-invalid={validation.errors.username ? 'true' : 'false'}
-              aria-describedby={validation.errors.username ? 'username-error' : undefined}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: `1px solid ${validation.errors.username ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: '8px',
-                boxSizing: 'border-box'
-              }}
-            />
-            {validation.errors.username && validation.touched.username && (
-              <div id="username-error" role="alert" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
-                {validation.errors.username}
-              </div>
-            )}
+        <form onSubmit={handleSubmit} style={{ padding: isMobile ? '0 20px 20px' : '0 32px 32px', maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label htmlFor="username" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                {t('username')} *
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={validation.values.username}
+                onChange={(e) => validation.handleChange('username', e.target.value)}
+                onBlur={() => validation.handleBlur('username')}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${validation.errors.username ? '#ef4444' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {validation.errors.username && validation.touched.username && (
+                <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+                  {validation.errors.username}
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                {t('email')} *
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={validation.values.email}
+                onChange={(e) => validation.handleChange('email', e.target.value)}
+                onBlur={() => validation.handleBlur('email')}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${validation.errors.email ? '#ef4444' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {validation.errors.email && validation.touched.email && (
+                <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+                  {validation.errors.email}
+                </div>
+              )}
+            </div>
           </div>
           
-          <div style={{ marginBottom: '16px' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              {t('email')}
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={validation.values.email}
-              onChange={(e) => validation.handleChange('email', e.target.value)}
-              onBlur={() => validation.handleBlur('email')}
-              aria-invalid={validation.errors.email ? 'true' : 'false'}
-              aria-describedby={validation.errors.email ? 'email-error' : undefined}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: `1px solid ${validation.errors.email ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: '8px',
-                boxSizing: 'border-box'
-              }}
-            />
-            {validation.errors.email && validation.touched.email && (
-              <div id="email-error" role="alert" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
-                {validation.errors.email}
-              </div>
-            )}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                {t('role')} *
+              </label>
+              <select
+                value={validation.values.role}
+                onChange={(e) => validation.handleChange('role', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="student">{t('student')}</option>
+                <option value="teacher">{t('teacher')}</option>
+                <option value="manager">{t('manager')}</option>
+                <option value="admin">{t('admin')}</option>
+              </select>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                {validation.values.role === 'student' ? 'Class/Grade' : 'Full Name'} *
+              </label>
+              <input
+                type="text"
+                value={validation.values.grade_level}
+                onChange={(e) => validation.handleChange('grade_level', e.target.value)}
+                onBlur={() => validation.handleBlur('grade_level')}
+                placeholder={validation.values.role === 'student' ? 'e.g., 5A, 6B, 7C' : 'Full name'}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: `1px solid ${validation.errors.grade_level ? '#ef4444' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {validation.errors.grade_level && validation.touched.grade_level && (
+                <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>
+                  {validation.errors.grade_level}
+                </div>
+              )}
+            </div>
           </div>
           
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-              {t('role')}
-            </label>
-            <select
-              value={validation.values.role}
-              onChange={(e) => validation.handleChange('role', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                boxSizing: 'border-box'
-              }}
-            >
-              <option value="student">{t('student')}</option>
-              <option value="teacher">{t('teacher')}</option>
-              <option value="manager">{t('manager')}</option>
-              <option value="admin">{t('admin')}</option>
-            </select>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                Subject Specialization
+              </label>
+              <input
+                type="text"
+                value={validation.values.subject_specialization}
+                onChange={(e) => validation.handleChange('subject_specialization', e.target.value)}
+                placeholder={validation.values.role === 'teacher' ? 'e.g., MATHEMATICS, ENGLISH' : 'Optional'}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={validation.values.phone}
+                onChange={(e) => validation.handleChange('phone', e.target.value)}
+                placeholder="Optional"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+          
+          {validation.values.role === 'teacher' && subjects.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                Assign Subject
+              </label>
+              <select
+                value={validation.values.subject_id}
+                onChange={(e) => validation.handleChange('subject_id', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="">Select a subject (optional)</option>
+                {subjects.map(subject => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name} ({subject.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          <div style={{ padding: '16px', backgroundColor: '#f0f9ff', borderRadius: '8px', marginBottom: '24px' }}>
+            <p style={{ margin: 0, fontSize: '14px', color: '#0369a1' }}>
+              💡 The user will receive verification codes to set up their password on first login.
+            </p>
           </div>
           
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>

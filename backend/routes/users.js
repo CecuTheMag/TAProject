@@ -7,7 +7,17 @@ router.use(setSchoolContext);
 
 router.get('/', async (req, res) => {
   try {
-    const result = await queryInSchema(req.schoolSchema, 'SELECT * FROM users ORDER BY created_at DESC');
+    const result = await queryInSchema(req.schoolSchema, `
+      SELECT u.*, s.name as subject_name, s.code as subject_code,
+             COUNT(r.id) as total_requests,
+             COUNT(CASE WHEN r.status = 'pending' THEN 1 END) as pending_requests,
+             COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_requests
+      FROM users u
+      LEFT JOIN subjects s ON u.subject_id = s.id
+      LEFT JOIN requests r ON u.id = r.user_id
+      GROUP BY u.id, s.name, s.code
+      ORDER BY u.created_at DESC
+    `);
     res.json(result.rows);
   } catch (error) {
     console.error('Get users error:', error);
@@ -17,17 +27,27 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { username, email, password, role, grade_level, subject_specialization } = req.body;
+    const { username, email, role, grade_level, subject_specialization, phone, subject_id } = req.body;
+    
+    // Generate temporary password
+    const bcrypt = await import('bcryptjs');
+    const tempPassword = 'temp123';
+    const hashedPassword = await bcrypt.default.hash(tempPassword, 12);
+    
     const result = await queryInSchema(req.schoolSchema, `
-      INSERT INTO users (username, email, password, role, grade_level, subject_specialization)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO users (username, email, password, role, grade_level, subject_specialization, phone, subject_id, password_set)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
-    `, [username, email, password, role, grade_level, subject_specialization]);
+    `, [username, email, hashedPassword, role, grade_level, subject_specialization, phone, subject_id || null, false]);
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Create user error:', error);
-    res.status(500).json({ error: 'Failed to create user' });
+    if (error.code === '23505') {
+      res.status(400).json({ error: 'Username or email already exists' });
+    } else {
+      res.status(500).json({ error: 'Failed to create user' });
+    }
   }
 });
 

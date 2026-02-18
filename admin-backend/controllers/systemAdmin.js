@@ -688,13 +688,19 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
     for (let i = 1; i < lines.length; i++) {
       const row = lines[i].split(',').map(cell => cell.replace(/"/g, '').trim());
       
+      // Skip empty rows
+      if (row.length < Math.max(nameIndex, emailIndex) + 1) {
+        console.log(`Skipping row ${i}: insufficient columns`);
+        continue;
+      }
+      
       const rawName = row[nameIndex];
       const email = row[emailIndex];
-      const phone = phoneIndex >= 0 ? row[phoneIndex] : null;
-      const role = roleIndex >= 0 ? row[roleIndex] : '';
+      const phone = phoneIndex >= 0 && phoneIndex < row.length ? row[phoneIndex] : null;
+      const role = roleIndex >= 0 && roleIndex < row.length ? row[roleIndex] : '';
 
       if (!rawName || !email) {
-        console.log(`Skipping row ${i}: missing name or email`);
+        console.log(`Skipping row ${i}: missing name (${rawName}) or email (${email})`);
         continue;
       }
 
@@ -713,39 +719,62 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         const roleUpper = role.toUpperCase();
         
         const teacherSubjects = {
-          'MATHEMATICS': 'MATH',
-          'BULGARIAN': 'ENG', // Map to English for international schools
-          'ENGLISH': 'ENG',
-          'HISTORY': 'HIST',
-          'GEOGRAPHY': 'HIST', // Map to History
-          'BIOLOGY': 'SCI',
-          'CHEMISTRY': 'SCI',
-          'PHYSICS': 'SCI',
-          'PHYSICAL_EDUCATION': 'PE',
-          'ART': 'ART',
-          'MUSIC': 'MUS',
-          'TECHNOLOGY': 'CS',
-          'COMPUTER_SCIENCE': 'CS'
+          'MATHEMATICS': { code: 'MATH', name: 'Mathematics' },
+          'BULGARIAN': { code: 'BUL', name: 'Bulgarian Language' },
+          'ENGLISH': { code: 'ENG', name: 'English Language' },
+          'HISTORY': { code: 'HIST', name: 'History' },
+          'GEOGRAPHY': { code: 'GEO', name: 'Geography' },
+          'BIOLOGY': { code: 'BIO', name: 'Biology' },
+          'CHEMISTRY': { code: 'CHEM', name: 'Chemistry' },
+          'PHYSICS': { code: 'PHYS', name: 'Physics' },
+          'PHYSICAL_EDUCATION': { code: 'PE', name: 'Physical Education' },
+          'ART': { code: 'ART', name: 'Art' },
+          'MUSIC': { code: 'MUS', name: 'Music' },
+          'TECHNOLOGY': { code: 'TECH', name: 'Technology' },
+          'COMPUTER_SCIENCE': { code: 'CS', name: 'Computer Science' },
+          'GERMAN': { code: 'GER', name: 'German Language' },
+          'FRENCH': { code: 'FR', name: 'French Language' },
+          'PHILOSOPHY': { code: 'PHIL', name: 'Philosophy' },
+          'PSYCHOLOGY': { code: 'PSY', name: 'Psychology' },
+          'ADMINISTRATOR': { code: 'ADMIN', name: 'Administration' }
         };
         
-        if (Object.keys(teacherSubjects).some(subject => roleUpper.includes(subject))) {
+        // Check if role is exactly a teacher subject (not a class code like "5A", "6B")
+        if (teacherSubjects[roleUpper]) {
           userRole = 'teacher';
-          // Find matching subject code
-          for (const [subjectName, subjectCode] of Object.entries(teacherSubjects)) {
-            if (roleUpper.includes(subjectName)) {
-              // Get subject ID from school schema
-              const subjectResult = await getMainDBData(
-                `SELECT id FROM "${schoolSchema}".subjects WHERE code = $1`,
-                [subjectCode]
-              );
-              if (subjectResult.rows && subjectResult.rows.length > 0) {
-                subjectId = subjectResult.rows[0].id;
-              }
-              break;
-            }
+          const subjectInfo = teacherSubjects[roleUpper];
+          
+          // Check if subject exists, create if not
+          let subjectResult = await getMainDBData(
+            `SELECT id FROM "${schoolSchema}".subjects WHERE code = $1`,
+            [subjectInfo.code]
+          );
+          
+          if (!subjectResult.rows || subjectResult.rows.length === 0) {
+            // Create the subject
+            console.log(`Creating subject ${subjectInfo.name} (${subjectInfo.code}) for school ${schoolCode}`);
+            subjectResult = await getMainDBData(
+              `INSERT INTO "${schoolSchema}".subjects (name, code, description, grade_level, room) 
+               VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+              [
+                subjectInfo.name,
+                subjectInfo.code,
+                `${subjectInfo.name} curriculum and instruction`,
+                '5-12',
+                `${subjectInfo.name} Room`
+              ]
+            );
           }
-        } else if (role && role.toLowerCase().includes('admin')) {
+          
+          if (subjectResult.rows && subjectResult.rows.length > 0) {
+            subjectId = subjectResult.rows[0].id;
+            console.log(`Assigned subject ${subjectInfo.name} (ID: ${subjectId}) to teacher ${formattedName}`);
+          }
+        } else if (roleUpper === 'ADMINISTRATOR') {
           userRole = 'admin';
+        } else {
+          // If role is a class code (like "5A", "6B", etc.), it's a student
+          userRole = 'student';
         }
 
         // Generate clean username from name, not email
@@ -799,9 +828,9 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         
         if (result.rows && result.rows.length > 0) {
           imported++;
-          console.log(`Successfully imported user: ${formattedName}`);
+          console.log(`Successfully imported user: ${formattedName} as ${userRole}`);
         } else {
-          console.log(`User already exists (updated): ${formattedName}`);
+          console.log(`User already exists (updated): ${formattedName} as ${userRole}`);
         }
       } catch (error) {
         console.error(`Error importing row ${i}:`, error.message);
@@ -1031,5 +1060,157 @@ export const proxyDashboardStats = async (req, res) => {
   } catch (error) {
     console.error('Proxy dashboard stats error:', error);
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+};
+
+// Education proxy endpoints
+export const proxyEducationSubjects = async (req, res) => {
+  try {
+    const jwt = await import('jsonwebtoken');
+    
+    // Get first available school for context
+    const schoolsResult = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
+    if (schoolsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No schools available' });
+    }
+    
+    const schoolCode = schoolsResult.rows[0].code;
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: schoolCode }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/education/subjects', null, 15000, 'GET', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy education subjects error:', error);
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
+};
+
+export const proxyEducationLessonPlans = async (req, res) => {
+  try {
+    const jwt = await import('jsonwebtoken');
+    
+    // Get first available school for context
+    const schoolsResult = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
+    if (schoolsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No schools available' });
+    }
+    
+    const schoolCode = schoolsResult.rows[0].code;
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: schoolCode }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/education/lesson-plans', null, 15000, 'GET', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy education lesson plans error:', error);
+    res.status(500).json({ error: 'Failed to fetch lesson plans' });
+  }
+};
+
+export const proxyEducationCurriculum = async (req, res) => {
+  try {
+    const jwt = await import('jsonwebtoken');
+    
+    // Get first available school for context
+    const schoolsResult = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
+    if (schoolsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No schools available' });
+    }
+    
+    const schoolCode = schoolsResult.rows[0].code;
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: schoolCode }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/education/curriculum', null, 15000, 'GET', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy education curriculum error:', error);
+    res.status(500).json({ error: 'Failed to fetch curriculum' });
+  }
+};
+
+export const proxyEducationRecommendations = async (req, res) => {
+  try {
+    const { subjectCode } = req.params;
+    const jwt = await import('jsonwebtoken');
+    
+    // Get first available school for context
+    const schoolsResult = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
+    if (schoolsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No schools available' });
+    }
+    
+    const schoolCode = schoolsResult.rows[0].code;
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: schoolCode }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest(`/api/education/curriculum/${subjectCode}/recommendations`, null, 15000, 'GET', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy education recommendations error:', error);
+    res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+};
+
+export const proxyCreateLessonPlan = async (req, res) => {
+  try {
+    const jwt = await import('jsonwebtoken');
+    
+    // Get first available school for context
+    const schoolsResult = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
+    if (schoolsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No schools available' });
+    }
+    
+    const schoolCode = schoolsResult.rows[0].code;
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: schoolCode }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/education/lesson-plans', req.body, 15000, 'POST', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy create lesson plan error:', error);
+    res.status(500).json({ error: 'Failed to create lesson plan' });
+  }
+};
+
+export const proxyCreateSubject = async (req, res) => {
+  try {
+    const jwt = await import('jsonwebtoken');
+    
+    // Get first available school for context
+    const schoolsResult = await pool.query('SELECT code FROM schools ORDER BY created_at ASC LIMIT 1');
+    if (schoolsResult.rows.length === 0) {
+      return res.status(400).json({ error: 'No schools available' });
+    }
+    
+    const schoolCode = schoolsResult.rows[0].code;
+    const token = jwt.default.sign(
+      { userId: 1, schoolCode: schoolCode }, 
+      process.env.JWT_SECRET || 'LQv3c1yqBwEHXw47HvzOWOehHdBNppveYuwz4JSHGoP8CoJxlrn3',
+      { expiresIn: '1h' }
+    );
+    
+    const response = await mainApiRequest('/api/education/subjects', req.body, 15000, 'POST', token);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Proxy create subject error:', error);
+    res.status(500).json({ error: 'Failed to create subject' });
   }
 };
