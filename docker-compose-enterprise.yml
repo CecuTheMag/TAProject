@@ -198,6 +198,7 @@ services:
     networks:
       - user_network
       - admin_network
+      - internal_api
     restart: unless-stopped
 
   # Monitoring Stack
