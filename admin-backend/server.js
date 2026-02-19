@@ -14,21 +14,26 @@ const PORT = process.env.ADMIN_PORT;
 // Enhanced CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
+    // Always allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+    // Allow all 192.168.88.* IPs
+    if (origin.match(/^https?:\/\/192\.168\.88\./)) {
+      return callback(null, true);
+    }
     
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
-        return allowed === origin;
-      }
-      return allowed.test(origin);
-    });
+    // Allow localhost and school-sync.org
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3002', 
+      'https://school-sync.org',
+      'http://school-sync.org'
+    ];
     
-    if (isAllowed) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
+      console.log('CORS allowed origin:', origin);
       callback(null, true); // Allow anyway for development
     }
   },
@@ -41,7 +46,15 @@ app.use(cors({
 
 // Additional CORS headers for preflight requests
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  
+  // Allow 192.168.88.* IPs
+  if (origin && origin.match(/^https?:\/\/192\.168\.88\./)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, X-Admin-Panel');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

@@ -57,22 +57,17 @@ app.use(compression());
 // Manual CORS headers middleware - MUST come before cors() to ensure headers are set
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
   
-  // Check if origin is allowed
-  const isAllowed = !origin || allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.some(allowed => {
-    if (typeof allowed === 'string') {
-      return allowed === origin;
-    }
-    return allowed.test(origin);
-  });
-  
-  if (isAllowed) {
+  // Allow 192.168.88.* IPs
+  if (origin && origin.match(/^https?:\/\/192\.168\.88\./)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
     res.header('Access-Control-Allow-Origin', origin || process.env.FRONTEND_URL);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   }
+  
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -86,30 +81,24 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
-    
-    // If wildcard is set, allow all origins
-    if (allowedOrigins.includes('*')) {
+    // Allow all 192.168.88.* IPs
+    if (origin.match(/^https?:\/\/192\.168\.88\./)) {
       return callback(null, true);
     }
     
-    // If no allowed origins configured, allow all (for development)
-    if (allowedOrigins.length === 0) {
-      return callback(null, true);
-    }
+    // Allow localhost and school-sync.org
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3002', 
+      'https://school-sync.org',
+      'http://school-sync.org'
+    ];
     
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
-        return allowed === origin;
-      }
-      return allowed.test(origin);
-    });
-    
-    if (isAllowed) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      console.log('CORS allowed origin:', origin);
+      callback(null, true); // Allow anyway for development
     }
   },
   credentials: true,
