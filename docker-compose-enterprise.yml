@@ -1,50 +1,53 @@
 services:
-  # Admin Database - Separate from main system
+  # Main user-facing database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - user_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ISOLATED ADMIN DATABASE
   postgres_admin:
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: ${ADMIN_DB_NAME}
       POSTGRES_USER: ${ADMIN_DB_USER}
       POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_admin_data:/var/lib/postgresql/data
     ports:
-      - "0.0.0.0:5434:5432"
+      - "5433:5432"
+    networks:
+      - admin_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin_user -d SIMS_ADMIN"]
+      test: ["CMD-SHELL", "pg_isready -U ${ADMIN_DB_USER} -d ${ADMIN_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
-  # Database Cluster
-  postgres-primary:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
-    volumes:
-      - postgres_primary_data:/var/lib/postgresql/data
-    ports:
-      - "0.0.0.0:5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d SIMS"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # Redis for Caching & Sessions
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
     ports:
-      - "0.0.0.0:6379:6379"
+      - "6379:6379"
+    networks:
+      - user_network
+      - admin_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -52,25 +55,87 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Admin Backend Service
-  admin-backend:
-    build: ./admin-backend
+  # Main user-facing backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
     environment:
       - NODE_ENV=${NODE_ENV}
-      - PORT=${ADMIN_PORT}
-      - DB_HOST=${ADMIN_DB_HOST}
-      - DB_PORT=${ADMIN_DB_PORT}
-      - DB_USER=${ADMIN_DB_USER}
-      - DB_PASSWORD=${ADMIN_DB_PASSWORD}
-      - DB_NAME=${ADMIN_DB_NAME}
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - REDIS_URL=${REDIS_URL}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - SYSTEM_ADMIN_ID=${SYSTEM_ADMIN_ID}
+      - SYSTEM_ADMIN_USERNAME=${SYSTEM_ADMIN_USERNAME}
+      - SYSTEM_ADMIN_EMAIL=${SYSTEM_ADMIN_EMAIL}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - user_network
+      - internal_api
+      - admin_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  # ISOLATED ADMIN BACKEND (Private Network Only)
+  admin_backend:
+    build:
+      context: ./admin-backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - ADMIN_PORT=${ADMIN_PORT}
+      - ADMIN_DB_HOST=${ADMIN_DB_HOST}
+      - ADMIN_DB_PORT=${ADMIN_DB_PORT}
+      - ADMIN_DB_NAME=${ADMIN_DB_NAME}
+      - ADMIN_DB_USER=${ADMIN_DB_USER}
+      - ADMIN_DB_PASSWORD=${ADMIN_DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
       - MAIN_API_URL=${MAIN_API_URL}
       - MAIN_API_KEY=${MAIN_API_KEY}
+      - ALLOWED_IPS=${ALLOWED_IPS}
+      - DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME}
+      - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD}
+    volumes:
+      - ./admin-backend:/app
+      - /app/node_modules
+    ports:
+      - "5005:5005"
     depends_on:
       postgres_admin:
         condition: service_healthy
-      backend-1:
+      redis:
         condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - admin_network
+      - internal_api
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5005/health || exit 1"]
       interval: 10s
@@ -79,116 +144,41 @@ services:
       start_period: 60s
     restart: unless-stopped
 
-  # Admin Frontend Service
-  admin-frontend:
-    build: ./admin-frontend
+  # User-facing frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - user_network
+    restart: unless-stopped
+
+  # ISOLATED ADMIN FRONTEND (Private Network Only)
+  admin_frontend:
+    build:
+      context: ./admin-frontend
+      dockerfile: Dockerfile
     environment:
       - NODE_ENV=${NODE_ENV}
       - VITE_API_URL=${ADMIN_API_URL}
+    volumes:
+      - ./admin-frontend:/app
+      - /app/node_modules
+    ports:
+      - "3002:3000"
     depends_on:
-      - admin-backend
-    restart: unless-stopped
-
-  # Backend Cluster (3 instances)
-  backend-1:
-    build: ./backend
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - PORT=${PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-      - REDIS_URL=${REDIS_URL}
-      - INSTANCE_ID=backend-1
-    depends_on:
-      postgres-primary:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    restart: unless-stopped
-
-  backend-2:
-    build: ./backend
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - PORT=${PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-      - REDIS_URL=${REDIS_URL}
-      - INSTANCE_ID=backend-2
-    depends_on:
-      postgres-primary:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    restart: unless-stopped
-
-  backend-3:
-    build: ./backend
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - PORT=${PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-      - REDIS_URL=${REDIS_URL}
-      - INSTANCE_ID=backend-3
-    depends_on:
-      postgres-primary:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    restart: unless-stopped
-
-  # Frontend with Production Build
-  frontend:
-    build: ./frontend
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - VITE_API_URL=${FRONTEND_URL}
+      - admin_backend
+    networks:
+      - admin_network
     restart: unless-stopped
 
   # Main Load Balancer with HTTPS on port 443
@@ -202,24 +192,10 @@ services:
       - caddy_main_data:/data
       - caddy_main_config:/config
     depends_on:
-      - backend-1
-      - backend-2
-      - backend-3
+      - backend
       - frontend
-    restart: unless-stopped
-
-  # Admin Load Balancer with HTTPS on port 445
-  caddy-admin:
-    image: caddy:alpine
-    ports:
-      - "0.0.0.0:445:443"
-    volumes:
-      - ./Caddyfile.enterprise-admin:/etc/caddy/Caddyfile
-      - caddy_admin_data:/data
-      - caddy_admin_config:/config
-    depends_on:
-      - admin-backend
-      - admin-frontend
+    networks:
+      - user_network
     restart: unless-stopped
 
   # Monitoring Stack
@@ -237,6 +213,9 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
+    networks:
+      - user_network
+      - admin_network
     restart: unless-stopped
 
   grafana:
@@ -249,15 +228,24 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
+    networks:
+      - user_network
+      - admin_network
     restart: unless-stopped
 
 volumes:
+  postgres_data:
   postgres_admin_data:
-  postgres_primary_data:
   redis_data:
   grafana_data:
   prometheus_data:
   caddy_main_data:
   caddy_main_config:
-  caddy_admin_data:
-  caddy_admin_config:
+
+networks:
+  user_network:
+    driver: bridge
+  admin_network:
+    driver: bridge
+  internal_api:
+    driver: bridge
