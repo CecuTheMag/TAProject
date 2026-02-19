@@ -13,7 +13,9 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? `${window.location.origin}/api`
-  : `http://${window.location.hostname}:5000`;
+  : window.location.protocol === 'https:' 
+    ? `https://${window.location.hostname}/api`
+    : `http://${window.location.hostname}:5000`;
 
 /**
  * AdminViewRoute Component
@@ -39,7 +41,7 @@ const AdminViewRoute = () => {
 
       hasRequested.current = true;
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/auth/school-admin/${schoolId}`);
+        const response = await axios.get(`${API_BASE_URL}/auth/school-admin/${schoolId}`);
         login(response.data.user, response.data.token);
         // Force a small delay to ensure state is updated
         setTimeout(() => setLoading(false), 100);
