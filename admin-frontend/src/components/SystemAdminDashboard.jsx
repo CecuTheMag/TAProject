@@ -190,7 +190,7 @@ const SystemAdminDashboard = () => {
             {selectedSchool ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <button onClick={() => setSelectedSchool(null)} style={{ padding: '12px 20px', background: '#64748b', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', marginBottom: '20px', minHeight: '44px' }}>Back to Schools</button>
-                <iframe src={`http://localhost:3000/admin-view?school_id=${selectedSchool.id}`} style={{ width: '100%', height: 'calc(100vh - 200px)', border: '1px solid #e2e8f0', borderRadius: '12px', background: 'white' }} title={`${selectedSchool.name} Admin Dashboard`} />
+                <iframe src={`https://school-sync.org/admin-view?school_id=${selectedSchool.id}`} style={{ width: '100%', height: 'calc(100vh - 200px)', border: '1px solid #e2e8f0', borderRadius: '12px', background: 'white' }} title={`${selectedSchool.name} Admin Dashboard`} />
               </motion.div>
             ) : (
               <>
