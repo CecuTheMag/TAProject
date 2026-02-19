@@ -43,9 +43,19 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/system-admin', systemAdminRoutes);
+app.use('/admin-api/auth', authRoutes);
+app.use('/admin-api/system-admin', systemAdminRoutes);
 
+app.get('/admin-api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    service: 'admin-backend',
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
+});
+
+// Keep original /health for Docker health checks
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 

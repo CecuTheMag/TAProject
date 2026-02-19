@@ -3,15 +3,20 @@ school-sync.org, www.school-sync.org {
     tls kironotificatora@gmail.com
     
     handle_path /admin-api/* {
-        uri strip_prefix /admin-api
         reverse_proxy admin_backend:5005 {
-            health_uri /health
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
         }
     }
     
     handle_path /api/* {
         reverse_proxy backend:5000 {
-            health_uri /health
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
         }
     }
     
