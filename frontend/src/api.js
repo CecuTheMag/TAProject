@@ -11,7 +11,9 @@ import axios from 'axios';
  */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? `${window.location.origin}/api`        // Production: nginx proxy routing
-  : `http://${window.location.hostname}:5000/api`; // Development: direct backend connection with /api prefix
+  : window.location.protocol === 'https:' 
+    ? `https://${window.location.hostname}/api`  // HTTPS: use proxy
+    : `http://${window.location.hostname}:5000/api`; // HTTP dev: direct backend
 
 /**
  * Create axios instance with centralized configuration

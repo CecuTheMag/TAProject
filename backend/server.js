@@ -56,15 +56,7 @@ app.use(compression());
 
 // Manual CORS headers middleware - MUST come before cors() to ensure headers are set
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Allow 192.168.88.* IPs
-  if (origin && origin.match(/^https?:\/\/192\.168\.88\./)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    res.header('Access-Control-Allow-Origin', origin || process.env.FRONTEND_URL);
-  }
-  
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -77,30 +69,7 @@ app.use((req, res, next) => {
 
 // CORS middleware - enables cross-origin requests from frontend
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Allow all 192.168.88.* IPs
-    if (origin.match(/^https?:\/\/192\.168\.88\./)) {
-      return callback(null, true);
-    }
-    
-    // Allow localhost and school-sync.org
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3002', 
-      'https://school-sync.org',
-      'http://school-sync.org'
-    ];
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('CORS allowed origin:', origin);
-      callback(null, true); // Allow anyway for development
-    }
-  },
+  origin: true, // Allow all origins
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-School-Code', 'X-Admin-Panel'],
   exposedHeaders: ['Content-Type', 'Authorization'],
