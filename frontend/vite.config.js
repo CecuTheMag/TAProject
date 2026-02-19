@@ -8,20 +8,10 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     allowedHosts: ['school-sync.org', 'www.school-sync.org', 'localhost'],
-    hmr: {
-      port: 3000,
-      host: 'localhost'
-    },
+    hmr: false, // Disable HMR to prevent WebSocket errors
     watch: {
       usePolling: true,
       interval: 1000
-    }
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
-      }
     }
   }
 })
