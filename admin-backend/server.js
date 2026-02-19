@@ -43,10 +43,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/admin-api/auth', authRoutes);
-app.use('/admin-api/system-admin', systemAdminRoutes);
+app.use('/auth', authRoutes);
+app.use('/system-admin', systemAdminRoutes);
 
-app.get('/admin-api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     service: 'admin-backend',
