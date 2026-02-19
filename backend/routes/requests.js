@@ -19,9 +19,9 @@ router.use(setSchoolContext);
 
 router.post('/', createRequest);
 router.get('/', getUserRequests);
-router.get('/manager', getAllRequests);
-router.put('/:id/approve', approveRequest);
-router.put('/:id/reject', rejectRequest);
+router.get('/manager', requireManagerOrAdmin, getAllRequests);
+router.put('/:id/approve', requireTeacherOrAdmin, approveRequest);
+router.put('/:id/reject', requireTeacherOrAdmin, rejectRequest);
 router.put('/:id/return', returnEquipment);
 router.put('/:id/early-return', earlyReturnEquipment);
 

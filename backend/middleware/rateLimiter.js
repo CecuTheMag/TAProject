@@ -57,5 +57,6 @@ const rateLimiter = new RateLimiter();
 export const apiLimiter = rateLimiter.limit(1000, 60000);
 export const authLimiter = rateLimiter.limit(100, 60000);
 export const reportLimiter = rateLimiter.limit(500, 60000);
+export const userLimiter = rateLimiter.limit(50, 60000); // Stricter limit for user management
 
 export default rateLimiter;

@@ -49,12 +49,10 @@ api.interceptors.request.use((config) => {
     }
   }
   
-  // Only use fallback if no user is logged in (for login endpoint)
-  if (!schoolCode && !userData) {
-    schoolCode = 'TEST001'; // Use TEST001 as fallback
+  // Only add school code if user is authenticated
+  if (schoolCode) {
+    config.headers['X-School-Code'] = schoolCode;
   }
-  
-  config.headers['X-School-Code'] = schoolCode;
 
 
   

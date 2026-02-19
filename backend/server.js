@@ -9,10 +9,12 @@ import helmet from 'helmet';          // Security headers
 import dotenv from 'dotenv';          // Environment variable management
 
 // Custom middleware imports
-import { apiLimiter, authLimiter, reportLimiter } from './middleware/rateLimiter.js';
+import { apiLimiter, authLimiter, reportLimiter, userLimiter } from './middleware/rateLimiter.js';
 import { metricsMiddleware, metricsHandler } from './middleware/metrics.js';
 import { setSchoolContext } from './middleware/schoolContext.js';
 import { authenticateToken } from './middleware/auth.js';
+import { securityMiddleware } from './middleware/security.js';
+import { auditLogger } from './middleware/audit.js';
 
 // Database and caching services
 import { initDB } from './database.js';
@@ -47,16 +49,34 @@ const PORT = process.env.PORT;
 // ===== MIDDLEWARE CONFIGURATION =====
 
 // Security middleware - adds security headers to prevent common attacks
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' } // Allow cross-origin requests
-}));
+app.use(securityMiddleware.headers);
+
+// Audit logging for security monitoring
+app.use(auditLogger.middleware);
+
+// CSRF protection with IP whitelist
+app.use(securityMiddleware.csrf);
+
+// Input sanitization
+app.use(securityMiddleware.sanitize);
 
 // Performance middleware - compresses responses to reduce bandwidth
 app.use(compression());
 
 // Manual CORS headers middleware - MUST come before cors() to ensure headers are set
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const allowedOrigins = [
+    'https://school-sync.org',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  // Allow 192.168.88.* IP range
+  const origin = req.get('Origin');
+  if (origin && (allowedOrigins.includes(origin) || /^https?:\/\/192\.168\.88\..+/.test(origin))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-School-Code, X-Admin-Panel');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -67,9 +87,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS middleware - enables cross-origin requests from frontend
+// CORS middleware - enables cross-origin requests from specific origins
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://school-sync.org',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow specific origins and 192.168.88.* IP range
+    if (allowedOrigins.includes(origin) || /^https?:\/\/192\.168\.88\..+/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-School-Code', 'X-Admin-Panel'],
   exposedHeaders: ['Content-Type', 'Authorization'],
@@ -93,8 +129,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiting middleware - prevents API abuse (10 requests per second)
-app.use(apiLimiter);
+// Enhanced rate limiting middleware - prevents API abuse
+app.use('/auth', securityMiddleware.rateLimit(60000, 10, 'Too many authentication attempts'));
+app.use('/api', securityMiddleware.rateLimit(60000, 100, 'Too many API requests'));
 
 // Initialize database and Redis
 initDB();
@@ -140,7 +177,7 @@ app.use('/reports', reportLimiter, reportRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/alerts', alertRoutes);
 app.use('/documents', documentRoutes);
-app.use('/users', userRoutes);
+app.use('/users', userLimiter, userRoutes);
 app.use('/education', educationRoutes);
 app.use('/internal', internalRoutes);
 

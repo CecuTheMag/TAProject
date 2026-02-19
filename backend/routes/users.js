@@ -1,8 +1,13 @@
 import express from 'express';
 import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireAdmin, requireTeacherOrAdmin } from '../middleware/roleAuth.js';
+import crypto from 'crypto';
 
 const router = express.Router();
 
+// All routes require authentication
+router.use(authenticateToken);
 router.use(setSchoolContext);
 
 router.get('/', async (req, res) => {
@@ -25,13 +30,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { username, email, role, grade_level, subject_specialization, phone, subject_id } = req.body;
     
-    // Generate temporary password
+    // Generate cryptographically secure random password
     const bcrypt = await import('bcryptjs');
-    const tempPassword = 'temp123';
+    const tempPassword = crypto.randomBytes(12).toString('base64').slice(0, 16);
     const hashedPassword = await bcrypt.default.hash(tempPassword, 12);
     
     const result = await queryInSchema(req.schoolSchema, `
@@ -51,7 +56,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id/role', async (req, res) => {
+router.put('/:id/role', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -71,7 +76,7 @@ router.put('/:id/role', async (req, res) => {
   }
 });
 
-router.put('/:id/subject', async (req, res) => {
+router.put('/:id/subject', requireTeacherOrAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { subject_id } = req.body;
@@ -109,7 +114,7 @@ router.get('/:id/activity', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await queryInSchema(req.schoolSchema, 'DELETE FROM users WHERE id = $1 RETURNING *', [id]);

@@ -5,11 +5,19 @@ import bcrypt from 'bcryptjs';
 import pool from './database.js';
 import authRoutes from './routes/auth.js';
 import systemAdminRoutes from './routes/systemAdmin.js';
+import { securityMiddleware } from './middleware/security.js';
+import { auditLogger } from './middleware/audit.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.ADMIN_PORT;
+
+// Security middleware
+app.use(securityMiddleware.headers);
+app.use(auditLogger.middleware);
+app.use(securityMiddleware.csrf);
+app.use(securityMiddleware.sanitize);
 
 // Enhanced CORS configuration
 app.use(cors({
@@ -36,6 +44,10 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Enhanced rate limiting for admin endpoints
+app.use('/auth', securityMiddleware.rateLimit(60000, 5, 'Too many admin authentication attempts'));
+app.use('/', securityMiddleware.rateLimit(60000, 50, 'Too many admin requests'));
 
 // Request logging middleware
 app.use((req, res, next) => {
