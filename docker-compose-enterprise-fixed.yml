@@ -81,13 +81,18 @@ services:
       - SYSTEM_ADMIN_USERNAME=${SYSTEM_ADMIN_USERNAME}
       - SYSTEM_ADMIN_EMAIL=${SYSTEM_ADMIN_EMAIL}
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - type: bind
+        source: ./backend
+        target: /app
+      - type: volume
+        target: /app/node_modules
     ports:
       - "5000:5000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - user_network
       - internal_api
@@ -122,8 +127,11 @@ services:
       - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL}
       - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD}
     volumes:
-      - ./admin-backend:/app
-      - /app/node_modules
+      - type: bind
+        source: ./admin-backend
+        target: /app
+      - type: volume
+        target: /app/node_modules
     ports:
       - "5005:5005"
     depends_on:
@@ -152,8 +160,11 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - type: bind
+        source: ./frontend
+        target: /app
+      - type: volume
+        target: /app/node_modules
     ports:
       - "3000:3000"
     depends_on:
@@ -169,10 +180,13 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=${NODE_ENV}
-      - VITE_API_URL=http://admin_backend:5005/api
+      - VITE_API_URL=${ADMIN_API_URL}
     volumes:
-      - ./admin-frontend:/app
-      - /app/node_modules
+      - type: bind
+        source: ./admin-frontend
+        target: /app
+      - type: volume
+        target: /app/node_modules
     ports:
       - "3002:3000"
     depends_on:

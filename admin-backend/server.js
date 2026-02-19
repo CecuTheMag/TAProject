@@ -122,6 +122,8 @@ const initDB = async () => {
         [process.env.DEFAULT_ADMIN_USERNAME, process.env.DEFAULT_ADMIN_EMAIL, hashedPassword, true]
       );
       console.log(`✅ System admin created: ${process.env.DEFAULT_ADMIN_EMAIL}`);
+    } else {
+      console.log(`ℹ️ System admin already exists: ${process.env.DEFAULT_ADMIN_EMAIL}`);
     }
 
     console.log('✅ Admin database initialized');
