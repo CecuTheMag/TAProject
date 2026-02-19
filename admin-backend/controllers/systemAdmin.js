@@ -105,7 +105,7 @@ const getMainDBData = async (query, params = []) => {
   }
   
   try {
-    const response = await mainApiRequest('/api/internal/query', { query, params }, 10000);
+    const response = await mainApiRequest('/internal/query', { query, params }, 10000);
     const data = response.data;
     
     queryCache.set(cacheKey, { data, timestamp: Date.now() });
@@ -168,7 +168,7 @@ export const createSchool = async (req, res) => {
       // Create dedicated schema for the new school
       console.log('Creating school schema...');
       const schemaResponse = await mainApiRequest(
-        '/api/internal/create-school-schema',
+        '/internal/create-school-schema',
         { schoolCode: code },
         30000
       );
@@ -301,7 +301,7 @@ export const createSchoolAdmin = async (req, res) => {
       
       console.log('Creating school schema...');
       const schemaResponse = await mainApiRequest(
-        '/api/internal/create-school-schema',
+        '/internal/create-school-schema',
         { schoolCode: school.code },
         30000
       );
@@ -1037,7 +1037,7 @@ export const proxyEquipmentRequest = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/equipment', null, 15000, 'GET', token);
+    const response = await mainApiRequest('/equipment', null, 15000, 'GET', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy equipment request error:', error);
@@ -1055,7 +1055,7 @@ export const proxyDashboardStats = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/dashboard/stats', null, 15000, 'GET', token);
+    const response = await mainApiRequest('/dashboard/stats', null, 15000, 'GET', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy dashboard stats error:', error);
@@ -1081,7 +1081,7 @@ export const proxyEducationSubjects = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/education/subjects', null, 15000, 'GET', token);
+    const response = await mainApiRequest('/education/subjects', null, 15000, 'GET', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy education subjects error:', error);
@@ -1106,7 +1106,7 @@ export const proxyEducationLessonPlans = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/education/lesson-plans', null, 15000, 'GET', token);
+    const response = await mainApiRequest('/education/lesson-plans', null, 15000, 'GET', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy education lesson plans error:', error);
@@ -1131,7 +1131,7 @@ export const proxyEducationCurriculum = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/education/curriculum', null, 15000, 'GET', token);
+    const response = await mainApiRequest('/education/curriculum', null, 15000, 'GET', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy education curriculum error:', error);
@@ -1157,7 +1157,7 @@ export const proxyEducationRecommendations = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest(`/api/education/curriculum/${subjectCode}/recommendations`, null, 15000, 'GET', token);
+    const response = await mainApiRequest(`/education/curriculum/${subjectCode}/recommendations`, null, 15000, 'GET', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy education recommendations error:', error);
@@ -1182,7 +1182,7 @@ export const proxyCreateLessonPlan = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/education/lesson-plans', req.body, 15000, 'POST', token);
+    const response = await mainApiRequest('/education/lesson-plans', req.body, 15000, 'POST', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy create lesson plan error:', error);
@@ -1207,7 +1207,7 @@ export const proxyCreateSubject = async (req, res) => {
       { expiresIn: '1h' }
     );
     
-    const response = await mainApiRequest('/api/education/subjects', req.body, 15000, 'POST', token);
+    const response = await mainApiRequest('/education/subjects', req.body, 15000, 'POST', token);
     res.json(response.data);
   } catch (error) {
     console.error('Proxy create subject error:', error);

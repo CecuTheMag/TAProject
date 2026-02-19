@@ -10,7 +10,7 @@ import axios from 'axios';
 const getMainDBData = async (query, params = []) => {
   try {
     const response = await axios.post(
-      `${process.env.MAIN_API_URL || 'http://backend:5000'}/api/internal/query`,
+      `${process.env.MAIN_API_URL || 'http://backend:5000'}/internal/query`,
       { query, params },
       {
         headers: {
