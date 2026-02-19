@@ -169,7 +169,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=${NODE_ENV}
-      - VITE_API_URL=http://admin_backend:5005/api
+      - VITE_API_URL=https://school-sync.org/admin-api
     volumes:
       - ./admin-frontend:/app
       - /app/node_modules
