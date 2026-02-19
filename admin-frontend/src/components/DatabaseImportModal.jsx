@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { systemAdmin } from '../api';
 
 const DatabaseImportModal = ({ onClose, onImport }) => {
   const [file, setFile] = useState(null);
@@ -18,16 +19,9 @@ const DatabaseImportModal = ({ onClose, onImport }) => {
   useEffect(() => {
     const fetchSchools = async () => {
       try {
-        const response = await fetch(`http://localhost:5005/api/system-admin/schools`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Loaded schools:', data.schools);
-          setSchools(data.schools);
-        }
+        const response = await systemAdmin.getSchools();
+        console.log('Loaded schools:', response.data.schools);
+        setSchools(response.data.schools);
       } catch (error) {
         console.error('Failed to fetch schools:', error);
       }
@@ -52,21 +46,9 @@ const DatabaseImportModal = ({ onClose, onImport }) => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch(`http://localhost:5005/api/system-admin/parse-accdb`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setColumns(data.columns);
-        setStep(2);
-      } else {
-        alert('Failed to parse file');
-      }
+      const response = await systemAdmin.parseAccdb(formData);
+      setColumns(response.data.columns);
+      setStep(2);
     } catch (error) {
       alert('Error parsing file');
     } finally {
@@ -87,22 +69,9 @@ const DatabaseImportModal = ({ onClose, onImport }) => {
     formData.append('school_id', selectedSchool);
 
     try {
-      const response = await fetch(`http://localhost:5005/api/system-admin/import-accdb`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        onImport(result);
-        onClose();
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Import failed');
-      }
+      const response = await systemAdmin.importAccdb(formData);
+      onImport(response.data);
+      onClose();
     } catch (error) {
       alert('Import error');
     } finally {

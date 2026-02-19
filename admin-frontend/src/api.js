@@ -38,6 +38,12 @@ export const systemAdmin = {
   getUsers: (schoolId) => api.get('/system-admin/users', { params: schoolId ? { schoolId } : {} }),
   importUsers: (formData) => api.post('/system-admin/import-users', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  parseAccdb: (formData) => api.post('/system-admin/parse-accdb', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  importAccdb: (formData) => api.post('/system-admin/import-accdb', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
   })
 };
 
