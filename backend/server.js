@@ -133,16 +133,16 @@ initializeSchemas();
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
 // Routes with rate limiting
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/equipment', equipmentRoutes);
-app.use('/api/request', requestRoutes);
-app.use('/api/reports', reportLimiter, reportRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/alerts', alertRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/education', educationRoutes);
-app.use('/api/internal', internalRoutes);
+app.use('/auth', authLimiter, authRoutes);
+app.use('/equipment', equipmentRoutes);
+app.use('/request', requestRoutes);
+app.use('/reports', reportLimiter, reportRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/alerts', alertRoutes);
+app.use('/documents', documentRoutes);
+app.use('/users', userRoutes);
+app.use('/education', educationRoutes);
+app.use('/internal', internalRoutes);
 
 // Direct curriculum test route
 app.get('/education/curriculum-direct', (req, res) => {
@@ -182,7 +182,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/api/test', (req, res) => {
+app.get('/test', (req, res) => {
   res.json({ status: 'Backend working!', timestamp: new Date().toISOString() });
 });
 

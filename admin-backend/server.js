@@ -115,7 +115,13 @@ const initDB = async () => {
       );
       console.log(`✅ System admin created: ${process.env.DEFAULT_ADMIN_EMAIL}`);
     } else {
-      console.log(`ℹ️ System admin already exists: ${process.env.DEFAULT_ADMIN_EMAIL}`);
+      // Update existing admin password
+      const hashedPassword = await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD, 12);
+      await client.query(
+        'UPDATE admin_users SET password = $1 WHERE email = $2',
+        [hashedPassword, process.env.DEFAULT_ADMIN_EMAIL]
+      );
+      console.log(`ℹ️ System admin password updated: ${process.env.DEFAULT_ADMIN_EMAIL}`);
     }
 
     console.log('✅ Admin database initialized');

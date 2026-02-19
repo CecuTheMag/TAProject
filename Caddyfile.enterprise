@@ -13,6 +13,7 @@ school-sync.org, www.school-sync.org {
     }
     
     handle_path /api/* {
+        uri strip_prefix /api
         reverse_proxy backend:5000 {
             header_up Host {upstream_hostport}
             header_up X-Real-IP {remote_host}
