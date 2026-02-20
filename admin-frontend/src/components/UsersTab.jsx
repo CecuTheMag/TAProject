@@ -21,6 +21,27 @@ const UsersTab = () => {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
   const { user } = useAuth();
 
+  const groupUsersByClass = (users) => {
+    const groups = {};
+    users.forEach(user => {
+      let groupKey;
+      if (user.role === 'student' && user.grade_level) {
+        groupKey = user.grade_level;
+      } else if (user.role === 'teacher' && user.subject_name) {
+        groupKey = `Teachers - ${user.subject_name}`;
+      } else {
+        groupKey = user.role === 'admin' ? 'Administrators' : 
+                  user.role === 'manager' ? 'Managers' : 'Other';
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(user);
+    });
+    return groups;
+  };
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -170,176 +191,21 @@ const UsersTab = () => {
       </div>
 
       <div>
-        {isMobile ? (
-          // Mobile Card Layout
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {usersList.map((userItem) => (
-              <UserCard 
-                key={userItem.id} 
-                userItem={userItem} 
-                currentUser={user}
-                onRoleChange={handleRoleChange}
-                onEditUser={handleEditUser}
-                onViewActivity={handleViewActivity}
-                onDeleteUser={handleDeleteUser}
-                getRoleBadgeColor={getRoleBadgeColor}
-              />
-            ))}
-          </div>
-        ) : (
-          // Desktop Table Layout
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)'
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse'
-            }}>
-              <thead>
-                <tr style={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.05)',
-                  borderBottom: '1px solid rgba(226, 232, 240, 0.5)'
-                }}>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>User</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>{t('role')}</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Subject/Class</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Requests</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Joined</th>
-                  <th style={{ padding: '20px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersList.map((userItem) => (
-                  <tr key={userItem.id} style={{
-                    borderBottom: '1px solid rgba(226, 232, 240, 0.3)'
-                  }}>
-                    <td style={{ padding: '20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontWeight: '600'
-                        }}>
-                          {userItem.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: '600', color: '#0f172a' }}>
-                            {userItem.username}
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#64748b' }}>
-                            {userItem.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '20px' }}>
-                      <select
-                        value={userItem.role}
-                        onChange={(e) => handleRoleChange(userItem.id, e.target.value)}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
-                          backgroundColor: getRoleBadgeColor(userItem.role),
-                          color: 'white',
-                          fontWeight: '600',
-                          fontSize: '12px'
-                        }}
-                      >
-                        <option value="student">{t('student')}</option>
-                        <option value="teacher">{t('teacher')}</option>
-                        <option value="manager">{t('manager')}</option>
-                        <option value="admin">{t('admin')}</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: '20px' }}>
-                      {userItem.role === 'teacher' && userItem.subject_name ? (
-                        <div style={{ fontSize: '14px' }}>
-                          <div style={{ fontWeight: '600', color: '#0f172a' }}>{userItem.subject_name}</div>
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>({userItem.subject_code})</div>
-                        </div>
-                      ) : userItem.role === 'student' && userItem.grade_level ? (
-                        <div style={{ fontSize: '14px' }}>
-                          <div style={{ fontWeight: '600', color: '#0f172a' }}>{userItem.grade_level}</div>
-                        </div>
-                      ) : (
-                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>—</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '20px' }}>
-                      <div style={{ fontSize: '14px', color: '#64748b' }}>
-                        <div>{t('totalRequests')}: {userItem.total_requests}</div>
-                        <div>Pending: {userItem.pending_requests}</div>
-                        <div>Approved: {userItem.approved_requests}</div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '20px', fontSize: '14px', color: '#64748b' }}>
-                      {new Date(userItem.created_at).toLocaleDateString()}
-                    </td>
-                    <td style={{ padding: '20px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleEditUser(userItem)}
-                          style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t('edit')}
-                        </button>
-                        <button
-                          onClick={() => handleViewActivity(userItem.id)}
-                          style={{
-                            padding: '8px 12px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {t('activity')}
-                        </button>
-                        {userItem.id !== user.id && (
-                          <button
-                            onClick={() => handleDeleteUser(userItem.id, userItem.username)}
-                            style={{
-                              padding: '8px 12px',
-                              backgroundColor: '#ef4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {t('delete')}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {Object.entries(groupUsersByClass(usersList)).map(([className, users]) => (
+          <ClassGroup 
+            key={className} 
+            className={className} 
+            users={users} 
+            currentUser={user}
+            onRoleChange={handleRoleChange}
+            onEditUser={handleEditUser}
+            onViewActivity={handleViewActivity}
+            onDeleteUser={handleDeleteUser}
+            getRoleBadgeColor={getRoleBadgeColor}
+            isMobile={isMobile}
+            t={t}
+          />
+        ))}
       </div>
 
       {/* Create User Modal */}
@@ -380,6 +246,187 @@ const UsersTab = () => {
       
       {/* Confirm Dialog */}
       <ConfirmDialog {...confirmDialog} />
+    </div>
+  );
+};
+
+const ClassGroup = ({ className, users, currentUser, onRoleChange, onEditUser, onViewActivity, onDeleteUser, getRoleBadgeColor, isMobile, t }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          color: 'white',
+          padding: '16px 20px',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px'
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+          {className} ({users.length} users)
+        </h3>
+        <span style={{ fontSize: '20px' }}>{isExpanded ? '▼' : '▶'}</span>
+      </div>
+      
+      {isExpanded && (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
+        }}>
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+              {users.map((userItem) => (
+                <UserCard 
+                  key={userItem.id} 
+                  userItem={userItem} 
+                  currentUser={currentUser}
+                  onRoleChange={onRoleChange}
+                  onEditUser={onEditUser}
+                  onViewActivity={onViewActivity}
+                  onDeleteUser={onDeleteUser}
+                  getRoleBadgeColor={getRoleBadgeColor}
+                />
+              ))}
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{
+                  backgroundColor: 'rgba(15, 23, 42, 0.05)',
+                  borderBottom: '1px solid rgba(226, 232, 240, 0.5)'
+                }}>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>User</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Role</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Requests</th>
+                  <th style={{ padding: '16px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Joined</th>
+                  <th style={{ padding: '16px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((userItem) => (
+                  <tr key={userItem.id} style={{
+                    borderBottom: '1px solid rgba(226, 232, 240, 0.3)'
+                  }}>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontWeight: '600',
+                          fontSize: '14px'
+                        }}>
+                          {userItem.username.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '600', color: '#0f172a' }}>
+                            {userItem.username}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>
+                            {userItem.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <select
+                        value={userItem.role}
+                        onChange={(e) => onRoleChange(userItem.id, e.target.value)}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid #e2e8f0',
+                          backgroundColor: getRoleBadgeColor(userItem.role),
+                          color: 'white',
+                          fontWeight: '600',
+                          fontSize: '11px'
+                        }}
+                      >
+                        <option value="student">{t('student')}</option>
+                        <option value="teacher">{t('teacher')}</option>
+                        <option value="manager">{t('manager')}</option>
+                        <option value="admin">{t('admin')}</option>
+                      </select>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        <div>Total: {userItem.total_requests}</div>
+                        <div>Pending: {userItem.pending_requests}</div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '12px', color: '#64748b' }}>
+                      {new Date(userItem.created_at).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => onEditUser(userItem)}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => onViewActivity(userItem.id)}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Activity
+                        </button>
+                        {userItem.id !== currentUser.id && (
+                          <button
+                            onClick={() => onDeleteUser(userItem.id, userItem.username)}
+                            style={{
+                              padding: '6px 10px',
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   );
 };
