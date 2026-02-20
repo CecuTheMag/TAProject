@@ -141,7 +141,9 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
     
-    const tempPassword = 'temp';
+    // Generate cryptographically secure random password
+    const crypto = await import('crypto');
+    const tempPassword = crypto.default.randomBytes(12).toString('base64').slice(0, 16);
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
     
     const result = await pool.query(

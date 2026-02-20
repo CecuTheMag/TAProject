@@ -41,38 +41,39 @@ export const getAllEquipment = async (req, res) => {
     const { search, type, status, condition } = req.query;
     const schema = req.schoolSchema;
     
-    // Validate schema name to prevent injection
+    // Validate schema name to prevent injection - only allow alphanumeric and underscore
     if (!schema || !/^[a-zA-Z0-9_]+$/.test(schema)) {
       return res.status(400).json({ error: 'Invalid schema' });
     }
     
-    let query = `SELECT * FROM "${schema}".equipment WHERE 1=1`;
+    // Use queryInSchema helper which safely handles schema names
+    let baseQuery = 'SELECT * FROM equipment WHERE 1=1';
     const params = [];
     let paramCount = 0;
 
     if (search) {
       paramCount++;
-      query += ` AND (name ILIKE $${paramCount} OR serial_number ILIKE $${paramCount})`;
+      baseQuery += ` AND (name ILIKE $${paramCount} OR serial_number ILIKE $${paramCount})`;
       params.push(`%${search}%`);
     }
     if (type) {
       paramCount++;
-      query += ` AND type = $${paramCount}`;
+      baseQuery += ` AND type = $${paramCount}`;
       params.push(type);
     }
     if (status) {
       paramCount++;
-      query += ` AND status = $${paramCount}`;
+      baseQuery += ` AND status = $${paramCount}`;
       params.push(status);
     }
     if (condition) {
       paramCount++;
-      query += ` AND condition_status = $${paramCount}`;
+      baseQuery += ` AND condition_status = $${paramCount}`;
       params.push(condition);
     }
 
-    query += ' ORDER BY name, serial_number';
-    const result = await pool.query(query, params);
+    baseQuery += ' ORDER BY name, serial_number';
+    const result = await queryInSchema(schema, baseQuery, params);
     
     res.json(result.rows);
   } catch (error) {
@@ -131,7 +132,7 @@ export const createEquipment = async (req, res) => {
       console.log(`Creating item ${i}/${quantity} with serial: ${itemSerial}`);
       
       // Ensure serial number uniqueness within school schema
-      const existingSerial = await pool.query(`SELECT id FROM "${schema}".equipment WHERE serial_number = $1`, [itemSerial]);
+      const existingSerial = await queryInSchema(schema, 'SELECT id FROM equipment WHERE serial_number = $1', [itemSerial]);
       if (existingSerial.rows.length > 0) {
         throw new Error(`Serial number ${itemSerial} already exists`);
       }
@@ -144,9 +145,8 @@ export const createEquipment = async (req, res) => {
         console.error('QR generation error:', qrError);
       }
       
-      const result = await pool.query(
-        `INSERT INTO "${schema}".equipment (name, type, serial_number, condition_status, status, location, qr_code) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      const result = await queryInSchema(schema,
+        'INSERT INTO equipment (name, type, serial_number, condition_status, status, location, qr_code) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
         [name, type, itemSerial, condition, status, location, qrCode]
       );
       
@@ -226,8 +226,8 @@ export const updateRepairStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
-    const result = await pool.query(
-      `UPDATE "${schema}".equipment SET status = $1 WHERE id = ANY($2) AND status = $3 RETURNING *`,
+    const result = await queryInSchema(req.schoolSchema,
+      'UPDATE equipment SET status = $1 WHERE id = ANY($2) AND status = $3 RETURNING *',
       ['under_repair', ids, 'available']
     );
     
@@ -251,8 +251,8 @@ export const completeRepair = async (req, res) => {
       return res.status(400).json({ error: 'Valid condition required' });
     }
 
-    const result = await pool.query(
-      `UPDATE "${schema}".equipment SET status = $1, condition_status = $2 WHERE id = ANY($3) AND status = $4 RETURNING *`,
+    const result = await queryInSchema(req.schoolSchema,
+      'UPDATE equipment SET status = $1, condition_status = $2 WHERE id = ANY($3) AND status = $4 RETURNING *',
       ['available', condition, ids, 'under_repair']
     );
     
@@ -272,8 +272,8 @@ export const retireFleet = async (req, res) => {
       return res.status(400).json({ error: 'Invalid equipment selection - ids array required' });
     }
 
-    const result = await pool.query(
-      `UPDATE "${schema}".equipment SET status = $1 WHERE id = ANY($2::int[]) RETURNING *`,
+    const result = await queryInSchema(req.schoolSchema,
+      'UPDATE equipment SET status = $1 WHERE id = ANY($2::int[]) RETURNING *',
       ['retired', ids]
     );
     
@@ -286,8 +286,7 @@ export const retireFleet = async (req, res) => {
 
 export const getEquipmentGroups = async (req, res) => {
   try {
-    const schema = req.schoolSchema;
-    const result = await pool.query(`
+    const result = await queryInSchema(req.schoolSchema, `
       SELECT
         CASE
           WHEN RIGHT(serial_number, 3) ~ '^[0-9]{3}$'
@@ -301,7 +300,7 @@ export const getEquipmentGroups = async (req, res) => {
         COUNT(CASE WHEN status = 'checked_out' THEN 1 END) AS checked_out_count,
         COUNT(CASE WHEN status = 'under_repair' THEN 1 END) AS under_repair_count,
         array_agg(json_build_object('id', id, 'serial_number', serial_number, 'status', status, 'condition_status', condition_status) ORDER BY serial_number) AS items
-      FROM "${schema}".equipment
+      FROM equipment
       WHERE serial_number IS NOT NULL
       GROUP BY base_serial, name, type
       ORDER BY name
@@ -333,8 +332,7 @@ export const deleteEquipment = async (req, res) => {
 
 export const getLowStockAlerts = async (req, res) => {
   try {
-    const schema = req.schoolSchema;
-    const result = await pool.query(`
+    const result = await queryInSchema(req.schoolSchema, `
       WITH groups AS (
         SELECT
           CASE
@@ -347,7 +345,7 @@ export const getLowStockAlerts = async (req, res) => {
           COUNT(*) AS total_count,
           COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count,
           COALESCE(MIN(stock_threshold), 2) AS stock_threshold
-        FROM "${schema}".equipment
+        FROM equipment
         WHERE serial_number IS NOT NULL
         GROUP BY base_serial, name, type
       )
