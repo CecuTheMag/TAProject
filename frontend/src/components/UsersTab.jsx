@@ -681,7 +681,11 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
-            {teacher.username.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')}
+            {teacher.grade_level || (
+              teacher.username.includes('.') 
+                ? teacher.username.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+                : teacher.username.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, str => str.toUpperCase())
+            )}
           </div>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{teacher.email}</div>
           <div style={{
