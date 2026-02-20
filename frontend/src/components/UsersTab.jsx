@@ -430,10 +430,10 @@ const StudentCard = ({ student, onEditUser, onViewActivity, onDeleteUser, curren
           aspectRatio: '1',
           flexShrink: 0
         }}>
-          {student.grade_level?.charAt(0) || student.username.charAt(0).toUpperCase()}
+          {student.username.charAt(0).toUpperCase()}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: '600', color: '#111827' }}>{student.grade_level || student.username}</div>
+          <div style={{ fontWeight: '600', color: '#111827' }}>{student.username}</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>{student.email}</div>
         </div>
       </div>
@@ -497,11 +497,11 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
           aspectRatio: '1',
           flexShrink: 0
         }}>
-          {teacher.grade_level?.charAt(0) || teacher.username.charAt(0).toUpperCase()}
+          {teacher.username.charAt(0).toUpperCase()}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
-            {teacher.grade_level || teacher.username}
+            {teacher.username}
           </div>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{teacher.email}</div>
           {teacher.subject_specialization && (
