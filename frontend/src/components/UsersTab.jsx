@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { users } from '../api';
 import { useAuth } from '../AuthContext';
@@ -45,12 +45,16 @@ const UsersTab = () => {
   };
 
   // Group users by class (grade_level) and teachers separately
-  const groupedData = useMemo(() => {
+  const groupedData = () => {
     const classes = {};
     const teachers = [];
     
+    console.log('All users:', usersList); // Debug log
+    
     usersList.forEach(user => {
-      if (user.role === 'teacher' || user.role === 'admin') {
+      console.log('Processing user:', user.username, 'role:', user.role, 'subject_specialization:', user.subject_specialization); // Debug log
+      
+      if (user.role === 'teacher') {
         teachers.push(user);
       } else if (user.role === 'student') {
         // Extract class from subject_specialization field
@@ -63,6 +67,8 @@ const UsersTab = () => {
           }
         }
         
+        console.log('Student class extracted:', className); // Debug log
+        
         if (!classes[className]) {
           classes[className] = [];
         }
@@ -70,10 +76,13 @@ const UsersTab = () => {
       }
     });
     
+    console.log('Final classes:', classes); // Debug log
+    console.log('Final teachers:', teachers); // Debug log
+    
     return { classes, teachers };
-  }, [usersList]);
+  };
 
-  const { classes, teachers } = groupedData;
+  const { classes, teachers } = groupedData();
 
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -419,7 +428,7 @@ const StudentCard = ({ student, onEditUser, onViewActivity, onDeleteUser, curren
           {student.grade_level?.charAt(0) || student.username.charAt(0).toUpperCase()}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: '600', color: '#111827' }}>{student.username}</div>
+          <div style={{ fontWeight: '600', color: '#111827' }}>{student.grade_level || student.username}</div>
           <div style={{ fontSize: '14px', color: '#6b7280' }}>{student.email}</div>
         </div>
       </div>
@@ -473,9 +482,7 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
           width: '60px',
           height: '60px',
           borderRadius: '50%',
-          background: teacher.role === 'admin' 
-            ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
-            : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -489,7 +496,7 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
-            {teacher.username}
+            {teacher.grade_level || teacher.username}
           </div>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{teacher.email}</div>
           {teacher.subject_specialization && (
@@ -860,6 +867,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
       role: 'student',
       grade_level: '',
       subject_specialization: '',
+      phone: '',
       subject_id: ''
     },
     {
@@ -1057,14 +1065,14 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
             
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-                {validation.values.role === 'student' ? 'Student Name' : 'Full Name'} *
+                {validation.values.role === 'student' ? 'Class/Grade' : 'Full Name'} *
               </label>
               <input
                 type="text"
                 value={validation.values.grade_level}
                 onChange={(e) => validation.handleChange('grade_level', e.target.value)}
                 onBlur={() => validation.handleBlur('grade_level')}
-                placeholder={validation.values.role === 'student' ? 'Student full name' : 'Full name'}
+                placeholder={validation.values.role === 'student' ? 'e.g., 5A, 6B, 7C' : 'Full name'}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -1081,16 +1089,35 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
             </div>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr', gap: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
-                {validation.values.role === 'student' ? 'Class/Grade' : 'Subject Specialization'}
+                Subject Specialization
               </label>
               <input
                 type="text"
                 value={validation.values.subject_specialization}
                 onChange={(e) => validation.handleChange('subject_specialization', e.target.value)}
-                placeholder={validation.values.role === 'student' ? 'e.g., 5A, 6B, 7C' : 'e.g., MATHEMATICS, ENGLISH'}
+                placeholder={validation.values.role === 'teacher' ? 'e.g., MATHEMATICS, ENGLISH' : 'Optional'}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={validation.values.phone}
+                onChange={(e) => validation.handleChange('phone', e.target.value)}
+                placeholder="Optional"
                 style={{
                   width: '100%',
                   padding: '12px',

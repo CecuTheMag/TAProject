@@ -270,7 +270,7 @@ const UsersTab = () => {
                         </div>
                       ) : userItem.role === 'student' && userItem.grade_level ? (
                         <div style={{ fontSize: '14px' }}>
-                          <div style={{ fontWeight: '600', color: '#0f172a' }}>Class {userItem.grade_level}</div>
+                          <div style={{ fontWeight: '600', color: '#0f172a' }}>{userItem.grade_level}</div>
                         </div>
                       ) : (
                         <span style={{ color: '#9ca3af', fontSize: '14px' }}>—</span>
@@ -586,7 +586,7 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onEditUser, onViewActiv
               fontSize: '12px',
               fontWeight: '600'
             }}>
-              Class {userItem.grade_level}
+              {userItem.grade_level}
             </div>
           )}
         </div>
