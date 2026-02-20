@@ -653,6 +653,16 @@ const AdminCard = ({ admin, onEditUser, onViewActivity, onDeleteUser, onRoleChan
 };
 
 const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser }) => {
+  // Get the teacher's name - prefer grade_level (which stores full name properly), fall back to formatted username
+  const displayName = teacher.grade_level || (
+    teacher.username.includes('.') 
+      ? teacher.username.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+      : teacher.username.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, str => str.toUpperCase())
+  );
+  
+  // Get the subject - prefer subject_name from the subjects table, fall back to subject_specialization
+  const displaySubject = teacher.subject_name || teacher.subject_specialization || 'Teacher';
+
   return (
     <div style={{
       background: 'rgba(255, 255, 255, 0.95)',
@@ -681,11 +691,7 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
-            {teacher.grade_level || (
-              teacher.username.includes('.') 
-                ? teacher.username.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
-                : teacher.username.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, str => str.toUpperCase())
-            )}
+            {displayName}
           </div>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{teacher.email}</div>
           <div style={{
@@ -697,7 +703,7 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
             fontSize: '12px',
             fontWeight: '600'
           }}>
-            {teacher.subject_specialization || 'Teacher'}
+            {displaySubject}{teacher.subject_code ? ` (${teacher.subject_code})` : ''}
           </div>
         </div>
       </div>
