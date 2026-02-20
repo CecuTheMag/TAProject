@@ -6,16 +6,26 @@ import pool from '../database.js';
  */
 
 export const createSchoolSchema = async (schoolCode) => {
+  // SECURITY: Validate schoolCode to prevent SQL injection
+  if (!schoolCode || typeof schoolCode !== 'string') {
+    throw new Error('Invalid school code: must be a non-empty string');
+  }
+  
+  // Only allow alphanumeric characters, 2-50 chars
+  if (!/^[a-zA-Z0-9]{2,50}$/.test(schoolCode)) {
+    throw new Error('Invalid school code format: must be alphanumeric, 2-50 characters');
+  }
+  
   const schemaName = `school_${schoolCode.toLowerCase()}`;
   
   try {
-    // Create schema
-    await pool.query(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`);
+    // Create schema with quoted identifier to prevent injection
+    await pool.query('CREATE SCHEMA IF NOT EXISTS "' + schemaName + '"');
     
-    // Create all tables in the school schema
+    // Create all tables in the school schema with quoted identifiers
     await pool.query(`
       -- Users table
-      CREATE TABLE IF NOT EXISTS ${schemaName}.users (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
@@ -29,7 +39,7 @@ export const createSchoolSchema = async (schoolCode) => {
       );
 
       -- Subjects table
-      CREATE TABLE IF NOT EXISTS ${schemaName}.subjects (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".subjects (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         code VARCHAR(20) UNIQUE,
@@ -42,7 +52,7 @@ export const createSchoolSchema = async (schoolCode) => {
       );
 
       -- Equipment table
-      CREATE TABLE IF NOT EXISTS ${schemaName}.equipment (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".equipment (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         type VARCHAR(50) NOT NULL,
@@ -66,18 +76,18 @@ export const createSchoolSchema = async (schoolCode) => {
       );
 
       -- Requests table
-      CREATE TABLE IF NOT EXISTS ${schemaName}.requests (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".requests (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES ${schemaName}.users(id),
-        equipment_id INTEGER REFERENCES ${schemaName}.equipment(id),
+        user_id INTEGER REFERENCES "${schemaName}".users(id),
+        equipment_id INTEGER REFERENCES "${schemaName}".equipment(id),
         request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         start_date TIMESTAMP NOT NULL,
         end_date TIMESTAMP NOT NULL,
         due_date TIMESTAMP,
         status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'returned', 'early_returned')),
-        manager_approved_by INTEGER REFERENCES ${schemaName}.users(id),
+        manager_approved_by INTEGER REFERENCES "${schemaName}".users(id),
         manager_approved_at TIMESTAMP,
-        approved_by INTEGER REFERENCES ${schemaName}.users(id),
+        approved_by INTEGER REFERENCES "${schemaName}".users(id),
         approved_at TIMESTAMP,
         returned_at TIMESTAMP,
         return_condition VARCHAR(20) CHECK (return_condition IN ('excellent', 'good', 'fair', 'poor')),
@@ -86,10 +96,10 @@ export const createSchoolSchema = async (schoolCode) => {
       );
 
       -- Lesson plans table
-      CREATE TABLE IF NOT EXISTS ${schemaName}.lesson_plans (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".lesson_plans (
         id SERIAL PRIMARY KEY,
-        teacher_id INTEGER REFERENCES ${schemaName}.users(id),
-        subject_id INTEGER REFERENCES ${schemaName}.subjects(id),
+        teacher_id INTEGER REFERENCES "${schemaName}".users(id),
+        subject_id INTEGER REFERENCES "${schemaName}".subjects(id),
         title VARCHAR(200) NOT NULL,
         description TEXT,
         learning_objectives TEXT[],
@@ -104,22 +114,22 @@ export const createSchoolSchema = async (schoolCode) => {
       );
 
       -- Condition logs table
-      CREATE TABLE IF NOT EXISTS ${schemaName}.condition_logs (
+      CREATE TABLE IF NOT EXISTS "${schemaName}".condition_logs (
         id SERIAL PRIMARY KEY,
-        equipment_id INTEGER REFERENCES ${schemaName}.equipment(id),
-        user_id INTEGER REFERENCES ${schemaName}.users(id),
+        equipment_id INTEGER REFERENCES "${schemaName}".equipment(id),
+        user_id INTEGER REFERENCES "${schemaName}".users(id),
         old_condition VARCHAR(20),
         new_condition VARCHAR(20),
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      -- Create indexes
-      CREATE INDEX IF NOT EXISTS idx_${schemaName}_requests_user ON ${schemaName}.requests(user_id);
-      CREATE INDEX IF NOT EXISTS idx_${schemaName}_requests_equipment ON ${schemaName}.requests(equipment_id);
-      CREATE INDEX IF NOT EXISTS idx_${schemaName}_requests_status ON ${schemaName}.requests(status);
-      CREATE INDEX IF NOT EXISTS idx_${schemaName}_equipment_status ON ${schemaName}.equipment(status);
-      CREATE INDEX IF NOT EXISTS idx_${schemaName}_users_role ON ${schemaName}.users(role);
+      -- Create indexes with quoted schema names
+      CREATE INDEX IF NOT EXISTS "idx_${schemaName}_requests_user" ON "${schemaName}".requests(user_id);
+      CREATE INDEX IF NOT EXISTS "idx_${schemaName}_requests_equipment" ON "${schemaName}".requests(equipment_id);
+      CREATE INDEX IF NOT EXISTS "idx_${schemaName}_requests_status" ON "${schemaName}".requests(status);
+      CREATE INDEX IF NOT EXISTS "idx_${schemaName}_equipment_status" ON "${schemaName}".equipment(status);
+      CREATE INDEX IF NOT EXISTS "idx_${schemaName}_users_role" ON "${schemaName}".users(role);
     `);
 
     console.log(`✅ Schema created for school: ${schemaName}`);
@@ -131,10 +141,19 @@ export const createSchoolSchema = async (schoolCode) => {
 };
 
 export const deleteSchoolSchema = async (schoolCode) => {
+  // SECURITY: Validate schoolCode to prevent SQL injection
+  if (!schoolCode || typeof schoolCode !== 'string') {
+    throw new Error('Invalid school code: must be a non-empty string');
+  }
+  
+  if (!/^[a-zA-Z0-9]{2,50}$/.test(schoolCode)) {
+    throw new Error('Invalid school code format: must be alphanumeric, 2-50 characters');
+  }
+  
   const schemaName = `school_${schoolCode.toLowerCase()}`;
   
   try {
-    await pool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`);
+    await pool.query('DROP SCHEMA IF EXISTS "' + schemaName + '" CASCADE');
     console.log(`✅ Schema deleted: ${schemaName}`);
   } catch (error) {
     console.error(`❌ Failed to delete schema ${schemaName}:`, error);
@@ -143,13 +162,22 @@ export const deleteSchoolSchema = async (schoolCode) => {
 };
 
 export const getSchemaConnection = (schoolCode) => {
+  // SECURITY: Validate schoolCode to prevent SQL injection
+  if (!schoolCode || typeof schoolCode !== 'string') {
+    throw new Error('Invalid school code: must be a non-empty string');
+  }
+  
+  if (!/^[a-zA-Z0-9]{2,50}$/.test(schoolCode)) {
+    throw new Error('Invalid school code format: must be alphanumeric, 2-50 characters');
+  }
+  
   const schemaName = `school_${schoolCode.toLowerCase()}`;
   return {
     query: async (text, params) => {
-      // Set search_path to school schema for this query
+      // Set search_path to school schema for this query with quoted identifier
       const client = await pool.connect();
       try {
-        await client.query(`SET search_path TO ${schemaName}, public`);
+        await client.query('SET search_path TO "' + schemaName + '", public');
         const result = await client.query(text, params);
         return result;
       } finally {

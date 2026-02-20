@@ -1,288 +1,640 @@
-# SchoolSync - Professional Inventory Management System
+# SchoolSync - Enterprise Inventory Management System
 
 <div align="center">
-  <img src="frontend/src/assets/logotp.png" alt="SchoolSync Logo" width="200"/>
-  
-  **Enterprise-Grade Full-Stack Inventory Management Solution**
-  
-  [![Professional](https://img.shields.io/badge/Professional-Solution-blue)](https://school-sync.org)
-  [![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org)
-  [![React](https://img.shields.io/badge/React-18+-blue)](https://reactjs.org)
-  [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)](https://postgresql.org)
-  [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://docker.com)
-  [![Kubernetes](https://img.shields.io/badge/Kubernetes-Scalable-326CE5)](https://kubernetes.io)
+
+![SchoolSync Logo](frontend/src/assets/logotp.png)
+
+**SchoolSync** — Интелигентна система за управление на оборудване в образователни институции
+
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?style=for-the-badge&logo=node.js)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18+-blue?style=for-the-badge&logo=react)](https://reactjs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?style=for-the-badge&logo=postgresql)](https://postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=for-the-badge&logo=docker)](https://docker.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+**Версия:** 2.0.0 | **Статус:** Производствена среда ✅
+
 </div>
 
 ---
 
-## Executive Summary
+## 📋 Съдържание
 
-SchoolSync is a production-ready, enterprise-grade inventory management system engineered for educational institutions and organizations. The platform delivers comprehensive equipment tracking, automated workflow management, and advanced analytics through a modern microservices architecture with horizontal scalability.
-
-**Key Metrics:**
-- 10,000+ concurrent users supported
-- 99.9% uptime with load balancing
-- Sub-100ms API response times
-- Enterprise security compliance
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Directory Structure](#directory-structure)
+4. [Features](#features)
+5. [Technology Stack](#technology-stack)
+6. [API Documentation](#api-documentation)
+7. [Security](#security)
+8. [Setup & Installation](#setup--installation)
+9. [Deployment](#deployment)
+10. [Demo Credentials](#demo-credentials)
 
 ---
 
-## Architecture Overview
+## 📌 Overview
 
-### Technology Stack
+**SchoolSync** е цялостна система за управление на оборудване, проектирана специално за образователни институции. Системата позволява проследяване на оборудване чрез QR кодове, управление на заявки, мулти-тенантна архитектура за поддръжка на множество училища.
 
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| **Frontend** | React 18 + Vite | Modern SPA with real-time updates |
-| **Backend** | Node.js + Express | RESTful API with microservices |
-| **Database** | PostgreSQL 15 | ACID-compliant data persistence |
-| **Cache** | Redis 7 | Session management & performance |
-| **Security** | JWT + bcryptjs | Authentication & authorization |
-| **Orchestration** | Docker + Kubernetes | Container management & scaling |
-| **Monitoring** | Prometheus + Grafana | Metrics & observability |
-| **Load Balancer** | Nginx | Traffic distribution & SSL termination |
+### Key Features
 
-### System Architecture
+- 📱 **QR Code Tracking** — Проследяване на оборудване чрез QR кодове
+- 🔐 **Multi-Role Access** — Различна достъп за ученици, учители, мениджъри, админи
+- 🏫 **Multi-School Support** — Мулти-тенантна архитектура с отделни схеми в PostgreSQL
+- 📊 **Real-time Analytics** — Аналитични табла в реално време
+- 📧 **Email Notifications** — Автоматични email известия
+- 🔒 **Enterprise Security** — SQL injection защита, JWT автентикация
+
+---
+
+## 🏗️ Architecture
+
+### System Architecture Diagram
 
 ```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              INTERNET                                        │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         NGINX LOAD BALANCER                                 │
+│                    (SSL Termination + Rate Limiting)                        │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Load Balancer │    │  Frontend SPA   │    │ Backend Cluster │
-│     (Nginx)     │◄──►│    (React)      │◄──►│ (3+ instances)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                                              │
-         ▼                                              ▼
+│   Frontend      │    │  Admin Frontend │    │   Mobile App    │
+│   (User Portal) │    │   (Management)  │    │   (PWA)         │
+│   :3000         │    │   :5173         │    │   :3000         │
+└────────┬────────┘    └────────┬────────┘    └─────────────────┘
+         │                      │
+         └──────────┬───────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         BACKEND API (Node.js + Express)                     │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │                        API GATEWAY                                    │   │
+│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐    │   │
+│  │  │  /auth     │ │ /equipment │ │ /requests  │ │ /education │    │   │
+│  │  │  Routes    │ │  Routes    │ │  Routes    │ │  Routes    │    │   │
+│  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘    │   │
+│  │                                                                   │   │
+│  │  ┌──────────────────────────────────────────────────────────┐    │   │
+│  │  │              MIDDLEWARE LAYER                            │    │   │
+│  │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐      │    │   │
+│  │  │  │Security │ │  Auth   │ │ Rate    │ │ School  │      │    │   │
+│  │  │  │Headers  │ │  JWT    │ │ Limiter │ │ Context │      │    │   │
+│  │  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘      │    │   │
+│  │  └──────────────────────────────────────────────────────────┘    │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   PostgreSQL    │    │     Redis       │    │   Monitoring    │
-│    Cluster      │    │     Cache       │    │     Stack       │
+│   PostgreSQL    │    │      Redis       │    │     File        │
+│   Database      │    │      Cache       │    │     Storage     │
+│   (Port 5432)  │    │   (Port 6379)    │    │   (Uploads)     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Database Schema Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      PUBLIC SCHEMA                               │
+│  (Shared tables across all schools)                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │   schools   │  │    users    │  │ school_data │          │
+│  │  (id, name, │  │ (id, email,│  │  (imported  │          │
+│  │   code,     │  │  password, │  │   student    │          │
+│  │   district) │  │  role,     │  │   records)  │          │
+│  └─────────────┘  │  school_id)│  └─────────────┘          │
+│                    └─────────────┘                             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ (One schema per school)
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              school_{CODE} SCHEMA (Per School)                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │   users     │  │  equipment  │  │  requests   │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │  subjects   │  │lesson_plans │  │condition_logs│          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Request Flow Diagram
+
+```
+┌──────────┐     ┌─────────────┐     ┌──────────────┐     ┌────────────┐
+│  Client  │────►│  Express    │────►│  Middleware  │────►│ Controller │
+│  (React) │     │  Router     │     │  (Auth,JWT)  │     │  (Logic)   │
+└──────────┘     └─────────────┘     └──────────────┘     └─────┬──────┘
+                                                                  │
+                                                                  ▼
+┌──────────┐     ┌─────────────┐     ┌──────────────┐     ┌────────────┐
+│  Client  │◄────│  Response   │◄────│   Database   │◄────│   Query    │
+│  (React) │     │   (JSON)    │     │  (PostgreSQL)│     │  (Params)  │
+└──────────┘     └─────────────┘     └──────────────┘     └────────────┘
 ```
 
 ---
 
-## Core Capabilities
+## 📁 Directory Structure
 
-### Authentication & Authorization
-- **Multi-role access control** (Student, Teacher, Manager, Administrator)
-- **JWT-based authentication** with secure token management
-- **Password encryption** using industry-standard bcryptjs
-- **Session management** with Redis-backed storage
-- **Rate limiting** to prevent abuse and ensure system stability
-
-### Equipment Management
-- **Complete CRUD operations** with real-time synchronization
-- **Advanced search & filtering** by multiple criteria
-- **QR code integration** for physical asset tracking
-- **Condition monitoring** with detailed maintenance logs
-- **Document management** with secure file uploads
-- **Status tracking** (Available, Checked Out, Under Repair, Retired)
-
-### Request & Approval Workflow
-- **Automated approval routing** based on equipment sensitivity
-- **Due date management** with proactive notifications
-- **Return processing** with condition assessment
-- **History tracking** for audit compliance
-- **Email notifications** for all stakeholders
-
-### Analytics & Reporting
-- **Real-time dashboards** with interactive visualizations
-- **Usage analytics** for equipment utilization optimization
-- **Export capabilities** (CSV, PDF) for external reporting
-- **Performance metrics** with caching optimization
-- **Predictive analytics** for maintenance scheduling
-
-### Educational Integration
-- **Curriculum mapping** with equipment requirements
-- **Lesson plan integration** for automated equipment requests
-- **Subject-based equipment categorization**
-- **Teacher workflow optimization**
-- **Learning impact analytics**
+```
+SchoolSync/
+├── 📂 backend/                          # Main API Server
+│   ├── 📂 controllers/                  # Business logic
+│   │   ├── auth.js                      # Authentication
+│   │   ├── equipment.js                  # Equipment CRUD
+│   │   ├── requests.js                  # Request workflow
+│   │   ├── users.js                     # User management
+│   │   ├── dashboard.js                 # Dashboard stats
+│   │   ├── reports.js                   # Reporting
+│   │   └── systemAdmin.js               # System admin
+│   │
+│   ├── 📂 middleware/                   # Express middleware
+│   │   ├── auth.js                      # JWT verification
+│   │   ├── security.js                  # Security headers
+│   │   ├── schoolContext.js             # Multi-tenant context
+│   │   ├── rateLimiter.js               # Rate limiting
+│   │   └── roleAuth.js                  # Role-based access
+│   │
+│   ├── 📂 routes/                       # API endpoints
+│   │   ├── auth.js
+│   │   ├── equipment.js
+│   │   ├── requests.js
+│   │   ├── users.js
+│   │   ├── dashboard.js
+│   │   ├── reports.js
+│   │   └── systemAdmin.js
+│   │
+│   ├── 📂 services/                     # External services
+│   │   ├── emailService.js              # Email notifications
+│   │   ├── notificationService.js       # Push notifications
+│   │   └── alertService.js              # Alert system
+│   │
+│   ├── 📂 utils/                        # Utilities
+│   │   ├── schemaManager.js             # Multi-tenant schema
+│   │   ├── cache.js                     # Redis caching
+│   │   └── createSampleData.js          # Demo data
+│   │
+│   ├── 📂 migrations/                   # Database migrations
+│   ├── database.js                     # PostgreSQL connection
+│   ├── server.js                       # Express app
+│   └── package.json
+│
+├── 📂 admin-backend/                     # Admin API Server
+│   ├── controllers/
+│   ├── routes/
+│   ├── middleware/
+│   ├── database.js
+│   └── server.js
+│
+├── 📂 frontend/                          # User Portal
+│   ├── src/
+│   │   ├── components/                  # React components
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── EquipmentTab.jsx
+│   │   │   ├── RequestsTab.jsx
+│   │   │   ├── QRScanner.jsx
+│   │   │   └── ...
+│   │   ├── api.js                       # API client
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── index.html
+│   ├── vite.config.js
+│   └── package.json
+│
+├── 📂 admin-frontend/                    # Admin Portal
+│   ├── src/
+│   │   ├── components/
+│   │   ├── api.js
+│   │   └── ...
+│   ├── package.json
+│   └── Dockerfile
+│
+├── 📂 docker/                            # Docker configs
+├── docker-compose.yml                    # Production stack
+├── docker-compose-localhost.yml          # Development
+├── nginx.conf                           # Nginx config
+├── Caddyfile                            # SSL/HTTPS
+└── README.md                            # This file
+```
 
 ---
 
-## Deployment Options
+## ✨ Features
 
-### Quick Start (Development)
+### 🔐 Authentication & Authorization
+
+| Feature | Description |
+|---------|-------------|
+| JWT Tokens | Secure token-based authentication |
+| Role-Based Access | Student, Teacher, Manager, Admin, System Admin |
+| Password Encryption | bcryptjs with salt rounds |
+| Session Management | Redis-backed sessions |
+| Rate Limiting | IP-based request limiting |
+| CSRF Protection | Origin validation |
+
+### 📦 Equipment Management
+
+| Feature | Description |
+|---------|-------------|
+| CRUD Operations | Full create, read, update, delete |
+| QR Code Generation | Automatic QR codes for each item |
+| QR Code Scanning | Mobile-friendly scanner |
+| Search & Filter | By name, type, status, condition |
+| Fleet Management | Group equipment by serial number |
+| Document Attachments | PDF/image attachments |
+| Condition Tracking | Excellent/Good/Fair/Poor |
+| Status Tracking | Available/Checked Out/Under Repair/Retired |
+
+### 📝 Request Workflow
+
+```
+┌─────────┐    ┌───────────┐    ┌────────────┐    ┌───────────┐    ┌─────────┐
+│  Student │───►│  Pending  │───►│  Approved  │───►│ In Use    │───►│Returned │
+│  Request │    │           │    │  (Manager) │    │           │    │         │
+└─────────┘    └───────────┘    └────────────┘    └───────────┘    └─────────┘
+     │              │                 │                 │               │
+     ▼              ▼                 ▼                 ▼               ▼
+  Submit        Email to         Email to         Update         Email to
+  form          Manager          Requester         Status         Requester
+```
+
+### 📊 Analytics & Reporting
+
+- Real-time dashboard statistics
+- Equipment usage analytics
+- User activity tracking
+- Export to CSV/PDF
+- Low stock alerts
+- Overdue return notifications
+
+### 🏫 Multi-School Support
+
+- PostgreSQL schema-per-school isolation
+- School-specific data partitioning
+- Cross-school equipment sharing
+- District-wide reporting
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 18+ | UI Framework |
+| Vite | 5+ | Build tool |
+| Axios | 1.6+ | HTTP Client |
+| React Router | 6+ | Navigation |
+| CSS Modules | - | Styling |
+
+### Backend
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Node.js | 18+ | Runtime |
+| Express | 4.18+ | Web Framework |
+| PostgreSQL | 15+ | Database |
+| Redis | 7+ | Caching |
+| JWT | 9.0+ | Authentication |
+| bcryptjs | 2.4+ | Password Hashing |
+| Joi | 17+ | Validation |
+| QRCode | 1.5+ | QR Generation |
+| Nodemailer | 6+ | Email |
+
+### DevOps
+
+| Technology | Purpose |
+|------------|---------|
+| Docker | Containerization |
+| Nginx | Reverse Proxy |
+| Caddy | SSL/HTTPS |
+| Prometheus | Metrics |
+| Grafana | Monitoring |
+
+---
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+
+```http
+POST   /api/auth/register          # Register new user
+POST   /api/auth/login             # User login
+POST   /api/auth/logout            # User logout
+POST   /api/auth/verify-email      # Send verification code
+POST   /api/auth/setup-password    # First-time password setup
+```
+
+### Equipment Endpoints
+
+```http
+GET    /api/equipment                              # List all equipment
+GET    /api/equipment/:id                         # Get equipment by ID
+POST   /api/equipment                             # Create equipment
+PUT    /api/equipment/:id                         # Update equipment
+DELETE /api/equipment/:id                         # Delete equipment
+GET    /api/equipment/groups                      # Get equipment groups
+POST   /api/equipment/qr/:id                      # Generate QR code
+```
+
+### Request Endpoints
+
+```http
+POST   /api/request                              # Create request
+GET    /api/request                              # User's requests
+GET    /api/request/all                          # All requests (admin)
+PUT    /api/request/:id/approve                  # Approve request
+PUT    /api/request/:id/reject                   # Reject request
+PUT    /api/request/:id/return                   # Process return
+```
+
+### User Endpoints
+
+```http
+GET    /api/users                                # List users
+GET    /api/users/:id                           # Get user
+PUT    /api/users/:id/role                      # Update user role
+DELETE /api/users/:id                           # Delete user
+```
+
+### Dashboard & Reports
+
+```http
+GET    /api/dashboard/stats                     # Dashboard statistics
+GET    /api/reports/usage                       # Usage report
+GET    /api/reports/export                      # Export data
+GET    /api/reports/low-stock                   # Low stock alerts
+```
+
+### Education Features
+
+```http
+GET    /api/education/subjects                   # List subjects
+POST   /api/education/lesson-plans              # Create lesson plan
+GET    /api/education/lesson-plans              # List lesson plans
+POST   /api/education/lesson-plans/:id/request  # Request equipment
+```
+
+### System Admin
+
+```http
+POST   /api/system/schools                      # Create school
+GET    /api/system/schools                      # List schools
+PUT    /api/system/schools/:id/status           # Update school status
+POST   /api/system/admins                       # Create school admin
+GET    /api/system/stats                        # System statistics
+```
+
+---
+
+## 🔒 Security
+
+### Implemented Security Measures
+
+| Measure | Implementation |
+|---------|----------------|
+| SQL Injection | Parameterized queries + input validation |
+| XSS Protection | Input sanitization + CSP headers |
+| CSRF Protection | Origin validation + tokens |
+| Password Storage | bcryptjs (12 rounds) |
+| JWT Security | Secret + expiration |
+| Rate Limiting | Per-IP + per-user limits |
+| Security Headers | X-Frame-Options, HSTS, etc. |
+| Input Validation | Joi schemas |
+| Schema Isolation | PostgreSQL per-school schemas |
+
+### Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     SECURITY LAYER                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Input     │  │  Output    │  │   Database         │  │
+│  │  Validation │  │ Sanitization│  │   Layer           │  │
+│  │  (Joi)      │  │ (XSS)      │  │   (Parameterized) │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│                                                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Auth JWT   │  │  RBAC      │  │   SQL Injection    │  │
+│  │  Middleware │  │  Middleware │  │   Prevention       │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 Setup & Installation
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 15+
+- Redis 7+ (optional)
+- Docker & Docker Compose
+
+### Quick Start (Docker)
+
 ```bash
-# Clone and setup
-git clone <repository-url>
-cd TAProject
+# Clone repository
+git clone https://github.com/your-repo/SchoolSync.git
+cd SchoolSync
 
-# Local development
+# Start with Docker
+docker-compose up --build
+
+# Access the application
+# Frontend: http://localhost:3000
+# Admin: http://localhost:5173
+# Backend API: http://localhost:3001
+```
+
+### Manual Setup
+
+```bash
+# Backend
+cd backend
+cp .env.example .env
+# Edit .env with your database credentials
+npm install
+npm start
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+
+# Admin Frontend
+cd admin-frontend
+npm install
+npm run dev
+```
+
+### Environment Variables
+
+```env
+# Backend (.env)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=schoolsync
+DB_USER=postgres
+DB_PASSWORD=your_password
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=1h
+
+# Redis (optional)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+---
+
+## 📦 Deployment
+
+### Development
+
+```bash
 docker-compose -f docker-compose-localhost.yml up --build
 ```
 
-### Production Deployment
-```bash
-# Full enterprise stack
-docker-compose up --build
+### Production
 
-# Kubernetes deployment
+```bash
+# With SSL (Caddy)
+docker-compose -f docker-compose.yml up --build -d
+
+# Or with custom Nginx
+docker-compose up --build -d
+```
+
+### Kubernetes
+
+```bash
 kubectl apply -f kubernetes/
 ```
 
-### Access Points
-- **Application**: http://localhost
-- **Admin Dashboard**: http://localhost/admin
-- **API Documentation**: http://localhost/api
-- **Monitoring**: http://localhost:3000 (Grafana)
-- **Metrics**: http://localhost:9090 (Prometheus)
+---
+
+## 👤 Demo Credentials
+
+### User Portal
+
+| Role | Email | Password |
+|------|-------|----------|
+| Student | student@test.com | password123 |
+| Teacher | teacher@test.com | password123 |
+| Manager | manager@test.com | password123 |
+| Admin | admin@school-sync.org | schoolsync2026 |
+
+### Admin Portal
+
+| Role | Email | Password |
+|------|-------|----------|
+| System Admin | admin@school-sync.org | schoolsync2026 |
 
 ---
 
-## API Specification
-
-### Authentication Endpoints
-```http
-POST   /api/auth/register     # User registration
-POST   /api/auth/login        # Authentication
-GET    /api/auth/logout       # Session termination
-```
-
-### Equipment Management
-```http
-GET    /api/equipment         # List equipment with filtering
-GET    /api/equipment/{id}    # Retrieve specific equipment
-POST   /api/equipment         # Create new equipment
-PUT    /api/equipment/{id}    # Update equipment details
-DELETE /api/equipment/{id}    # Remove equipment
-```
-
-### Request Management
-```http
-POST   /api/request           # Submit equipment request
-GET    /api/request           # User's request history
-GET    /api/request/manager   # Admin: all requests
-PUT    /api/request/{id}/approve  # Approve request
-PUT    /api/request/{id}/reject   # Reject request
-PUT    /api/request/{id}/return   # Process return
-```
-
-### Educational Features
-```http
-GET    /api/education/subjects        # Curriculum subjects
-POST   /api/education/lesson-plans    # Create lesson plan
-GET    /api/education/curriculum      # Curriculum integration
-POST   /api/education/lesson-plans/{id}/request-equipment  # Request equipment for lesson
-```
-
-### Analytics & Reporting
-```http
-GET    /api/reports/usage     # Usage statistics
-GET    /api/reports/history   # Historical data
-GET    /api/reports/export    # Data export (CSV/PDF)
-GET    /api/dashboard/stats   # Real-time metrics
-```
-
----
-
-## Security Implementation
-
-### Data Protection
-- **Encryption at rest** for sensitive data
-- **TLS/SSL encryption** for data in transit
-- **Input sanitization** preventing injection attacks
-- **XSS protection** with content security policies
-- **CSRF protection** with token validation
-
-### Access Control
-- **Role-based permissions** enforced at API level
-- **Route protection** with authentication middleware
-- **Admin-only operations** with authorization checks
-- **Audit logging** for compliance requirements
-
-### Performance & Reliability
-- **Connection pooling** for database optimization
-- **Distributed caching** with Redis
-- **Health checks** for service monitoring
-- **Graceful degradation** during high load
-- **Automatic failover** for critical services
-
----
-
-## Scalability Features
-
-### Horizontal Scaling
-- **Kubernetes orchestration** with auto-scaling
-- **Load balancing** across multiple instances
-- **Database clustering** for high availability
-- **Redis clustering** for cache distribution
-- **CDN integration** for static asset delivery
-
-### Performance Optimization
-- **Response caching** with intelligent TTL
-- **Database indexing** for query optimization
-- **Connection pooling** for resource efficiency
-- **Lazy loading** for frontend performance
-- **Image optimization** for faster loading
-
-### Monitoring & Observability
-- **Prometheus metrics** collection
-- **Grafana dashboards** for visualization
-- **Custom alerting** for proactive monitoring
-- **Performance profiling** for optimization
-- **Error tracking** with detailed logging
-
----
-
-## Quality Assurance
-
-### Code Standards
-- **ESLint configuration** with strict rules
-- **Consistent naming conventions** across codebase
-- **Modular architecture** with reusable components
-- **Comprehensive error handling** with graceful degradation
-- **Documentation standards** for maintainability
-
-### Security Testing
-- **Automated vulnerability scanning**
-- **Penetration testing** for critical paths
-- **Input validation** on all endpoints
-- **Authentication bypass** prevention
-- **SQL injection** protection verification
-
----
-
-## Demo Credentials
+## 📊 Project Structure (Visual)
 
 ```
-Administrator Access:
-Email: admin@school-sync.org
-Password: schoolsync2026
-
-Student Access:
-Email: student@test.com
-Password: password123
+┌────────────────────────────────────────────────────────────────────────┐
+│                           SCHOOLSYNC PROJECT                           │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  ┌──────────────────────┐    ┌──────────────────────┐                  │
+│  │    FRONTEND         │    │    ADMIN-FRONTEND   │                  │
+│  │    (Port 3000)      │    │    (Port 5173)      │                  │
+│  │                     │    │                      │                  │
+│  │  ┌──────────────┐  │    │  ┌──────────────┐   │                  │
+│  │  │  Dashboard  │  │    │  │  Dashboard   │   │                  │
+│  │  └──────────────┘  │    │  └──────────────┘   │                  │
+│  │  ┌──────────────┐  │    │  ┌──────────────┐   │                  │
+│  │  │  Equipment  │  │    │  │  Equipment   │   │                  │
+│  │  └──────────────┘  │    │  └──────────────┘   │                  │
+│  │  ┌──────────────┐  │    │  ┌──────────────┐   │                  │
+│  │  │  Requests   │  │    │  │  Alerts      │   │                  │
+│  │  └──────────────┘  │    │  └──────────────┘   │                  │
+│  └─────────┬───────────┘    └─────────┬───────────┘                  │
+│            │                         │                               │
+│            └────────────┬────────────┘                               │
+│                         │                                            │
+│                         ▼                                            │
+│  ┌────────────────────────────────────────────────────────────┐      │
+│  │                    BACKEND API (Port 3001)                 │      │
+│  │                                                          │      │
+│  │  ┌─────────────────────────────────────────────────────┐ │      │
+│  │  │                    ROUTES                             │ │      │
+│  │  │  /auth  /equipment  /requests  /users  /reports      │ │      │
+│  │  └─────────────────────────────────────────────────────┘ │      │
+│  │                         │                                  │      │
+│  │  ┌─────────────────────────────────────────────────────┐ │      │
+│  │  │                   MIDDLEWARE                         │ │      │
+│  │  │  Auth  Security  RateLimit  SchoolContext            │ │      │
+│  │  └─────────────────────────────────────────────────────┘ │      │
+│  │                         │                                  │      │
+│  │  ┌─────────────────────────────────────────────────────┐ │      │
+│  │  │                  CONTROLLERS                        │ │      │
+│  │  │  Auth  Equipment  Requests  Users  Reports          │ │      │
+│  │  └─────────────────────────────────────────────────────┘ │      │
+│  └──────────────────────────┬───────────────────────────────┘      │
+│                             │                                       │
+│             ┌───────────────┼───────────────┐                       │
+│             ▼               ▼               ▼                       │
+│  ┌─────────────────┐ ┌─────────────┐ ┌─────────────────┐            │
+│  │   PostgreSQL    │ │    Redis    │ │      File       │            │
+│  │   (Port 5432)  │ │  (Port 6379)│ │    Storage      │            │
+│  │                 │ │             │ │                 │            │
+│  │ ┌─────────────┐ │ │ ┌─────────┐ │ │ ┌─────────────┐ │            │
+│  │ │   public   │ │ │ │Sessions │ │ │ │  /uploads  │ │            │
+│  │ │   schema   │ │ │ └─────────┘ │ │ └─────────────┘ │            │
+│  │ └─────────────┘ │ │             │ │                 │            │
+│  │ ┌─────────────┐ │ │             │ │                 │            │
+│  │ │school_HBH S│ │ │             │ │                 │            │
+│  │ │school_ABC │ │ │             │ │                 │            │
+│  │ └─────────────┘ │ │             │ │                 │            │
+│  └─────────────────┘ └─────────────┘ └─────────────────┘            │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Project Features
+## 📄 License
 
-### Technical Excellence
-✅ **Full-stack implementation** with modern technologies  
-✅ **Enterprise scalability** with container orchestration  
-✅ **Comprehensive security** implementation  
-✅ **Advanced features** exceeding requirements  
-✅ **Production-ready** deployment configuration  
+MIT License - See [LICENSE](LICENSE) file for details.
 
-### Innovation Highlights
-🚀 **Microservices architecture** with Docker & Kubernetes  
-📧 **Automated notification system** with intelligent scheduling  
-📊 **Real-time analytics** with interactive dashboards  
-🔄 **Horizontal auto-scaling** with load balancing  
-📱 **Mobile-responsive** design with PWA capabilities  
-🎓 **Educational integration** with curriculum mapping  
-📋 **Lesson plan management** with equipment automation  
-👥 **Multi-role user management** with subject assignments  
+---
+
+## 👨‍💻 Authors
+
+- **SchoolSync Team** - Initial development
 
 ---
 
 <div align="center">
-  <strong>Built With ❤️ For Professional Excellence</strong><br>
-  <em>Demonstrating enterprise-grade full-stack development expertise</em><br><br>
-  
-  **System Status:** Production Ready ✅  
-  **Security Level:** Enterprise Grade 🛡️  
-  **Scalability:** 10,000+ Users 📈  
-  **Uptime:** 99.9% Guaranteed ⚡  
+
+**SchoolSync** — *Интелигентно управление на образователно оборудване*
+
+⭐ Star this project if you find it helpful!
+
 </div>
+

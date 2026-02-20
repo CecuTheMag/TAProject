@@ -84,20 +84,27 @@ export const createSchoolAdmin = async (req, res) => {
     }
 
     const schoolCode = schoolCheck.rows[0].code;
+    
+    // SECURITY: Validate school code format to prevent injection
+    if (!/^[a-zA-Z0-9]{2,50}$/.test(schoolCode)) {
+      return res.status(400).json({ error: 'Invalid school code format' });
+    }
+    
     const schemaName = `school_${schoolCode.toLowerCase()}`;
     const hashedPassword = await bcrypt.hash(password, 12);
     
     // Create admin in school's schema
     const client = await pool.connect();
     try {
-      await client.query(`SET search_path TO ${schemaName}, public`);
+      // Use quoted identifier for secure SET search_path
+      await client.query('SET search_path TO "' + schemaName + '", public');
       const result = await client.query(
         'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role, created_at',
         [username, email, hashedPassword, 'admin']
       );
       
       // Also create in public schema for authentication
-      await client.query(`SET search_path TO public`);
+      await client.query('SET search_path TO public');
       await client.query(
         'INSERT INTO users (username, email, password, role, school_id) VALUES ($1, $2, $3, $4, $5)',
         [username, email, hashedPassword, 'admin', school_id]

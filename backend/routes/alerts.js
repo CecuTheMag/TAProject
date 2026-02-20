@@ -2,7 +2,7 @@ import express from 'express';
 import pool from '../database.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { requireAdmin, requireTeacherOrAdmin } from '../middleware/roleAuth.js';
-import { setSchoolContext } from '../middleware/schoolContext.js';
+import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
 import emailService from '../services/emailService.js';
 
 const router = express.Router();
@@ -13,7 +13,6 @@ router.use(setSchoolContext);
 // Get low stock alerts
 router.get('/low-stock', async (req, res) => {
   try {
-    const schema = req.schoolSchema;
     const query = `
       WITH groups AS (
         SELECT
@@ -28,7 +27,7 @@ router.get('/low-stock', async (req, res) => {
           COUNT(CASE WHEN status = 'available' THEN 1 END) AS available_count,
           COALESCE(MIN(stock_threshold), 2) AS stock_threshold,
           MIN(id) as id
-        FROM "${schema}".equipment
+        FROM equipment
         WHERE serial_number IS NOT NULL
         GROUP BY base_serial, name, type
         HAVING COUNT(CASE WHEN status != 'retired' THEN 1 END) > 0
@@ -38,7 +37,7 @@ router.get('/low-stock', async (req, res) => {
       ORDER BY available_count
     `;
     
-    const result = await pool.query(query);
+    const result = await queryInSchema(req.schoolSchema, query);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching low stock alerts:', error);
@@ -49,20 +48,19 @@ router.get('/low-stock', async (req, res) => {
 // Get overdue equipment
 router.get('/overdue', async (req, res) => {
   try {
-    const schema = req.schoolSchema;
     const query = `
       SELECT r.id, r.due_date, r.start_date, r.end_date,
              u.username, u.email, e.name as equipment_name, e.type
-      FROM "${schema}".requests r
-      JOIN "${schema}".users u ON r.user_id = u.id
-      JOIN "${schema}".equipment e ON r.equipment_id = e.id
+      FROM requests r
+      JOIN users u ON r.user_id = u.id
+      JOIN equipment e ON r.equipment_id = e.id
       WHERE r.status = 'approved' 
       AND r.due_date < NOW()
       AND r.returned_at IS NULL
       ORDER BY r.due_date ASC
     `;
     
-    const result = await pool.query(query);
+    const result = await queryInSchema(req.schoolSchema, query);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching overdue equipment:', error);
@@ -75,13 +73,12 @@ router.put('/threshold/:base_serial', requireAdmin, async (req, res) => {
   try {
     const { base_serial } = req.params;
     const { stock_threshold } = req.body;
-    const schema = req.schoolSchema;
     
     console.log('Updating threshold for base_serial:', base_serial, 'to:', stock_threshold);
     
     // Update all equipment items with the same base serial
     const query = `
-      UPDATE "${schema}".equipment 
+      UPDATE equipment 
       SET stock_threshold = $1 
       WHERE (
         CASE
@@ -93,7 +90,7 @@ router.put('/threshold/:base_serial', requireAdmin, async (req, res) => {
       RETURNING *
     `;
     
-    const result = await pool.query(query, [stock_threshold, base_serial]);
+    const result = await queryInSchema(req.schoolSchema, query, [stock_threshold, base_serial]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment group not found' });

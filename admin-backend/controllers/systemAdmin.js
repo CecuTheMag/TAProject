@@ -223,6 +223,12 @@ export const getSchools = async (req, res) => {
     // For each school, count users in their schema
     for (const school of adminSchools.rows) {
       try {
+        // SECURITY: Validate school code format before using in queries
+        if (!/^[a-zA-Z0-9]{2,50}$/.test(school.code)) {
+          console.error(`Invalid school code format: ${school.code}`);
+          continue;
+        }
+        
         const schoolSchema = `school_${school.code}`;
         console.log(`Counting users in schema: ${schoolSchema}`);
         
@@ -281,6 +287,11 @@ export const createSchoolAdmin = async (req, res) => {
     }
 
     const school = schoolCheck.rows[0];
+    // SECURITY: Validate school code format to prevent SQL injection
+    if (!/^[a-zA-Z0-9]{2,50}$/.test(school.code)) {
+      return res.status(400).json({ error: 'Invalid school code format in database' });
+    }
+    
     const schoolSchema = `school_${school.code}`;
     
     console.log('School found:', school.name, 'Schema:', schoolSchema);
@@ -379,6 +390,12 @@ export const getSchoolAdmins = async (req, res) => {
     // Query each school schema for admin users
     for (const school of schools) {
       try {
+        // SECURITY: Validate school code format before using in queries
+        if (!/^[a-zA-Z0-9]{2,50}$/.test(school.code)) {
+          console.error(`Invalid school code format: ${school.code}`);
+          continue;
+        }
+        
         const schoolSchema = `school_${school.code}`;
         console.log(`Querying admins from schema: ${schoolSchema}`);
         
@@ -976,6 +993,12 @@ export const getSystemStats = async (req, res) => {
     // Count users in each school schema
     for (const school of schools) {
       try {
+        // SECURITY: Validate school code format before using in queries
+        if (!/^[a-zA-Z0-9]{2,50}$/.test(school.code)) {
+          console.error(`Invalid school code format: ${school.code}`);
+          continue;
+        }
+        
         const schoolSchema = `school_${school.code}`;
         console.log(`Counting users in schema: ${schoolSchema}`);
         

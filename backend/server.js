@@ -20,7 +20,7 @@ import { auditLogger } from './middleware/audit.js';
 import { initDB } from './database.js';
 import redisService from './utils/redis.js';
 import migrationRunner from './utils/migrationRunner.js';
-import { createSchoolSchema } from './migrations/schema-per-school.js';
+import { createSchoolSchema } from './utils/schemaManager.js';
 
 // Route handlers for different API endpoints
 import authRoutes from './routes/auth.js';         // User authentication
