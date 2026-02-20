@@ -3,9 +3,15 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import pool from '../database.js';
-import { authenticateToken, requireAdmin } from '../middleware.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { requireAdmin, requireManagerOrAdmin } from '../middleware/roleAuth.js';
+import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
 
 const router = express.Router();
+
+// Apply authentication and schema context to all routes
+router.use(authenticateToken);
+router.use(setSchoolContext);
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -36,15 +42,47 @@ const upload = multer({
   }
 });
 
+// Get equipment documents
+router.get('/equipment/:equipmentId', async (req, res) => {
+  try {
+    const { equipmentId } = req.params;
+    
+    const result = await queryInSchema(
+      req.schoolSchema,
+      'SELECT documents FROM equipment WHERE id = $1',
+      [equipmentId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Equipment not found' });
+    }
+    
+    const documents = (result.rows[0].documents || []).map(doc => {
+      try {
+        return JSON.parse(doc);
+      } catch (e) {
+        return doc;
+      }
+    });
+    res.json(documents);
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({ error: 'Failed to fetch documents' });
+  }
+});
+
 // Upload document for equipment
-router.post('/upload/:equipmentId', authenticateToken, requireAdmin, upload.single('document'), async (req, res) => {
+router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('document'), async (req, res) => {
   try {
     const { equipmentId } = req.params;
     const { originalname, filename, mimetype, size } = req.file;
     
     // Get current documents
-    const equipmentQuery = 'SELECT documents FROM equipment WHERE id = $1';
-    const equipmentResult = await pool.query(equipmentQuery, [equipmentId]);
+    const equipmentResult = await queryInSchema(
+      req.schoolSchema,
+      'SELECT documents FROM equipment WHERE id = $1',
+      [equipmentId]
+    );
     
     if (equipmentResult.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
@@ -62,8 +100,11 @@ router.post('/upload/:equipmentId', authenticateToken, requireAdmin, upload.sing
     const updatedDocs = [...currentDocs, JSON.stringify(newDoc)];
     
     // Update equipment with new document
-    const updateQuery = 'UPDATE equipment SET documents = $1 WHERE id = $2 RETURNING *';
-    const result = await pool.query(updateQuery, [updatedDocs, equipmentId]);
+    const result = await queryInSchema(
+      req.schoolSchema,
+      'UPDATE equipment SET documents = $1 WHERE id = $2 RETURNING *',
+      [updatedDocs, equipmentId]
+    );
     
     res.json({
       message: 'Document uploaded successfully',
@@ -76,28 +117,8 @@ router.post('/upload/:equipmentId', authenticateToken, requireAdmin, upload.sing
   }
 });
 
-// Get equipment documents
-router.get('/equipment/:equipmentId', authenticateToken, async (req, res) => {
-  try {
-    const { equipmentId } = req.params;
-    
-    const query = 'SELECT documents FROM equipment WHERE id = $1';
-    const result = await pool.query(query, [equipmentId]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Equipment not found' });
-    }
-    
-    const documents = (result.rows[0].documents || []).map(doc => JSON.parse(doc));
-    res.json(documents);
-  } catch (error) {
-    console.error('Error fetching documents:', error);
-    res.status(500).json({ error: 'Failed to fetch documents' });
-  }
-});
-
 // Serve document files
-router.get('/file/:filename', authenticateToken, (req, res) => {
+router.get('/file/:filename', (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(process.cwd(), 'uploads', 'documents', filename);
@@ -114,13 +135,16 @@ router.get('/file/:filename', authenticateToken, (req, res) => {
 });
 
 // Delete document
-router.delete('/:equipmentId/:filename', authenticateToken, requireAdmin, async (req, res) => {
+router.delete('/:equipmentId/:filename', requireManagerOrAdmin, async (req, res) => {
   try {
     const { equipmentId, filename } = req.params;
     
     // Get current documents
-    const equipmentQuery = 'SELECT documents FROM equipment WHERE id = $1';
-    const equipmentResult = await pool.query(equipmentQuery, [equipmentId]);
+    const equipmentResult = await queryInSchema(
+      req.schoolSchema,
+      'SELECT documents FROM equipment WHERE id = $1',
+      [equipmentId]
+    );
     
     if (equipmentResult.rows.length === 0) {
       return res.status(404).json({ error: 'Equipment not found' });
@@ -128,13 +152,20 @@ router.delete('/:equipmentId/:filename', authenticateToken, requireAdmin, async 
     
     const currentDocs = equipmentResult.rows[0].documents || [];
     const updatedDocs = currentDocs.filter(doc => {
-      const parsed = JSON.parse(doc);
-      return parsed.filename !== filename;
+      try {
+        const parsed = JSON.parse(doc);
+        return parsed.filename !== filename;
+      } catch (e) {
+        return doc !== filename;
+      }
     });
     
     // Update equipment
-    const updateQuery = 'UPDATE equipment SET documents = $1 WHERE id = $2';
-    await pool.query(updateQuery, [updatedDocs, equipmentId]);
+    await queryInSchema(
+      req.schoolSchema,
+      'UPDATE equipment SET documents = $1 WHERE id = $2',
+      [updatedDocs, equipmentId]
+    );
     
     // Delete file from filesystem
     const filePath = path.join(process.cwd(), 'uploads', 'documents', filename);

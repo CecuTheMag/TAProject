@@ -197,6 +197,18 @@ app.use('/users', userLimiter, userRoutes);
 app.use('/education', educationRoutes);
 app.use('/internal', internalRoutes);
 
+// API routes for frontend
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/request', requestRoutes);
+app.use('/api/reports', reportLimiter, reportRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/users', userLimiter, userRoutes);
+app.use('/api/education', educationRoutes);
+app.use('/api/internal', internalRoutes);
+
 // Direct curriculum test route
 app.get('/education/curriculum-direct', (req, res) => {
   res.json({

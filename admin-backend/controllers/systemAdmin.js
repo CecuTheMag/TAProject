@@ -733,6 +733,7 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         // Determine user role and assign subject if teacher
         let userRole = 'student';
         let subjectId = null;
+        let gradeLevel = null;
         const roleUpper = role.toUpperCase();
         
         const teacherSubjects = {
@@ -761,9 +762,18 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
           userRole = 'teacher';
           const subjectInfo = teacherSubjects[roleUpper];
           
+          // Get school code for schema first (moved up to avoid scope issues)
+          const schoolResult = await getMainDBData('SELECT code FROM schools WHERE id = $1', [parsedSchoolId]);
+          if (!schoolResult.rows || schoolResult.rows.length === 0) {
+            throw new Error(`School ${parsedSchoolId} not found`);
+          }
+          
+          const schoolCode = schoolResult.rows[0].code;
+          const currentSchoolSchema = `school_${schoolCode}`;
+          
           // Check if subject exists, create if not
           let subjectResult = await getMainDBData(
-            `SELECT id FROM "${schoolSchema}".subjects WHERE code = $1`,
+            `SELECT id FROM "${currentSchoolSchema}".subjects WHERE code = $1`,
             [subjectInfo.code]
           );
           
@@ -771,7 +781,7 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
             // Create the subject
             console.log(`Creating subject ${subjectInfo.name} (${subjectInfo.code}) for school ${schoolCode}`);
             subjectResult = await getMainDBData(
-              `INSERT INTO "${schoolSchema}".subjects (name, code, description, grade_level, room) 
+              `INSERT INTO "${currentSchoolSchema}".subjects (name, code, description, grade_level, room) 
                VALUES ($1, $2, $3, $4, $5) RETURNING id`,
               [
                 subjectInfo.name,
@@ -792,6 +802,7 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         } else {
           // If role is a class code (like "5A", "6B", etc.), it's a student
           userRole = 'student';
+          gradeLevel = role; // Use the role field as grade level for students
         }
 
         // Generate clean username from name, not email
@@ -801,18 +812,26 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         let username = baseUsername;
         let counter = 1;
         
-        // Get school code for schema first
-        const schoolResult = await getMainDBData('SELECT code FROM schools WHERE id = $1', [parsedSchoolId]);
-        if (!schoolResult.rows || schoolResult.rows.length === 0) {
-          throw new Error(`School ${parsedSchoolId} not found`);
+        // Get school code for schema (reuse if already fetched above)
+        let schoolCode, finalSchoolSchema;
+        if (userRole === 'teacher' && subjectId) {
+          // Already fetched above for teacher
+          const schoolResult = await getMainDBData('SELECT code FROM schools WHERE id = $1', [parsedSchoolId]);
+          schoolCode = schoolResult.rows[0].code;
+          finalSchoolSchema = `school_${schoolCode}`;
+        } else {
+          const schoolResult = await getMainDBData('SELECT code FROM schools WHERE id = $1', [parsedSchoolId]);
+          if (!schoolResult.rows || schoolResult.rows.length === 0) {
+            throw new Error(`School ${parsedSchoolId} not found`);
+          }
+          
+          schoolCode = schoolResult.rows[0].code;
+          finalSchoolSchema = `school_${schoolCode}`;
         }
-        
-        const schoolCode = schoolResult.rows[0].code;
-        const schoolSchema = `school_${schoolCode}`;
         
         while (true) {
           const existingUser = await getMainDBData(
-            `SELECT id FROM "${schoolSchema}".users WHERE username = $1`,
+            `SELECT id FROM "${finalSchoolSchema}".users WHERE username = $1`,
             [username]
           );
           if (!existingUser.rows || existingUser.rows.length === 0) {
@@ -829,7 +848,7 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
         
         // Insert user into school-specific schema with subject assignment
         const result = await getMainDBData(
-          `INSERT INTO "${schoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set, subject_id) 
+          `INSERT INTO "${finalSchoolSchema}".users (username, email, password, role, grade_level, subject_specialization, phone, password_set, subject_id) 
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
            ON CONFLICT (email) DO UPDATE SET 
            username = EXCLUDED.username,
@@ -840,7 +859,7 @@ const processImportAsync = async (filePath, mapping, schoolId) => {
            password_set = EXCLUDED.password_set,
            subject_id = EXCLUDED.subject_id
            RETURNING id`,
-          [username, email, hashedPassword, userRole, formattedName, role, phone, false, subjectId]
+          [username, email, hashedPassword, userRole, gradeLevel, formattedName, phone, false, subjectId]
         );
         
         if (result.rows && result.rows.length > 0) {

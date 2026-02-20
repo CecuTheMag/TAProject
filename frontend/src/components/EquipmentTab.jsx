@@ -387,7 +387,7 @@ const EquipmentTab = () => {
             totalItems={filteredEquipment.length}
           />
         )}
-        )}
+        
         
         {/* Modals */}
         {showDetailsModal && (

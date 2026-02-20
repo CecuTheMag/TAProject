@@ -40,7 +40,17 @@ const CreateLessonPlanModal = ({ onClose, onSuccess }) => {
   const fetchSubjects = async () => {
     try {
       const response = await education.getSubjects();
-      setSubjects(response.data); // Backend now handles filtering
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      
+      let filteredSubjects = response.data;
+      
+      // If user is a teacher, only show their assigned subject
+      if (currentUser?.role === 'teacher' && currentUser?.subject_id) {
+        filteredSubjects = response.data.filter(subject => subject.id === currentUser.subject_id);
+      }
+      
+      setSubjects(filteredSubjects);
     } catch (error) {
       console.error('Failed to fetch subjects:', error);
     }

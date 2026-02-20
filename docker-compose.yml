@@ -169,7 +169,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=${NODE_ENV}
-      - VITE_API_URL=${ADMIN_API_URL}
+      - VITE_API_URL=https://school-sync.org/admin-api
     volumes:
       - ./admin-frontend:/app
       - /app/node_modules
@@ -181,10 +181,69 @@ services:
       - admin_network
     restart: unless-stopped
 
+  # Main Load Balancer with HTTPS on port 443
+  caddy-main:
+    image: caddy:alpine
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_main_data:/data
+      - caddy_main_config:/config
+    depends_on:
+      - backend
+      - frontend
+      - admin_backend
+    networks:
+      - user_network
+      - admin_network
+      - internal_api
+    restart: unless-stopped
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "0.0.0.0:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - user_network
+      - admin_network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "0.0.0.0:3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - user_network
+      - admin_network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   postgres_admin_data:
   redis_data:
+  grafana_data:
+  prometheus_data:
+  caddy_main_data:
+  caddy_main_config:
 
 networks:
   user_network:

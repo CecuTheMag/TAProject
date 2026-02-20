@@ -6,7 +6,6 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
   const [documentList, setDocumentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -41,21 +40,22 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
     }
   };
 
-  const handlePreview = async (filename, mimetype) => {
+  const handleDownload = async (filename, originalname) => {
     try {
-      if (mimetype === 'application/pdf' || mimetype.startsWith('application/vnd.')) {
-        // Use Google Docs viewer for PDFs and Office documents
-        const publicUrl = `${window.location.origin}/uploads/documents/${filename}`;
-        setPreviewUrl(publicUrl);
-      } else {
-        // Use blob URL for images and other files
-        const response = await documents.getFile(filename);
-        const blob = new Blob([response.data], { type: mimetype });
-        const url = URL.createObjectURL(blob);
-        setPreviewUrl(url);
-      }
+      const response = await documents.getFile(filename);
+      const blob = new Blob([response.data]);
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = originalname;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to preview document:', error);
+      console.error('Failed to download document:', error);
+      alert('Failed to download document');
     }
   };
 
@@ -213,8 +213,10 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
                     padding: '16px',
                     border: '1px solid #e2e8f0',
                     borderRadius: '8px',
-                    gap: '16px'
+                    gap: '16px',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => handleDownload(doc.filename, doc.originalname)}
                 >
                   <div style={{ color: '#64748b' }}>
                     {getFileIcon(doc.mimetype)}
@@ -238,12 +240,15 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
                     </p>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  {user?.role === 'admin' && (
                     <button
-                      onClick={() => handlePreview(doc.filename, doc.mimetype)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(doc.filename);
+                      }}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: '#0f172a',
+                        backgroundColor: '#ef4444',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -251,95 +256,14 @@ const DocumentViewer = ({ equipmentId, onClose }) => {
                         cursor: 'pointer'
                       }}
                     >
-                      Preview
+                      Delete
                     </button>
-                    
-                    {user?.role === 'admin' && (
-                      <button
-                        onClick={() => handleDelete(doc.filename)}
-                        style={{
-                          padding: '8px 16px',
-                          backgroundColor: '#ef4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
-
-        {/* Preview Modal */}
-        {previewUrl && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1001
-          }}>
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              padding: '16px',
-              maxWidth: '90%',
-              maxHeight: '90%',
-              overflow: 'auto'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px'
-              }}>
-                <h3 style={{ margin: 0 }}>Document Preview</h3>
-                <button
-                  onClick={() => setPreviewUrl(null)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-              {previewUrl.includes('blob:') ? (
-                <iframe
-                  src={previewUrl}
-                  style={{
-                    width: '100%',
-                    height: '600px',
-                    border: 'none'
-                  }}
-                />
-              ) : (
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`}
-                  style={{
-                    width: '100%',
-                    height: '600px',
-                    border: 'none'
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
