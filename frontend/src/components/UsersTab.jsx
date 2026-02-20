@@ -52,14 +52,19 @@ const UsersTab = () => {
     console.log('All users:', usersList); // Debug log
     
     usersList.forEach(user => {
-      console.log('Processing user:', user.username, 'role:', user.role, 'subject_specialization:', user.subject_specialization); // Debug log
+      console.log('Processing user:', user.username, 'role:', user.role, 'email:', user.email); // Debug log
       
       if (user.role === 'teacher') {
         teachers.push(user);
       } else if (user.role === 'student') {
-        // Extract class from subject_specialization field
+        // Extract class from email (e.g., "12d@student" -> "12D")
         let className = 'Unknown';
-        if (user.subject_specialization) {
+        const emailMatch = user.email.match(/\.([0-9]+[a-d])@/);
+        if (emailMatch) {
+          className = emailMatch[1].toUpperCase();
+        } else if (user.grade_level) {
+          className = user.grade_level;
+        } else if (user.subject_specialization) {
           // Look for patterns like "7A", "6B", "10A" etc.
           const match = user.subject_specialization.match(/(\d+)\s*([A-Z])/i);
           if (match) {

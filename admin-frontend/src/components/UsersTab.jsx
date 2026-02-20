@@ -24,9 +24,18 @@ const UsersTab = () => {
   const groupUsersByClass = (users) => {
     const groups = {};
     users.forEach(user => {
-      let groupKey;
-      if (user.role === 'student' && user.grade_level) {
-        groupKey = user.grade_level;
+      let groupKey = 'Other';
+      
+      if (user.role === 'student') {
+        // Extract class from email (e.g., "12d@student" -> "12D")
+        const emailMatch = user.email.match(/\.([0-9]+[a-d])@/);
+        if (emailMatch) {
+          groupKey = emailMatch[1].toUpperCase();
+        } else if (user.grade_level) {
+          groupKey = user.grade_level;
+        } else {
+          groupKey = 'Students - Other';
+        }
       } else if (user.role === 'teacher' && user.subject_name) {
         groupKey = `Teachers - ${user.subject_name}`;
       } else {
