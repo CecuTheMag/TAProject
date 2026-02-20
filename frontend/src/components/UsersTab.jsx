@@ -19,7 +19,7 @@ const UsersTab = () => {
   const [userActivity, setUserActivity] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
-  const [selectedView, setSelectedView] = useState('classes'); // 'classes' or 'teachers'
+  const [selectedView, setSelectedView] = useState('classes'); // 'classes', 'teachers', or 'admins'
   const { user } = useAuth();
 
   useEffect(() => {
@@ -48,6 +48,7 @@ const UsersTab = () => {
   const groupedData = () => {
     const classes = {};
     const teachers = [];
+    const admins = [];
     
     console.log('All users:', usersList); // Debug log
     
@@ -56,6 +57,8 @@ const UsersTab = () => {
       
       if (user.role === 'teacher') {
         teachers.push(user);
+      } else if (user.role === 'admin') {
+        admins.push(user);
       } else if (user.role === 'student') {
         // Extract class from email (e.g., "12d@student" -> "12D")
         let className = 'Unknown';
@@ -83,11 +86,12 @@ const UsersTab = () => {
     
     console.log('Final classes:', classes); // Debug log
     console.log('Final teachers:', teachers); // Debug log
+    console.log('Final admins:', admins); // Debug log
     
-    return { classes, teachers };
+    return { classes, teachers, admins };
   };
 
-  const { classes, teachers } = groupedData();
+  const { classes, teachers, admins } = groupedData();
 
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -234,6 +238,21 @@ const UsersTab = () => {
             >
               Teachers
             </button>
+            <button
+              onClick={() => setSelectedView('admins')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: selectedView === 'admins' ? '#3b82f6' : 'transparent',
+                color: selectedView === 'admins' ? 'white' : '#64748b',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Admins
+            </button>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -265,9 +284,19 @@ const UsersTab = () => {
             currentUser={user}
             isMobile={isMobile}
           />
-        ) : (
+        ) : selectedView === 'teachers' ? (
           <TeachersView 
             teachers={teachers}
+            onEditUser={handleEditUser}
+            onViewActivity={handleViewActivity}
+            onDeleteUser={handleDeleteUser}
+            onRoleChange={handleRoleChange}
+            currentUser={user}
+            isMobile={isMobile}
+          />
+        ) : (
+          <AdminsView 
+            admins={admins}
             onEditUser={handleEditUser}
             onViewActivity={handleViewActivity}
             onDeleteUser={handleDeleteUser}
@@ -389,6 +418,24 @@ const ClassesView = ({ classes, onEditUser, onViewActivity, onDeleteUser, onRole
   );
 };
 
+const AdminsView = ({ admins, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser, isMobile }) => {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+      {admins.map(admin => (
+        <AdminCard 
+          key={admin.id}
+          admin={admin}
+          onEditUser={onEditUser}
+          onViewActivity={onViewActivity}
+          onDeleteUser={onDeleteUser}
+          onRoleChange={onRoleChange}
+          currentUser={currentUser}
+        />
+      ))}
+    </div>
+  );
+};
+
 const TeachersView = ({ teachers, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser, isMobile }) => {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
@@ -472,6 +519,139 @@ const StudentCard = ({ student, onEditUser, onViewActivity, onDeleteUser, curren
   );
 };
 
+const AdminCard = ({ admin, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser }) => {
+  return (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '16px',
+      padding: '24px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+      border: '1px solid rgba(226, 232, 240, 0.3)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: '700',
+          fontSize: '20px',
+          aspectRatio: '1',
+          flexShrink: 0
+        }}>
+          {admin.username.charAt(0).toUpperCase()}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
+            {admin.grade_level || admin.username.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')}
+          </div>
+          <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{admin.email}</div>
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 8px',
+            backgroundColor: '#fee2e2',
+            color: '#dc2626',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            Administrator
+          </div>
+        </div>
+      </div>
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px',
+        marginBottom: '20px'
+      }}>
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderRadius: '12px',
+          padding: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', color: '#3b82f6' }}>
+            {admin.total_requests || 0}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Total Requests
+          </div>
+        </div>
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.1)',
+          borderRadius: '12px',
+          padding: '12px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '20px', fontWeight: '700', color: '#f59e0b' }}>
+            {admin.pending_requests || 0}
+          </div>
+          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>
+            Pending
+          </div>
+        </div>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <button
+          onClick={() => onEditUser(admin)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => onViewActivity(admin.id)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Activity
+        </button>
+        {admin.id !== currentUser.id && (
+          <button
+            onClick={() => onDeleteUser(admin.id, admin.username)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRoleChange, currentUser }) => {
   return (
     <div style={{
@@ -501,22 +681,20 @@ const TeacherCard = ({ teacher, onEditUser, onViewActivity, onDeleteUser, onRole
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: '700', color: '#111827', fontSize: '18px' }}>
-            {teacher.username}
+            {teacher.grade_level || teacher.username.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')}
           </div>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>{teacher.email}</div>
-          {teacher.subject_specialization && (
-            <div style={{
-              display: 'inline-block',
-              padding: '4px 8px',
-              backgroundColor: '#dbeafe',
-              color: '#1d4ed8',
-              borderRadius: '12px',
-              fontSize: '12px',
-              fontWeight: '600'
-            }}>
-              {teacher.subject_specialization}
-            </div>
-          )}
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 8px',
+            backgroundColor: '#dbeafe',
+            color: '#1d4ed8',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            {teacher.subject_specialization || 'Teacher'}
+          </div>
         </div>
       </div>
       
