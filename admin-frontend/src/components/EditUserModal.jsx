@@ -10,7 +10,8 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
   const [subjects, setSubjects] = useState([]);
   const [formData, setFormData] = useState({
     role: user?.role || 'student',
-    subject_id: user?.subject_id || ''
+    subject_id: user?.subject_id || '',
+    grade_level: user?.grade_level || ''
   });
   const [isMobile, setIsMobile] = useState(false);
 
@@ -42,7 +43,8 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
     try {
       const updateData = {
         role: formData.role,
-        subject_id: formData.role === 'teacher' ? formData.subject_id : null
+        subject_id: formData.role === 'teacher' ? formData.subject_id : null,
+        grade_level: formData.role === 'student' ? formData.grade_level : null
       };
       
       await users.updateRole(user.id, updateData);
@@ -158,6 +160,28 @@ const EditUserModal = ({ user, onClose, onSuccess }) => {
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {formData.role === 'student' && (
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#0f172a' }}>
+                Class/Grade Level
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., 5A, 6B, 7C"
+                value={formData.grade_level}
+                onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box',
+                  fontSize: '14px'
+                }}
+              />
             </div>
           )}
 

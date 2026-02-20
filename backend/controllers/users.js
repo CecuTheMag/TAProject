@@ -73,15 +73,15 @@ export const getAllUsers = async (req, res) => {
 export const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
-    const { role, subject_id } = req.body;
+    const { role, subject_id, grade_level } = req.body;
     
     if (!['student', 'teacher', 'manager', 'admin'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
     
     const result = await pool.query(
-      'UPDATE users SET role = $1, subject_id = $2 WHERE id = $3 RETURNING id, username, email, role, subject_id',
-      [role, subject_id || null, id]
+      'UPDATE users SET role = $1, subject_id = $2, grade_level = $3 WHERE id = $4 RETURNING id, username, email, role, subject_id, grade_level',
+      [role, subject_id || null, grade_level || null, id]
     );
     
     if (result.rows.length === 0) {
@@ -129,7 +129,7 @@ export const deleteUser = async (req, res) => {
 
 export const createUser = async (req, res) => {
   try {
-    const { username, email, role = 'student' } = req.body;
+    const { username, email, role = 'student', grade_level } = req.body;
     
     // Check if user already exists
     const existingUser = await pool.query(
@@ -147,8 +147,8 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
     
     const result = await pool.query(
-      'INSERT INTO users (username, email, password, role, password_set) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role, created_at',
-      [username, email, hashedPassword, role, false]
+      'INSERT INTO users (username, email, password, role, grade_level, password_set) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, role, grade_level, created_at',
+      [username, email, hashedPassword, role, grade_level || null, false]
     );
     
     res.status(201).json(result.rows[0]);

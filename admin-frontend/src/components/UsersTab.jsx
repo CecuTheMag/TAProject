@@ -206,7 +206,7 @@ const UsersTab = () => {
                 }}>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>User</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>{t('role')}</th>
-                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Subject</th>
+                  <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Subject/Class</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Requests</th>
                   <th style={{ padding: '20px', textAlign: 'left', fontWeight: '600', color: '#0f172a' }}>Joined</th>
                   <th style={{ padding: '20px', textAlign: 'center', fontWeight: '600', color: '#0f172a' }}>Actions</th>
@@ -267,6 +267,10 @@ const UsersTab = () => {
                         <div style={{ fontSize: '14px' }}>
                           <div style={{ fontWeight: '600', color: '#0f172a' }}>{userItem.subject_name}</div>
                           <div style={{ fontSize: '12px', color: '#64748b' }}>({userItem.subject_code})</div>
+                        </div>
+                      ) : userItem.role === 'student' && userItem.grade_level ? (
+                        <div style={{ fontSize: '14px' }}>
+                          <div style={{ fontWeight: '600', color: '#0f172a' }}>Class {userItem.grade_level}</div>
                         </div>
                       ) : (
                         <span style={{ color: '#9ca3af', fontSize: '14px' }}>—</span>
@@ -573,6 +577,18 @@ const UserCard = ({ userItem, currentUser, onRoleChange, onEditUser, onViewActiv
               {userItem.subject_name} ({userItem.subject_code})
             </div>
           )}
+          {userItem.role === 'student' && userItem.grade_level && (
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#f0fdf4',
+              color: '#166534',
+              borderRadius: '16px',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              Class {userItem.grade_level}
+            </div>
+          )}
         </div>
       </div>
       
@@ -636,7 +652,7 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
   const [isMobile, setIsMobile] = useState(false);
   
   const validation = useFormValidation(
-    { username: '', email: '', role: 'student' },
+    { username: '', email: '', role: 'student', grade_level: '' },
     {
       username: [validationRules.required, validationRules.minLength(3)],
       email: [validationRules.required, validationRules.email],
@@ -662,7 +678,18 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
     setLoading(true);
     
     try {
-      await users.create(validation.values);
+      const userData = {
+        username: validation.values.username,
+        email: validation.values.email,
+        role: validation.values.role
+      };
+      
+      // Add grade_level for students
+      if (validation.values.role === 'student' && validation.values.grade_level) {
+        userData.grade_level = validation.values.grade_level;
+      }
+      
+      await users.create(userData);
       toast.success('User created successfully');
       onSuccess();
     } catch (error) {
@@ -802,6 +829,28 @@ const CreateUserModal = ({ onClose, onSuccess }) => {
               <option value="admin">{t('admin')}</option>
             </select>
           </div>
+          
+          {validation.values.role === 'student' && (
+            <div style={{ marginBottom: '24px' }}>
+              <label htmlFor="grade_level" style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#0f172a' }}>
+                Class/Grade Level
+              </label>
+              <input
+                id="grade_level"
+                type="text"
+                placeholder="e.g., 5A, 6B, 7C"
+                value={validation.values.grade_level}
+                onChange={(e) => validation.handleChange('grade_level', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          )}
           
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
             <button
