@@ -52,7 +52,7 @@ router.get('/search/:serial', async (req, res) => {
     res.status(500).json({ error: 'Failed to search equipment' });
   }
 });
-router.put('/retire-fleet', requireAdmin, retireFleet);
+router.put('/retire-fleet', requireManagerOrAdmin, retireFleet);
 router.put('/repair', requireManagerOrAdmin, updateRepairStatus);
 router.put('/repair-complete', requireManagerOrAdmin, completeRepair);
 router.post('/sync-status', async (req, res) => {
@@ -89,7 +89,7 @@ router.get('/:id', getEquipmentById);
 router.post('/', requireAdmin, createEquipment);
 router.put('/:id', requireAdmin, updateEquipment);
 router.put('/:id/status', requireAdmin, updateEquipmentStatus);
-router.delete('/:id', requireAdmin, deleteEquipment);
+router.delete('/:id', requireManagerOrAdmin, deleteEquipment);
 
 
 
