@@ -149,8 +149,10 @@ router.post('/lesson-plans', requireTeacherOrAdmin, async (req, res) => {
     const schema = req.schoolSchema;
     
     // If user is a teacher, ensure they can only create lesson plans for their assigned subject
-    if (req.user.role === 'teacher' && req.user.subject_id && subject_id !== req.user.subject_id) {
-      return res.status(403).json({ error: 'Teachers can only create lesson plans for their assigned subject' });
+    if (req.user.role === 'teacher' && req.user.subject_id) {
+      if (String(subject_id) !== String(req.user.subject_id)) {
+        return res.status(403).json({ error: 'Teachers can only create lesson plans for their assigned subject' });
+      }
     }
     
     const result = await pool.query(`
