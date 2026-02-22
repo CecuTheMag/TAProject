@@ -130,4 +130,68 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Update user profile (own profile or admin can update any)
+router.put('/:id/profile', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, phone, grade_level, subject_specialization } = req.body;
+    
+    // Check if user is updating their own profile or is an admin
+    const isAdmin = ['admin', 'system_admin'].includes(req.user.role);
+    const isOwnProfile = String(req.user.id) === String(id);
+    
+    if (!isAdmin && !isOwnProfile) {
+      return res.status(403).json({ error: 'You can only update your own profile' });
+    }
+    
+    // Build update query dynamically based on provided fields
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (username !== undefined) {
+      updates.push(`username = $${paramIndex++}`);
+      values.push(username);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push(`phone = $${paramIndex++}`);
+      values.push(phone);
+    }
+    if (grade_level !== undefined) {
+      updates.push(`grade_level = $${paramIndex++}`);
+      values.push(grade_level);
+    }
+    if (subject_specialization !== undefined) {
+      updates.push(`subject_specialization = $${paramIndex++}`);
+      values.push(subject_specialization);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    
+    values.push(id);
+    const query = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+    
+    const result = await queryInSchema(req.schoolSchema, query, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Update profile error:', error);
+    if (error.code === '23505') {
+      res.status(400).json({ error: 'Username or email already exists' });
+    } else {
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  }
+});
+
 export default router;
