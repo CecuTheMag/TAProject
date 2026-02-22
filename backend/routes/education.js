@@ -1,7 +1,7 @@
 import express from 'express';
 import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { requireTeacherOrAdmin } from '../middleware/roleAuth.js';
+import { requireTeacherOrAdmin, requireManagerTeacherOrAdmin } from '../middleware/roleAuth.js';
 import pool from '../database.js';
 
 const router = express.Router();
@@ -143,7 +143,7 @@ router.put('/subjects/:id', requireTeacherOrAdmin, async (req, res) => {
 });
 
 // Create lesson plan
-router.post('/lesson-plans', requireTeacherOrAdmin, async (req, res) => {
+router.post('/lesson-plans', requireManagerTeacherOrAdmin, async (req, res) => {
   try {
     const { subject_id, title, description, learning_objectives, lesson_date, duration_minutes, grade_level, required_equipment, start_date, end_date } = req.body;
     const schema = req.schoolSchema;
