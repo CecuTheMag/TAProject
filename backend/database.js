@@ -5,7 +5,7 @@ import pkg from 'pg';
 const { Pool } = pkg;
 import dotenv from 'dotenv';
 import { createDefaultAdmin } from './utils/createAdmin.js';
-import { createSampleData } from './utils/createSampleData.js';
+// import { createSampleData } from './utils/createSampleData.js';
 import migrationRunner from './utils/migrationRunner.js';
 
 // Load environment variables
@@ -367,8 +367,8 @@ export const initDB = async () => {
     // create default admin account
     await createDefaultAdmin();
     
-    // create sample data
-    await createSampleData();
+    // create sample data - disabled to prevent startup errors
+    // await createSampleData();
   } catch (error) {
     console.error('Database initialization error:', error);
   }

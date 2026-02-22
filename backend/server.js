@@ -19,7 +19,6 @@ import { auditLogger } from './middleware/audit.js';
 // Database and caching services
 import { initDB } from './database.js';
 import redisService from './utils/redis.js';
-import migrationRunner from './utils/migrationRunner.js';
 import { createSchoolSchema } from './utils/schemaManager.js';
 
 // Route handlers for different API endpoints
@@ -151,7 +150,8 @@ app.use('/api', securityMiddleware.rateLimit(60000, 100, 'Too many API requests'
 
 // Initialize database and Redis
 initDB();
-migrationRunner.runMigrations().catch(console.error);
+// Migration runner disabled - migrations handled manually
+// migrationRunner.runMigrations().catch(console.error);
 
 // Initialize schema-per-school architecture
 const initializeSchemas = async () => {
