@@ -206,12 +206,14 @@ const ManagementTab = ({ userRole }) => {
           {(
             userRole === 'teacher' 
               ? [{ id: 'lessons', label: isMobile ? t('lessons') : t('lessonPlans') }]
-              : [
-                  { id: 'equipment', label: isMobile ? t('equipment') : t('equipmentFleet') },
-                  { id: 'lessons', label: isMobile ? t('lessons') : t('lessonPlans') },
-                  { id: 'curriculum', label: t('curriculum') },
-                  { id: 'users', label: t('users') }
-                ]
+              : userRole === 'manager'
+                ? [{ id: 'equipment', label: isMobile ? t('equipment') : t('equipmentFleet') }]
+                : [
+                    { id: 'equipment', label: isMobile ? t('equipment') : t('equipmentFleet') },
+                    { id: 'lessons', label: isMobile ? t('lessons') : t('lessonPlans') },
+                    { id: 'curriculum', label: t('curriculum') },
+                    { id: 'users', label: t('users') }
+                  ]
           ).map((section) => (
             <button
               key={section.id}

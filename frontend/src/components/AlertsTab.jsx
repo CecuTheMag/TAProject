@@ -25,7 +25,7 @@ const AlertsTab = () => {
   }, [user]);
 
   const fetchAlerts = async () => {
-    if (!['teacher', 'admin'].includes(user?.role)) return;
+    if (!['teacher', 'admin', 'manager'].includes(user?.role)) return;
     
     try {
       setRefreshing(true);
@@ -52,7 +52,7 @@ const AlertsTab = () => {
     }
   };
 
-  if (!['teacher', 'admin'].includes(user?.role)) {
+  if (!['teacher', 'admin', 'manager'].includes(user?.role)) {
     return (
       <div style={{
         display: 'flex',
