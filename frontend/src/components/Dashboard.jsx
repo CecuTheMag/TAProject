@@ -450,7 +450,7 @@ const Dashboard = ({ schoolUser }) => {
                 {t('scanQR')}
               </button>
               
-              {['teacher', 'manager', 'admin'].includes(user?.role) && (
+              {['manager', 'admin'].includes(user?.role) && (
                 <button 
                   onClick={handleAddEquipment}
                   style={{

@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { requireAdmin, requireTeacherOrAdmin, requireManagerOrAdmin } from '../middleware/roleAuth.js';
+import { requireAdmin, requireTeacherOrAdmin, requireManagerOrAdmin, requireManagerTeacherOrAdmin } from '../middleware/roleAuth.js';
 import { setSchoolContext } from '../middleware/schoolContext.js';
 import {
   createRequest,
@@ -20,9 +20,9 @@ router.use(setSchoolContext);
 router.post('/', createRequest);
 router.get('/', getUserRequests);
 router.get('/manager', requireManagerOrAdmin, getAllRequests);
-router.put('/:id/approve', requireTeacherOrAdmin, approveRequest);
-router.put('/:id/reject', requireTeacherOrAdmin, rejectRequest);
-router.put('/:id/return', returnEquipment);
-router.put('/:id/early-return', earlyReturnEquipment);
+router.put('/:id/approve', requireManagerTeacherOrAdmin, approveRequest);
+router.put('/:id/reject', requireManagerTeacherOrAdmin, rejectRequest);
+router.put('/:id/return', requireManagerTeacherOrAdmin, returnEquipment);
+router.put('/:id/early-return', requireManagerTeacherOrAdmin, earlyReturnEquipment);
 
 export default router;

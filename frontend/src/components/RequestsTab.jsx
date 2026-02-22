@@ -26,7 +26,7 @@ const RequestsTab = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = user?.role === 'admin' 
+        const response = ['admin', 'manager', 'teacher'].includes(user?.role)
           ? await requests.getAllRequests()
           : await requests.getUserRequests();
         setRequestsList(response.data);
@@ -113,7 +113,7 @@ const RequestsTab = () => {
     if (success) {
       const fetchRequests = async () => {
         try {
-          const response = user?.role === 'admin' 
+          const response = ['admin', 'manager', 'teacher'].includes(user?.role)
             ? await requests.getAllRequests()
             : await requests.getUserRequests();
           setRequestsList(response.data);
@@ -176,7 +176,7 @@ const RequestsTab = () => {
               margin: '0 0 8px 0',
               fontFamily: '"SF Pro Display", -apple-system, sans-serif'
             }}>
-              {user?.role === 'admin' ? t('allRequests') : t('myRequests')}
+              {['admin', 'manager', 'teacher'].includes(user?.role) ? t('allRequests') : t('myRequests')}
             </h1>
             <p style={{
               color: '#64748b',
@@ -184,7 +184,7 @@ const RequestsTab = () => {
               fontWeight: '500',
               margin: 0
             }}>
-              {user?.role === 'admin' 
+              {['admin', 'manager', 'teacher'].includes(user?.role)
                 ? t('reviewManageRequests')
                 : t('trackYourRequests')
               }
@@ -330,7 +330,7 @@ const RequestsTab = () => {
                       {request.status === 'early_returned' ? t('earlyReturned') : t(request.status)}
                     </span>
                     
-                    {user?.role === 'admin' && request.status === 'pending' && (
+                    {['admin', 'manager', 'teacher'].includes(user?.role) && request.status === 'pending' && (
                       <div style={{ 
                         display: 'flex', 
                         gap: isMobile ? '6px' : '8px',
@@ -369,7 +369,7 @@ const RequestsTab = () => {
                       </div>
                     )}
                     
-                    {user?.role === 'admin' && request.status === 'approved' && (
+                    {['admin', 'manager', 'teacher'].includes(user?.role) && request.status === 'approved' && (
                       <button
                         onClick={() => handleEarlyReturn(request)}
                         style={{

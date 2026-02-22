@@ -43,11 +43,13 @@ const CreateLessonPlanModal = ({ onClose, onSuccess }) => {
       const userStr = localStorage.getItem('user');
       const currentUser = userStr ? JSON.parse(userStr) : null;
       
-      let filteredSubjects = response.data;
+      let filteredSubjects = response.data || [];
       
       // If user is a teacher, only show their assigned subject
       if (currentUser?.role === 'teacher' && currentUser?.subject_id) {
-        filteredSubjects = response.data.filter(subject => subject.id === currentUser.subject_id);
+        filteredSubjects = filteredSubjects.filter(subject => 
+          String(subject.id) === String(currentUser.subject_id)
+        );
       }
       
       setSubjects(filteredSubjects);
