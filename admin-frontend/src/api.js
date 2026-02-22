@@ -44,7 +44,8 @@ export const systemAdmin = {
   }),
   importAccdb: (formData) => api.post('/system-admin/import-accdb', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  }),
+  createDemoUser: (data) => api.post('/system-admin/demo-users', data)
 };
 
 // Equipment API for school management

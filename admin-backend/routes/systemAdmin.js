@@ -209,4 +209,51 @@ router.get('/proxy/education/curriculum/:subjectCode/recommendations', proxyEduc
 router.post('/proxy/education/lesson-plans', proxyCreateLessonPlan);
 router.post('/proxy/education/subjects', proxyCreateSubject);
 
+// Create demo users for a school
+router.post('/demo-users', async (req, res) => {
+  try {
+    const { username, email, password, role, school_id } = req.body;
+    
+    // Get school code for schema
+    const schoolResult = await pool.query('SELECT code FROM schools WHERE id = $1', [school_id]);
+    if (schoolResult.rows.length === 0) {
+      return res.status(404).json({ error: 'School not found' });
+    }
+    
+    const schoolCode = schoolResult.rows[0].code;
+    const schoolSchema = `school_${schoolCode}`;
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+    
+    // Insert user into school-specific schema
+    const insertQuery = `
+      INSERT INTO "${schoolSchema}".users (username, email, password, role, password_set) 
+      VALUES ($1, $2, $3, $4, $5) 
+      ON CONFLICT (email) DO UPDATE SET 
+      username = EXCLUDED.username,
+      password = EXCLUDED.password,
+      role = EXCLUDED.role,
+      password_set = EXCLUDED.password_set
+      RETURNING id, username, email, role
+    `;
+    
+    const result = await getMainDBData(insertQuery, [
+      username, 
+      email, 
+      hashedPassword, 
+      role, 
+      true
+    ]);
+    
+    res.status(201).json({ 
+      message: 'Demo user created successfully',
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Create demo user error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create demo user' });
+  }
+});
+
 export default router;

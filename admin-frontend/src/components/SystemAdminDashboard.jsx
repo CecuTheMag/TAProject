@@ -5,6 +5,7 @@ import { systemAdmin } from '../api';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import DatabaseImportModal from './DatabaseImportModal';
+import DemoUsersModal from './DemoUsersModal';
 
 const SystemAdminDashboard = () => {
   const { user: authUser, logout } = useAuth();
@@ -34,6 +35,7 @@ const SystemAdminDashboard = () => {
   });
 
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showDemoUsersModal, setShowDemoUsersModal] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -268,6 +270,7 @@ const SystemAdminDashboard = () => {
                 <h3 style={{ margin: '0 0 20px 0', fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#0f172a' }}>Database Operations</h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <button onClick={() => setShowImportModal(true)} style={{ padding: isMobile ? '14px 20px' : '12px 24px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontSize: isMobile ? '14px' : '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>Import .accdb File</button>
+                  <button onClick={() => setShowDemoUsersModal(true)} style={{ padding: isMobile ? '14px 20px' : '12px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', fontSize: isMobile ? '14px' : '14px', fontWeight: '600', cursor: 'pointer', minHeight: '48px' }}>DEMO Users</button>
                 </div>
               </motion.div>
             </div>
@@ -338,6 +341,16 @@ const SystemAdminDashboard = () => {
             alert(`Successfully imported ${result.imported} records`);
             fetchData();
           }}
+        />
+      )}
+      
+      {showDemoUsersModal && (
+        <DemoUsersModal
+          onClose={() => setShowDemoUsersModal(false)}
+          onSuccess={() => {
+            fetchData();
+          }}
+          schools={schools}
         />
       )}
     </div>
