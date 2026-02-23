@@ -66,13 +66,26 @@ router.get('/equipment/:equipmentId', async (req, res) => {
       return res.status(404).json({ error: 'Equipment not found' });
     }
     
-    const documents = (result.rows[0].documents || []).map(doc => {
-      try {
-        return JSON.parse(doc);
-      } catch (e) {
+    // Handle both old format (array of strings) and new format (JSONB array)
+    let documents = result.rows[0].documents || [];
+    
+    // If it's stored as a JSONB array, use it directly
+    if (Array.isArray(documents)) {
+      // Convert any string elements to objects (for backward compatibility)
+      documents = documents.map(doc => {
+        if (typeof doc === 'string') {
+          try {
+            return JSON.parse(doc);
+          } catch (e) {
+            return null;
+          }
+        }
         return doc;
-      }
-    });
+      }).filter(doc => doc !== null);
+    } else {
+      documents = [];
+    }
+    
     console.log(`Found ${documents.length} documents for equipment ${equipmentId}`);
     res.json(documents);
   } catch (error) {
@@ -110,7 +123,25 @@ router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('docume
       return res.status(404).json({ error: 'Equipment not found' });
     }
     
-    const currentDocs = equipmentResult.rows[0].documents || [];
+    // Get current documents - ensure it's an array of objects
+    let currentDocs = equipmentResult.rows[0].documents || [];
+    
+    // Handle legacy format where documents might be stored as strings
+    if (Array.isArray(currentDocs)) {
+      currentDocs = currentDocs.map(doc => {
+        if (typeof doc === 'string') {
+          try {
+            return JSON.parse(doc);
+          } catch (e) {
+            return null;
+          }
+        }
+        return doc;
+      }).filter(doc => doc !== null);
+    } else {
+      currentDocs = [];
+    }
+    
     const newDoc = {
       filename,
       originalname,
@@ -119,9 +150,10 @@ router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('docume
       uploadedAt: new Date().toISOString()
     };
     
-    const updatedDocs = [...currentDocs, JSON.stringify(newDoc)];
+    // Store as proper JSONB array (not array of strings)
+    const updatedDocs = [...currentDocs, newDoc];
     
-    // Update equipment with new document
+    // Update equipment with new document - pass array directly, pg will handle JSONB conversion
     const result = await queryInSchema(
       req.schoolSchema,
       'UPDATE equipment SET documents = $1 WHERE id = $2 RETURNING *',
@@ -180,17 +212,27 @@ router.delete('/:equipmentId/:filename', requireManagerOrAdmin, async (req, res)
       return res.status(404).json({ error: 'Equipment not found' });
     }
     
-    const currentDocs = equipmentResult.rows[0].documents || [];
-    const updatedDocs = currentDocs.filter(doc => {
-      try {
-        const parsed = JSON.parse(doc);
-        return parsed.filename !== filename;
-      } catch (e) {
-        return doc !== filename;
-      }
-    });
+    // Get current documents and handle both formats
+    let currentDocs = equipmentResult.rows[0].documents || [];
     
-    // Update equipment
+    if (Array.isArray(currentDocs)) {
+      currentDocs = currentDocs.map(doc => {
+        if (typeof doc === 'string') {
+          try {
+            return JSON.parse(doc);
+          } catch (e) {
+            return { filename: doc };
+          }
+        }
+        return doc;
+      });
+    } else {
+      currentDocs = [];
+    }
+    
+    const updatedDocs = currentDocs.filter(doc => doc.filename !== filename);
+    
+    // Update equipment - pass array directly, pg will handle JSONB conversion
     await queryInSchema(
       req.schoolSchema,
       'UPDATE equipment SET documents = $1 WHERE id = $2',
