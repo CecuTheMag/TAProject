@@ -17,6 +17,7 @@
 - [x] Ensure uploads directory exists
 - [x] Add better error handling and logging
 - [x] Test document upload functionality
+- [x] **Auto-run migration on startup** - Added `ensureDocumentsColumn()` function
 
 **Changes made to `backend/routes/documents.js`:**
 - Added automatic creation of `uploads/documents` directory on startup
@@ -26,6 +27,8 @@
 - Improved error messages with details
 
 **Changes made to `backend/server.js`:**
+- ✅ **Added `ensureDocumentsColumn()` function that runs on every startup**
+- ✅ **Checks if column exists before adding (idempotent - won't error if already there)**
 - Moved document routes registration BEFORE other API routes to prevent conflicts
 - Added both `/api/documents` and `/documents` route mounts for compatibility
 
@@ -40,12 +43,27 @@ The user deletion now properly:
 
 ### Document Upload Fix
 The document upload now properly:
-1. Creates the uploads directory automatically if it doesn't exist
-2. Uses absolute paths to prevent path resolution issues
-3. Has improved error handling with file cleanup on failures
-4. Routes are registered early to avoid conflicts with other routes
+1. ✅ **Auto-creates the documents column on every server startup if missing**
+2. Creates the uploads directory automatically if it doesn't exist
+3. Uses absolute paths to prevent path resolution issues
+4. Has improved error handling with file cleanup on failures
+5. Routes are registered early to avoid conflicts with other routes
 
 ## Files Modified
 1. ✅ `backend/routes/users.js` - Enhanced user deletion with logging and validation
 2. ✅ `backend/routes/documents.js` - Fixed upload directory and added error handling
-3. ✅ `backend/server.js` - Fixed route registration order
+3. ✅ `backend/server.js` - **Added automatic migration on startup**, fixed route registration order
+4. ✅ `backend/migrations/010_add_documents_column.sql` - Database migration (backup)
+5. ✅ `backend/run-documents-migration.js` - Standalone migration runner (backup)
+
+## How It Works Now
+
+**On every backend startup:**
+1. Server initializes database connection
+2. `ensureDocumentsColumn()` runs automatically
+3. It checks all school schemas for the `documents` column
+4. If column is missing, it adds it with `JSONB DEFAULT '[]'::jsonb`
+5. If column already exists, it skips (no error)
+6. Server continues startup normally
+
+**No manual SQL required!** Just restart your backend server and the migration will run automatically.

@@ -153,6 +153,53 @@ initDB();
 // Migration runner disabled - migrations handled manually
 // migrationRunner.runMigrations().catch(console.error);
 
+// Ensure documents column exists in all school schemas
+const ensureDocumentsColumn = async () => {
+  try {
+    const { default: pool } = await import('./database.js');
+    console.log('🔍 Checking documents column in equipment tables...');
+    
+    // Get all school schemas
+    const schemasResult = await pool.query(`
+      SELECT schema_name 
+      FROM information_schema.schemata 
+      WHERE schema_name LIKE 'school_%'
+    `);
+    
+    for (const schema of schemasResult.rows) {
+      const schemaName = schema.schema_name;
+      
+      try {
+        // Check if column exists
+        const columnCheck = await pool.query(`
+          SELECT 1 
+          FROM information_schema.columns 
+          WHERE table_schema = $1
+          AND table_name = 'equipment' 
+          AND column_name = 'documents'
+        `, [schemaName]);
+        
+        if (columnCheck.rows.length === 0) {
+          // Add documents column
+          await pool.query(`
+            ALTER TABLE "${schemaName}".equipment 
+            ADD COLUMN documents JSONB DEFAULT '[]'::jsonb
+          `);
+          console.log(`✅ Added documents column to ${schemaName}.equipment`);
+        } else {
+          console.log(`⏭️  documents column already exists in ${schemaName}.equipment`);
+        }
+      } catch (error) {
+        console.error(`❌ Error checking ${schemaName}:`, error.message);
+      }
+    }
+    
+    console.log('✅ Documents column check completed');
+  } catch (error) {
+    console.error('❌ Documents column migration failed:', error.message);
+  }
+};
+
 // Initialize schema-per-school architecture
 const initializeSchemas = async () => {
   try {
@@ -177,6 +224,9 @@ const initializeSchemas = async () => {
       await createSchoolSchema(school.code);
     }
     console.log('✅ School schemas initialized');
+    
+    // Run documents column check after schema initialization
+    await ensureDocumentsColumn();
   } catch (error) {
     console.error('❌ Schema initialization failed:', error.message);
   }
