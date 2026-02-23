@@ -153,11 +153,11 @@ router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('docume
     // Store as proper JSONB array (not array of strings)
     const updatedDocs = [...currentDocs, newDoc];
     
-    // Update equipment with new document - pass array directly, pg will handle JSONB conversion
-    const result = await queryInSchema(
-      req.schoolSchema,
-      'UPDATE equipment SET documents = $1 WHERE id = $2 RETURNING *',
-      [updatedDocs, equipmentId]
+    // Use direct pool query with schema-qualified table to avoid queryInSchema issues
+    const schemaName = req.schoolSchema;
+    const result = await pool.query(
+      `UPDATE "${schemaName}".equipment SET documents = $1::jsonb WHERE id = $2 RETURNING *`,
+      [JSON.stringify(updatedDocs), equipmentId]
     );
     
     console.log(`Document saved to equipment ${equipmentId}`);
@@ -232,11 +232,11 @@ router.delete('/:equipmentId/:filename', requireManagerOrAdmin, async (req, res)
     
     const updatedDocs = currentDocs.filter(doc => doc.filename !== filename);
     
-    // Update equipment - pass array directly, pg will handle JSONB conversion
-    await queryInSchema(
-      req.schoolSchema,
-      'UPDATE equipment SET documents = $1 WHERE id = $2',
-      [updatedDocs, equipmentId]
+    // Use direct pool query with schema-qualified table to avoid queryInSchema issues
+    const schemaName = req.schoolSchema;
+    await pool.query(
+      `UPDATE "${schemaName}".equipment SET documents = $1::jsonb WHERE id = $2`,
+      [JSON.stringify(updatedDocs), equipmentId]
     );
     
     // Delete file from filesystem
