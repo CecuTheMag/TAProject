@@ -1,29 +1,51 @@
-# Teacher Role Updates - Task List
+# Fix Issues - TODO
 
-## Frontend Changes
+## Issue 1: Admin cannot delete teachers and managers ✅ FIXED
+- [x] Examine backend user deletion route
+- [x] Add better error handling to user deletion
+- [x] Test deletion for all user roles
 
-### 1. Dashboard.jsx - Remove Add Equipment Button for Teachers
-- [x] Modify condition from `['teacher', 'manager', 'admin']` to `['manager', 'admin']`
-- [x] Location: Around line 320 in the header section
+**Changes made to `backend/routes/users.js`:**
+- Added detailed logging for user deletion process
+- Added pre-check to verify user exists and get their role before deletion
+- Added check for active requests (pending/approved) before allowing deletion
+- Improved error messages with details
+- Returns deleted user info in success response
 
-### 2. RequestsTab.jsx - Give Teachers and Managers Admin-like Request Management
-- [x] Update API call condition to include teachers and managers for `getAllRequests()`
-- [x] Update approve button visibility for teachers, managers, and admins
-- [x] Update reject button visibility for teachers, managers, and admins
-- [x] Update early return button visibility for teachers, managers, and admins
-- [x] Update header text to reflect new permissions
+## Issue 2: Equipment card PDF upload 404 error ✅ FIXED
+- [x] Fix document routes registration
+- [x] Ensure uploads directory exists
+- [x] Add better error handling and logging
+- [x] Test document upload functionality
 
-### 3. CreateLessonPlanModal.jsx - Fix Subject Filtering for Teachers
-- [x] Ensure only the teacher's assigned subject shows in the dropdown
-- [x] Verify the filtering logic works correctly
+**Changes made to `backend/routes/documents.js`:**
+- Added automatic creation of `uploads/documents` directory on startup
+- Changed upload path to use absolute path (`process.cwd()/uploads/documents`)
+- Added detailed logging for document fetch and upload operations
+- Added file cleanup on errors or if equipment not found
+- Improved error messages with details
 
-## Backend Changes
+**Changes made to `backend/server.js`:**
+- Moved document routes registration BEFORE other API routes to prevent conflicts
+- Added both `/api/documents` and `/documents` route mounts for compatibility
 
-### 4. backend/middleware/roleAuth.js - Add new middleware
-- [x] Create `requireManagerTeacherOrAdmin` middleware including teacher, manager, and admin
+## Summary of Fixes
 
-### 5. backend/routes/requests.js - Update route permissions
-- [x] Update approve route to use new middleware including managers
-- [x] Update reject route to use new middleware including managers
-- [x] Add role protection to return route for managers, teachers, and admins
-- [x] Add role protection to early-return route for managers, teachers, and admins
+### User Deletion Fix
+The user deletion now properly:
+1. Checks if the user exists before attempting deletion
+2. Verifies the user's role (teachers, managers, admins can all be deleted)
+3. Checks for active requests before allowing deletion
+4. Provides detailed logging for debugging
+
+### Document Upload Fix
+The document upload now properly:
+1. Creates the uploads directory automatically if it doesn't exist
+2. Uses absolute paths to prevent path resolution issues
+3. Has improved error handling with file cleanup on failures
+4. Routes are registered early to avoid conflicts with other routes
+
+## Files Modified
+1. ✅ `backend/routes/users.js` - Enhanced user deletion with logging and validation
+2. ✅ `backend/routes/documents.js` - Fixed upload directory and added error handling
+3. ✅ `backend/server.js` - Fixed route registration order

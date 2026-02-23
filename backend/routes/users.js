@@ -117,16 +117,56 @@ router.get('/:id/activity', async (req, res) => {
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await queryInSchema(req.schoolSchema, 'DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    console.log(`Attempting to delete user ${id} from schema ${req.schoolSchema}`);
     
-    if (result.rows.length === 0) {
+    // First check if user exists and get their role
+    const userCheck = await queryInSchema(
+      req.schoolSchema, 
+      'SELECT id, username, role FROM users WHERE id = $1', 
+      [id]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      console.log(`User ${id} not found in schema ${req.schoolSchema}`);
       return res.status(404).json({ error: 'User not found' });
     }
     
-    res.json({ message: 'User deleted successfully' });
+    const userToDelete = userCheck.rows[0];
+    console.log(`Found user to delete: ${userToDelete.username} (role: ${userToDelete.role})`);
+    
+    // Check if user has active requests
+    const activeRequests = await queryInSchema(
+      req.schoolSchema,
+      'SELECT COUNT(*) as count FROM requests WHERE user_id = $1 AND status IN ($2, $3)',
+      [id, 'pending', 'approved']
+    );
+    
+    if (parseInt(activeRequests.rows[0].count) > 0) {
+      console.log(`Cannot delete user ${id} - has ${activeRequests.rows[0].count} active requests`);
+      return res.status(400).json({ 
+        error: 'Cannot delete user with active requests',
+        activeRequests: parseInt(activeRequests.rows[0].count)
+      });
+    }
+    
+    // Delete the user
+    const result = await queryInSchema(
+      req.schoolSchema, 
+      'DELETE FROM users WHERE id = $1 RETURNING id, username, role', 
+      [id]
+    );
+    
+    console.log(`Successfully deleted user ${result.rows[0].username} (${result.rows[0].role})`);
+    res.json({ 
+      message: `User ${result.rows[0].username} deleted successfully`,
+      deletedUser: result.rows[0]
+    });
   } catch (error) {
     console.error('Delete user error:', error);
-    res.status(500).json({ error: 'Failed to delete user' });
+    res.status(500).json({ 
+      error: 'Failed to delete user',
+      details: error.message 
+    });
   }
 });
 

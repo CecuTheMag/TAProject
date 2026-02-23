@@ -9,6 +9,13 @@ import { setSchoolContext, queryInSchema } from '../middleware/schoolContext.js'
 
 const router = express.Router();
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), 'uploads', 'documents');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads/documents directory');
+}
+
 // Apply authentication and schema context to all routes
 router.use(authenticateToken);
 router.use(setSchoolContext);
@@ -16,7 +23,7 @@ router.use(setSchoolContext);
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/documents/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -46,6 +53,7 @@ const upload = multer({
 router.get('/equipment/:equipmentId', async (req, res) => {
   try {
     const { equipmentId } = req.params;
+    console.log(`Fetching documents for equipment ${equipmentId}, schema: ${req.schoolSchema}`);
     
     const result = await queryInSchema(
       req.schoolSchema,
@@ -54,6 +62,7 @@ router.get('/equipment/:equipmentId', async (req, res) => {
     );
     
     if (result.rows.length === 0) {
+      console.log(`Equipment ${equipmentId} not found in schema ${req.schoolSchema}`);
       return res.status(404).json({ error: 'Equipment not found' });
     }
     
@@ -64,10 +73,11 @@ router.get('/equipment/:equipmentId', async (req, res) => {
         return doc;
       }
     });
+    console.log(`Found ${documents.length} documents for equipment ${equipmentId}`);
     res.json(documents);
   } catch (error) {
     console.error('Error fetching documents:', error);
-    res.status(500).json({ error: 'Failed to fetch documents' });
+    res.status(500).json({ error: 'Failed to fetch documents', details: error.message });
   }
 });
 
@@ -75,7 +85,14 @@ router.get('/equipment/:equipmentId', async (req, res) => {
 router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('document'), async (req, res) => {
   try {
     const { equipmentId } = req.params;
+    console.log(`Uploading document for equipment ${equipmentId}, schema: ${req.schoolSchema}`);
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
     const { originalname, filename, mimetype, size } = req.file;
+    console.log(`File uploaded: ${filename} (${mimetype}, ${size} bytes)`);
     
     // Get current documents
     const equipmentResult = await queryInSchema(
@@ -85,6 +102,11 @@ router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('docume
     );
     
     if (equipmentResult.rows.length === 0) {
+      // Clean up uploaded file if equipment not found
+      const filePath = path.join(uploadsDir, filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
       return res.status(404).json({ error: 'Equipment not found' });
     }
     
@@ -106,6 +128,7 @@ router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('docume
       [updatedDocs, equipmentId]
     );
     
+    console.log(`Document saved to equipment ${equipmentId}`);
     res.json({
       message: 'Document uploaded successfully',
       document: newDoc,
@@ -113,7 +136,14 @@ router.post('/upload/:equipmentId', requireManagerOrAdmin, upload.single('docume
     });
   } catch (error) {
     console.error('Error uploading document:', error);
-    res.status(500).json({ error: 'Failed to upload document' });
+    // Clean up uploaded file on error
+    if (req.file && req.file.filename) {
+      const filePath = path.join(uploadsDir, req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    res.status(500).json({ error: 'Failed to upload document', details: error.message });
   }
 });
 

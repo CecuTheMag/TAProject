@@ -185,29 +185,32 @@ initializeSchemas();
 
 redisService.connect().catch(() => {}); // Non-blocking Redis connection
 
-// Routes with rate limiting
-app.use('/auth', authLimiter, authRoutes);
-app.use('/equipment', equipmentRoutes);
-app.use('/request', requestRoutes);
-app.use('/reports', reportLimiter, reportRoutes);
-app.use('/dashboard', dashboardRoutes);
-app.use('/alerts', alertRoutes);
+// Routes with rate limiting - ORDER MATTERS: more specific routes first
+// Document routes (must be before generic API routes to avoid conflicts)
+app.use('/api/documents', documentRoutes);
 app.use('/documents', documentRoutes);
-app.use('/users', userLimiter, userRoutes);
-app.use('/education', educationRoutes);
-app.use('/internal', internalRoutes);
 
-// API routes for frontend
+// Other API routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/request', requestRoutes);
 app.use('/api/reports', reportLimiter, reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/alerts', alertRoutes);
-app.use('/api/documents', documentRoutes);
 app.use('/api/users', userLimiter, userRoutes);
 app.use('/api/education', educationRoutes);
 app.use('/api/internal', internalRoutes);
+
+// Non-API routes (for backward compatibility)
+app.use('/auth', authLimiter, authRoutes);
+app.use('/equipment', equipmentRoutes);
+app.use('/request', requestRoutes);
+app.use('/reports', reportLimiter, reportRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/alerts', alertRoutes);
+app.use('/users', userLimiter, userRoutes);
+app.use('/education', educationRoutes);
+app.use('/internal', internalRoutes);
 
 // Direct curriculum test route
 app.get('/education/curriculum-direct', (req, res) => {
