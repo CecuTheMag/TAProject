@@ -51,11 +51,7 @@ const UsersTab = () => {
     const managers = [];
     const admins = [];
     
-    console.log('All users:', usersList); // Debug log
-    
     usersList.forEach(user => {
-      console.log('Processing user:', user.username, 'role:', user.role, 'email:', user.email); // Debug log
-      
       if (user.role === 'teacher') {
         teachers.push(user);
       } else if (user.role === 'manager') {
@@ -78,19 +74,12 @@ const UsersTab = () => {
           }
         }
         
-        console.log('Student class extracted:', className); // Debug log
-        
         if (!classes[className]) {
           classes[className] = [];
         }
         classes[className].push(user);
       }
     });
-    
-    console.log('Final classes:', classes); // Debug log
-    console.log('Final teachers:', teachers); // Debug log
-    console.log('Final managers:', managers); // Debug log
-    console.log('Final admins:', admins); // Debug log
     
     return { classes, teachers, managers, admins };
   };
