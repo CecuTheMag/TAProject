@@ -113,7 +113,9 @@ const UsersTab = () => {
           toast.success('User deleted successfully');
         } catch (error) {
           console.error('Failed to delete user:', error);
-          toast.error('Failed to delete user');
+          // Display specific error message from backend if available
+          const errorMessage = error.response?.data?.error || 'Failed to delete user';
+          toast.error(errorMessage);
         }
         setConfirmDialog({ isOpen: false });
       },
