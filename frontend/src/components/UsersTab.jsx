@@ -114,7 +114,14 @@ const UsersTab = () => {
         } catch (error) {
           console.error('Failed to delete user:', error);
           // Display specific error message from backend if available
-          const errorMessage = error.response?.data?.error || 'Failed to delete user';
+          let errorMessage = 'Failed to delete user';
+          if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
+          } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
           toast.error(errorMessage);
         }
         setConfirmDialog({ isOpen: false });
